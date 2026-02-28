@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WASTELAND-D</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ════════════════════════════ LOADING SCREEN ════════════════════════════ -->
+<div id="loadingScreen">
+    <h1>WASTELAND-D</h1>
+    <p>POST-APOCALYPTIC SURVIVAL</p>
+    <div id="loadingBar"><div id="loadingFill"></div></div>
+    <p id="startPrompt" style="display:none">CLICK TO START</p>
+</div>
+
+<!-- ════════════════════════════ GAME CANVAS ══════════════════════════════ -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- ════════════════════════════ PAUSE OVERLAY ════════════════════════════ -->
+<div id="pauseOverlay">
+    <div id="pausePanel">
+        <div id="pauseTitle">⚔ WASTELAND-D ⚔</div>
+
+        <!-- Tab bar (filled by JS) -->
+        <div id="tabBar"></div>
+
+        <!-- Tab content panels (JS switches .active) -->
+        <div id="tabContent">
+            <div id="tab-game"     class="tab-panel active"></div>
+            <div id="tab-features" class="tab-panel"></div>
+            <div id="tab-skills"   class="tab-panel"></div>
+            <div id="tab-armory"   class="tab-panel"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════ DEATH OVERLAY ════════════════════════════ -->
+<div id="deathOverlay">
+    <h1>YOU DIED</h1>
+    <p>Kills:  <strong id="deathKills">0</strong></p>
+    <p>Score:  <strong id="deathScore">0</strong></p>
+    <p>Wave:   <strong id="deathWave">0</strong></p>
+    <p>Level:  <strong id="deathLevel">1</strong></p>
+    <button class="restart-btn" id="restartBtn">↩  PLAY AGAIN</button>
+</div>
+
+<!-- ════════════════════════════ SCRIPTS (order matters) ══════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/pathfinding.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/projectile.js"></script>
+<script src="js/items.js"></script>
+<script src="js/world.js"></script>
+<script src="js/skilltree.js"></script>
+<script src="js/player.js"></script>
+<script src="js/enemy.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+
+<script>
+// ════════════════════════════ BOOTSTRAP ═══════════════════════════════════
+(function () {
+    'use strict';
+
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingFill   = document.getElementById('loadingFill');
+    const startPrompt   = document.getElementById('startPrompt');
+
+    // Fake loading bar
+    let progress = 0;
+    const tick = setInterval(() => {
+        progress = Math.min(100, progress + (Math.random() * 18));
+        loadingFill.style.width = progress + '%';
+        if (progress >= 100) {
+            clearInterval(tick);
+            setTimeout(() => { startPrompt.style.display = 'block'; }, 200);
+        }
+    }, 80);
+
+    let started = false;
+    function startGame() {
+        if (started) return;
+        started = true;
+        loadingScreen.style.display = 'none';
+
+        const game = new Game();
+        game.init();
+        game.start();
+
+        // Restart button
+        document.getElementById('restartBtn').addEventListener('click', () => game.restart());
+
+        // Resume from pause via Escape is handled inside Game._bindInput
+        // But also allow clicking the overlay background to close
+        document.getElementById('pauseOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                game.pauseMenu.hide();
+                game.state = 'playing';
+            }
+        });
+    }
+
+    document.addEventListener('click', startGame, { once: true });
+    document.addEventListener('keydown', startGame, { once: true });
+}());
+</script>
+
+<!-- ════════════════════════════ CONTROLS TOOLTIP ═════════════════════════ -->
+<div style="
+    position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.55); border:1px solid #332; border-radius:4px;
+    padding:5px 16px; font-family:'Courier New',monospace;
+    font-size:11px; color:#665; letter-spacing:1px; pointer-events:none; z-index:5;
+    white-space:nowrap;">
+    WASD Move &nbsp;|&nbsp; Mouse Aim &nbsp;|&nbsp; LMB Shoot &nbsp;|&nbsp;
+    RMB Scope &nbsp;|&nbsp; Q Grenade &nbsp;|&nbsp; E Melee &nbsp;|&nbsp;
+    SPACE Dash &nbsp;|&nbsp; R Reload &nbsp;|&nbsp; 1-0 Weapons &nbsp;|&nbsp; ESC Pause
+</div>
+
+</body>
+</html>
