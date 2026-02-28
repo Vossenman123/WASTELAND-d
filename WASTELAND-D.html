@@ -449,23 +449,84 @@ canvas#c{display:block;width:100vw;height:100vh;}
 
     <!-- ═══ TAB: ADMIN ═══ -->
     <div id="ptab-admin" class="ptab-panel">
-      <div class="p-section-title">🔧 ADMIN — WORLD SELECT</div>
-      <div class="psub">INSTANTLY TRAVEL TO ANY WORLD (RESETS WAVE TO 1)</div>
-      <div id="admin-worlds" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:14px;"></div>
-      <div class="p-divider"></div>
-      <div class="p-section-title">🌊 WAVE CONTROL</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
-        <button class="ptab" onclick="adminSetWave(1)">WAVE 1</button>
-        <button class="ptab" onclick="adminSetWave(3)">WAVE 3</button>
-        <button class="ptab" onclick="adminSetWave(5)">WAVE 5</button>
-        <button class="ptab" onclick="adminSetWave(7)">WAVE 7</button>
-        <button class="ptab" onclick="adminSetWave(10)">WAVE 10</button>
-        <button class="ptab" onclick="adminKillAll()">💀 KILL ALL ENEMIES</button>
-        <button class="ptab" onclick="adminGiveCoins()">💰 +500 COINS</button>
-        <button class="ptab" onclick="adminGiveXP()">⭐ +500 XP</button>
-        <button class="ptab" onclick="adminGodMode()">⚡ TOGGLE GOD MODE</button>
+
+      <!-- ── Lock screen ── -->
+      <div id="admin-lock">
+        <div class="p-section-title" style="font-size:13px;letter-spacing:4px;margin-bottom:6px;">🔒 ADMIN ACCESS</div>
+        <div style="font-size:8px;color:rgba(61,255,170,0.45);letter-spacing:2px;margin-bottom:14px;">ENTER ACCESS CODE TO CONTINUE</div>
+        <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
+          <input id="admin-code-input" type="password" maxlength="20" placeholder="••••••"
+            style="background:rgba(0,0,0,0.5);border:1px solid rgba(61,255,170,0.4);color:var(--g);
+              font-family:'Orbitron',monospace;font-size:14px;letter-spacing:6px;padding:8px 14px;
+              width:160px;outline:none;text-align:center;"
+            onkeydown="if(event.key==='Enter')adminSubmitCode()"/>
+          <button onclick="adminSubmitCode()" style="padding:8px 18px;background:transparent;
+            border:1px solid var(--g);color:var(--g);font-family:'Orbitron',monospace;
+            font-size:9px;letter-spacing:2px;cursor:pointer;">ENTER</button>
+        </div>
+        <div id="admin-lock-err" style="margin-top:10px;font-size:8px;color:var(--r);letter-spacing:2px;min-height:14px;"></div>
       </div>
-      <div id="admin-status" style="margin-top:12px;font-size:9px;color:rgba(61,255,170,0.7);letter-spacing:2px;"></div>
+
+      <!-- ── Admin panel (hidden until unlocked) ── -->
+      <div id="admin-panel-inner" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div class="p-section-title" style="margin:0;">🔧 ADMIN CONSOLE — WORLD SELECT</div>
+          <button onclick="adminLock()" style="padding:4px 10px;background:transparent;border:1px solid rgba(255,100,100,0.5);
+            color:rgba(255,100,100,0.7);font-family:'Orbitron',monospace;font-size:7px;cursor:pointer;letter-spacing:1px;">🔒 LOCK</button>
+        </div>
+        <div class="psub" style="margin-bottom:10px;">CLICK A WORLD CARD TO INSTANTLY TRAVEL THERE</div>
+        <div id="admin-worlds" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
+        <div class="p-divider"></div>
+
+        <!-- Wave control -->
+        <div class="p-section-title">🌊 WAVE CONTROL</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="ptab" onclick="adminSetWave(1)">WAVE 1</button>
+          <button class="ptab" onclick="adminSetWave(3)">WAVE 3</button>
+          <button class="ptab" onclick="adminSetWave(5)">WAVE 5</button>
+          <button class="ptab" onclick="adminSetWave(7)">WAVE 7</button>
+          <button class="ptab" onclick="adminSetWave(10)">WAVE 10</button>
+          <button class="ptab" onclick="adminNextWave()">⏩ NEXT WAVE NOW</button>
+          <button class="ptab" onclick="adminKillAll()">💀 KILL ALL ENEMIES</button>
+          <button class="ptab" onclick="adminSpawnBossNow()">👹 SPAWN BOSS NOW</button>
+          <button class="ptab" onclick="adminToggleBloodMoon()">🌕 TOGGLE BLOOD MOON</button>
+        </div>
+        <div class="p-divider"></div>
+
+        <!-- Player cheats -->
+        <div class="p-section-title">🧑 PLAYER CHEATS</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="ptab" onclick="adminGodMode()">⚡ GOD MODE</button>
+          <button class="ptab" onclick="adminFullHeal()">❤️ FULL HEAL</button>
+          <button class="ptab" onclick="adminToggleInfAmmo()">🔫 INF AMMO</button>
+          <button class="ptab" onclick="adminToggleOneHit()">☠️ ONE-HIT KILL</button>
+          <button class="ptab" onclick="adminToggleSpeedHack()">🏃 SPEED HACK</button>
+          <button class="ptab" onclick="adminMaxLevel()">⭐ MAX LEVEL (25)</button>
+          <button class="ptab" onclick="adminAddLevel()">+1 LEVEL</button>
+          <button class="ptab" onclick="adminGiveCoins()">💰 +500 COINS</button>
+          <button class="ptab" onclick="adminGiveCoins5k()">💰 +5000 COINS</button>
+          <button class="ptab" onclick="adminGiveXP()">⭐ +500 XP</button>
+          <button class="ptab" onclick="adminMaxJetpack()">✈ FULL JETPACK</button>
+          <button class="ptab" onclick="adminTeleportSpawn()">📍 TELEPORT TO SPAWN</button>
+        </div>
+        <div class="p-divider"></div>
+
+        <!-- Weapon / feature shortcuts -->
+        <div class="p-section-title">🔫 WEAPONS & FEATURES</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="ptab" onclick="adminUnlockAllWeapons()">🔓 UNLOCK ALL WEAPONS</button>
+          <button class="ptab" onclick="adminMaxAmmo()">📦 MAX ALL AMMO</button>
+          <button class="ptab" onclick="adminFeatureAllOn()">✅ ALL FEATURES ON</button>
+          <button class="ptab" onclick="adminFeatureAllOff()">❌ ALL FEATURES OFF</button>
+          <button class="ptab" onclick="adminSpawnEnemy(0)">🧟 SPAWN ZOMBIE</button>
+          <button class="ptab" onclick="adminSpawnEnemy(1)">🏃 SPAWN RUNNER</button>
+          <button class="ptab" onclick="adminSpawnEnemy(3)">💥 SPAWN BLOATER</button>
+          <button class="ptab" onclick="adminSpawnEnemy(5)">👾 SPAWN GIANT</button>
+          <button class="ptab" onclick="adminSpawnCrowd()">👥 SPAWN CROWD ×10</button>
+        </div>
+
+        <div id="admin-status" style="margin-top:14px;font-size:8px;color:rgba(61,255,170,0.6);letter-spacing:2px;line-height:1.8;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -3912,6 +3973,7 @@ function loop(){
   updDashAnim(dt);
   updAdrenaline();
   tryWallRun();
+  updAdminCheats(dt);
 
   updNapalmZones(dt);
 
@@ -4232,6 +4294,8 @@ function buildPauseMenu(){
   buildSkillTree();
   updSkillPtsDisplay();
 }
+var _adminUnlocked=false;
+
 function switchPTab(id,btn){
   document.querySelectorAll('.ptab').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.ptab-panel').forEach(function(p){p.classList.remove('active');});
@@ -4240,9 +4304,47 @@ function switchPTab(id,btn){
   if(panel)panel.classList.add('active');
   if(id==='skills'){buildSkillTree();updSkillPtsDisplay();}
   if(id==='features'){buildPauseMenu();}
-  if(id==='admin'){buildAdminPanel();}
+  if(id==='admin'){
+    // Show lock screen or panel depending on auth state
+    var lock=document.getElementById('admin-lock');
+    var inner=document.getElementById('admin-panel-inner');
+    if(lock&&inner){
+      if(_adminUnlocked){lock.style.display='none';inner.style.display='block';buildAdminPanel();}
+      else{lock.style.display='block';inner.style.display='none';}
+    }
+  }
 }
 window.switchPTab=switchPTab;
+
+function adminSubmitCode(){
+  var inp=document.getElementById('admin-code-input');
+  var err=document.getElementById('admin-lock-err');
+  if(!inp)return;
+  if(inp.value.toLowerCase()==='fay'){
+    _adminUnlocked=true;
+    inp.value='';
+    if(err) err.textContent='';
+    var lock=document.getElementById('admin-lock');
+    var inner=document.getElementById('admin-panel-inner');
+    if(lock) lock.style.display='none';
+    if(inner){inner.style.display='block';buildAdminPanel();}
+  }else{
+    if(err){
+      err.textContent='⚠ INVALID CODE';
+      setTimeout(function(){if(err) err.textContent='';},2000);
+    }
+    inp.value='';
+  }
+}
+window.adminSubmitCode=adminSubmitCode;
+
+function adminLock(){
+  _adminUnlocked=false;
+  var lock=document.getElementById('admin-lock');
+  var inner=document.getElementById('admin-panel-inner');
+  if(lock) lock.style.display='block';
+  if(inner) inner.style.display='none';
+}
 function toggleFeat(key){
   FEATS[key]=!FEATS[key];
   var card=document.getElementById('fcard-'+key);
@@ -4370,6 +4472,23 @@ patchGainXPForSkills();
 // ══  ADMIN PANEL  ════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════════════
 var adminGodModeOn=false;
+var adminInfAmmoOn=false;
+var adminOneHitOn=false;
+var adminSpeedOn=false;
+var _adminOrigMaxHp=100;
+
+function _adminStatus(){
+  var flags=[];
+  if(adminGodModeOn)  flags.push('⚡ GOD MODE');
+  if(adminInfAmmoOn)  flags.push('🔫 INF AMMO');
+  if(adminOneHitOn)   flags.push('☠️ ONE-HIT');
+  if(adminSpeedOn)    flags.push('🏃 SPEED HACK');
+  var st=document.getElementById('admin-status');
+  if(st) st.innerHTML=
+    'WORLD: '+(worldIdx+1)+' — '+WORLDS[worldIdx].name+'<br>'
+    +'WAVE: '+waveNum+'  |  LEVEL: '+playerLevel+'  |  COINS: '+coins+'<br>'
+    +(flags.length?'ACTIVE: '+flags.join('  '):' ');
+}
 
 function buildAdminPanel(){
   var container=document.getElementById('admin-worlds');
@@ -4377,29 +4496,29 @@ function buildAdminPanel(){
   container.innerHTML='';
   WORLDS.forEach(function(w,i){
     var card=document.createElement('div');
-    card.style.cssText='border:1px solid rgba(61,255,170,0.3);padding:14px;cursor:pointer;background:rgba(0,0,0,0.3);transition:all 0.15s;';
     var isActive=(i===worldIdx);
-    if(isActive) card.style.borderColor='var(--g)';
-    card.innerHTML='<div style="font-family:Orbitron,monospace;font-size:10px;color:'+(isActive?'var(--g)':'var(--y)')+';letter-spacing:2px;margin-bottom:6px;">'
-      +(isActive?'▶ ':'')+'WORLD '+(i+1)+': '+w.name+'</div>'
-      +'<div style="font-size:7px;color:rgba(61,255,170,0.5);">Fog: #'+w.fog.toString(16).padStart(6,'0')+'  Amb: '+Math.round(w.ambI*100)+'%</div>'
-      +(isActive?'<div style="font-size:7px;color:var(--g);margin-top:4px;">✓ CURRENT WORLD</div>':'<div style="font-size:7px;color:#ffaa33;margin-top:4px;">Click to travel →</div>');
+    card.style.cssText='border:1px solid '+(isActive?'var(--g)':'rgba(61,255,170,0.3)')
+      +';padding:12px;cursor:pointer;background:rgba(0,0,0,0.3);transition:all 0.15s;';
+    card.innerHTML='<div style="font-family:Orbitron,monospace;font-size:9px;color:'
+      +(isActive?'var(--g)':'var(--y)')+';letter-spacing:2px;margin-bottom:5px;">'
+      +(isActive?'▶ ':'')+'W'+(i+1)+': '+w.name+'</div>'
+      +'<div style="font-size:7px;color:rgba(61,255,170,0.45);">Fog #'+w.fog.toString(16).padStart(6,'0')
+      +'  Amb '+Math.round(w.ambI*100)+'%</div>'
+      +(isActive?'<div style="font-size:7px;color:var(--g);margin-top:3px;">✓ HERE</div>'
+               :'<div style="font-size:7px;color:#ffaa33;margin-top:3px;">TRAVEL →</div>');
     if(!isActive){
-      card.addEventListener('click',function(){
-        adminTravelToWorld(i);
-      });
+      card.addEventListener('click',function(){adminTravelToWorld(i);});
       card.addEventListener('mouseenter',function(){card.style.background='rgba(61,255,170,0.06)';});
       card.addEventListener('mouseleave',function(){card.style.background='rgba(0,0,0,0.3)';});
     }
     container.appendChild(card);
   });
-  var st=document.getElementById('admin-status');
-  if(st) st.textContent='CURRENT: WORLD '+(worldIdx+1)+' ('+WORLDS[worldIdx].name+') · WAVE '+waveNum+(adminGodModeOn?' · GOD MODE ON':'');
+  _adminStatus();
 }
 
+// ── World travel ──────────────────────────────────────────────────
 function adminTravelToWorld(idx){
   if(!gameRunning)return;
-  // Clear enemies and reset wave
   for(var _i=0;_i<enemies.length;_i++){if(!enemies[_i].dead)scene.remove(enemies[_i].group);}
   enemies=[];
   waveNum=0;waveActive=false;wavePause=true;wavePauseT=2;
@@ -4407,50 +4526,223 @@ function adminTravelToWorld(idx){
   buildWorld(idx);
   camera.position.set(0,1.75,0);
   notify('🌍 TRAVELING TO '+WORLDS[idx].name+'...',2500);
-  updEnemyCount();
-  buildAdminPanel();
-  closePause();
+  updEnemyCount();buildAdminPanel();closePause();
 }
 
+// ── Wave control ──────────────────────────────────────────────────
 function adminSetWave(n){
   if(!gameRunning)return;
   for(var _i=0;_i<enemies.length;_i++){if(!enemies[_i].dead)scene.remove(enemies[_i].group);}
   enemies=[];
   waveNum=n-1;waveActive=false;wavePause=true;wavePauseT=1;
-  notify('⚙ ADMIN: JUMPING TO WAVE '+n,2000);
-  var st=document.getElementById('admin-status');
-  if(st) st.textContent='Wave set to '+(n-1)+', next startWave() will be wave '+n;
+  notify('⚙ WAVE SKIP → '+n,1500);
+  _adminStatus();
+}
+
+function adminNextWave(){
+  if(!gameRunning)return;
+  adminKillAll();
+  // checkWaveClear handles the rest
+  notify('⏩ FORCING NEXT WAVE...',1200);
 }
 
 function adminKillAll(){
-  enemies.forEach(function(e){
-    if(e.alive){e.hp=0;e.alive=false;}
-  });
+  enemies.forEach(function(e){if(e.alive){e.hp=0;e.alive=false;}});
   checkWaveClear();
-  notify('💀 ADMIN: ALL ENEMIES KILLED',1500);
+  notify('💀 ALL ENEMIES KILLED',1200);
 }
 
-function adminGiveCoins(){gainCoins(500);notify('💰 ADMIN: +500 COINS',1500);}
-function adminGiveXP(){gainXP(500);notify('⭐ ADMIN: +500 XP',1500);}
+function adminSpawnBossNow(){
+  if(!gameRunning)return;
+  var idx=Math.floor(Math.random()*BOSS_TYPES.length);
+  spawnBoss(idx);
+  notify('👹 BOSS SPAWNED: '+BOSS_TYPES[idx].name,2000);
+  closePause();
+}
 
+function adminToggleBloodMoon(){
+  if(!bloodMoonActive){
+    bloodMoonActive=true;
+    scene.background=new THREE.Color(0x330000);
+    scene.fog.color.setHex(0x550000);
+    ambLight.color.setHex(0x441100);
+    sunLight.color.setHex(0xff2200);
+    notify('🌕 BLOOD MOON ACTIVATED',2000);
+  }else{
+    bloodMoonActive=false;
+    setWorldTheme(worldIdx);
+    notify('🌕 BLOOD MOON OFF',1500);
+  }
+  _adminStatus();
+}
+
+// ── Player cheats ─────────────────────────────────────────────────
 function adminGodMode(){
   adminGodModeOn=!adminGodModeOn;
   if(adminGodModeOn){
+    _adminOrigMaxHp=uSt.maxHp;
     player.hp=9999;uSt.maxHp=9999;player.invT=999999;
-    updHPHUD();notify('⚡ GOD MODE ON — INVINCIBLE',2000);
+    updHPHUD();notify('⚡ GOD MODE ON',1500);
   }else{
-    player.hp=100;uSt.maxHp=100;player.invT=0;
-    updHPHUD();notify('GOD MODE OFF',1500);
+    uSt.maxHp=_adminOrigMaxHp;
+    player.hp=uSt.maxHp;player.invT=0;
+    updHPHUD();notify('GOD MODE OFF',1200);
   }
   buildAdminPanel();
 }
 
+function adminFullHeal(){
+  player.hp=uSt.maxHp;updHPHUD();notify('❤️ FULL HEAL',1200);
+}
+
+function adminToggleInfAmmo(){
+  adminInfAmmoOn=!adminInfAmmoOn;
+  notify(adminInfAmmoOn?'🔫 INFINITE AMMO ON':'🔫 INFINITE AMMO OFF',1500);
+  _adminStatus();
+}
+
+function adminToggleOneHit(){
+  adminOneHitOn=!adminOneHitOn;
+  notify(adminOneHitOn?'☠️ ONE-HIT KILL ON':'☠️ ONE-HIT KILL OFF',1500);
+  _adminStatus();
+}
+
+function adminToggleSpeedHack(){
+  adminSpeedOn=!adminSpeedOn;
+  uSt.spd=adminSpeedOn?4:1;
+  notify(adminSpeedOn?'🏃 SPEED HACK ON (4×)':'🏃 SPEED NORMAL',1500);
+  _adminStatus();
+}
+
+function adminMaxLevel(){
+  while(playerLevel<25) gainXP(xpToNextLevel());
+  notify('⭐ LEVEL 25 — MAX LEVEL',2000);
+  _adminStatus();
+}
+
+function adminAddLevel(){
+  gainXP(xpToNextLevel?xpToNextLevel():999);
+  notify('⭐ LEVEL UP → '+playerLevel,1200);
+  _adminStatus();
+}
+
+function adminGiveCoins(){gainCoins(500);notify('💰 +500 COINS',1000);}
+function adminGiveCoins5k(){gainCoins(5000);notify('💰 +5000 COINS',1200);}
+function adminGiveXP(){gainXP(500);notify('⭐ +500 XP',1000);}
+
+function adminMaxJetpack(){
+  player.jpFuel=uSt.jpMax;player.jpCooldown=0;
+  updJetHUD();notify('✈ JETPACK FULL',1000);
+}
+
+function adminTeleportSpawn(){
+  camera.position.set(0,1.75,0);player.vy=0;
+  notify('📍 TELEPORTED TO SPAWN',1200);
+  closePause();
+}
+
+// ── Weapons & features ────────────────────────────────────────────
+function adminUnlockAllWeapons(){
+  if(typeof WDEFS!=='undefined'){
+    WDEFS.forEach(function(w,i){
+      if(!inventory.includes(i)) inventory.push(i);
+    });
+  }
+  notify('🔓 ALL WEAPONS UNLOCKED',1500);
+}
+
+function adminMaxAmmo(){
+  if(typeof WDEFS!=='undefined'){
+    WDEFS.forEach(function(w,i){
+      ammoReserves[i]=9999;
+    });
+  }
+  player.res=9999;player.ammo=curWep?curWep.clip:99;
+  updAmmoHUD();notify('📦 ALL AMMO MAXED',1200);
+}
+
+function adminFeatureAllOn(){Object.keys(FEATS).forEach(function(k){FEATS[k]=true;});notify('✅ ALL FEATURES ON',1200);}
+function adminFeatureAllOff(){Object.keys(FEATS).forEach(function(k){FEATS[k]=false;});notify('❌ ALL FEATURES OFF',1200);}
+
+function adminSpawnEnemy(t){
+  if(!gameRunning)return;
+  var a=Math.random()*Math.PI*2,r=8+Math.random()*6;
+  var ex=camera.position.x+Math.sin(a)*r;
+  var ez=camera.position.z+Math.cos(a)*r;
+  var e=new Enemy(t,ex,ez,false);
+  e.state='chase';enemies.push(e);
+  updEnemyCount();
+  notify('🧟 ENEMY SPAWNED',800);
+  closePause();
+}
+
+function adminSpawnCrowd(){
+  if(!gameRunning)return;
+  var list=[];for(var _s=0;_s<10;_s++) list.push(Math.floor(Math.random()*3));
+  spawnCrowds(list);
+  updEnemyCount();
+  notify('👥 CROWD OF 10 SPAWNED',1000);
+  closePause();
+}
+
+// ── Infinite ammo hook (applied in shoot loop) ────────────────────
+var _origDoShoot=null;
+function _patchAdminInfAmmo(){
+  if(_origDoShoot)return;
+  _origDoShoot=doShoot;
+  doShoot=function(){
+    _origDoShoot();
+    if(adminInfAmmoOn){player.ammo=curWep?curWep.clip:99;player.res=9999;updAmmoHUD();}
+  };
+}
+_patchAdminInfAmmo();
+
+// ── One-hit kill hook (applied per-frame in enemy damage) ─────────
+// Patch into enemy hurtEnemy / shootUpdate logic
+var _ohkPatchDone=false;
+function _patchOneHitKill(){
+  if(_ohkPatchDone)return;
+  _ohkPatchDone=true;
+  // We patch the game loop: every frame, if adminOneHitOn, set all chasing enemies to 1 hp
+  // Done inline in updEnemies loop below via updAdminCheats()
+}
+_patchOneHitKill();
+
+function updAdminCheats(dt){
+  if(adminGodModeOn){player.invT=999;if(player.hp<uSt.maxHp){player.hp=uSt.maxHp;updHPHUD();}}
+  if(adminOneHitOn){
+    for(var _i=0;_i<enemies.length;_i++){
+      var _e=enemies[_i];
+      if(_e.alive&&!_e.dead&&_e.state==='chase') _e.hp=1;
+    }
+  }
+}
+
 window.adminTravelToWorld=adminTravelToWorld;
 window.adminSetWave=adminSetWave;
+window.adminNextWave=adminNextWave;
 window.adminKillAll=adminKillAll;
-window.adminGiveCoins=adminGiveCoins;
-window.adminGiveXP=adminGiveXP;
+window.adminSpawnBossNow=adminSpawnBossNow;
+window.adminToggleBloodMoon=adminToggleBloodMoon;
 window.adminGodMode=adminGodMode;
+window.adminFullHeal=adminFullHeal;
+window.adminToggleInfAmmo=adminToggleInfAmmo;
+window.adminToggleOneHit=adminToggleOneHit;
+window.adminToggleSpeedHack=adminToggleSpeedHack;
+window.adminMaxLevel=adminMaxLevel;
+window.adminAddLevel=adminAddLevel;
+window.adminGiveCoins=adminGiveCoins;
+window.adminGiveCoins5k=adminGiveCoins5k;
+window.adminGiveXP=adminGiveXP;
+window.adminMaxJetpack=adminMaxJetpack;
+window.adminTeleportSpawn=adminTeleportSpawn;
+window.adminUnlockAllWeapons=adminUnlockAllWeapons;
+window.adminMaxAmmo=adminMaxAmmo;
+window.adminFeatureAllOn=adminFeatureAllOn;
+window.adminFeatureAllOff=adminFeatureAllOff;
+window.adminSpawnEnemy=adminSpawnEnemy;
+window.adminSpawnCrowd=adminSpawnCrowd;
+window.adminLock=adminLock;
 
 
 // ── WEAPON INSPECT (hold I) ──────────────────────────────────────
