@@ -2118,6 +2118,8 @@ Enemy.prototype.update=function(dt,px,pz){
         var sameCluster=(_cx!==undefined&&e2._groupCx===_cx&&e2._groupCz===_cz);
         if(sameCluster||d2x*d2x+d2z*d2z<144) e2.state='chase';
       }.bind(this));
+      // Apply one-hit kill the moment enemy enters chase state (not every frame)
+      if(adminOneHitOn&&!this.isBoss) this.hp=1;
     }
     this.state='chase';
   }
@@ -3393,6 +3395,8 @@ function diePlayer(){
   player.alive=false;SFX.die();
   document.getElementById('dead-s').textContent='WORLD '+(worldIdx+1)+' · WAVE '+waveNum+' · '+player.kills+' KILLS · '+player.coins+' COINS';
   addTimer(function(){document.getElementById('dead').style.display='flex';},700);
+  // Reset all admin cheat toggles on death
+  adminResetToggles();
 }
 
 // ── COINS ─────────────────────────────────────────────────────────────
@@ -3706,6 +3710,8 @@ function doWorldTransition(){
   document.getElementById('wt-name').textContent='ENTERING: '+nextWObj.name;
   document.getElementById('wt-sub').textContent='WORLD '+(nextW+1)+' / 6';
   tr.classList.add('show');
+  // Reset admin cheats when entering a new world
+  adminResetToggles();
   addTimer(function(){
     worldIdx=nextW;levelInWorld++;
     waveNum=0;boss5Spawned=boss10Spawned=false;
@@ -4523,6 +4529,7 @@ function adminTravelToWorld(idx){
   enemies=[];
   waveNum=0;waveActive=false;wavePause=true;wavePauseT=2;
   worldIdx=idx;levelInWorld=0;bloodMoonActive=false;
+  adminResetToggles(); // cheats reset when changing world
   buildWorld(idx);
   camera.position.set(0,1.75,0);
   notify('🌍 TRAVELING TO '+WORLDS[idx].name+'...',2500);
@@ -4621,7 +4628,8 @@ function adminMaxLevel(){
 }
 
 function adminAddLevel(){
-  gainXP(xpToNextLevel?xpToNextLevel():999);
+  var xpNeeded=(typeof xpToNextLevel==='function')?xpToNextLevel():999;
+  gainXP(xpNeeded||999);
   notify('⭐ LEVEL UP → '+playerLevel,1200);
   _adminStatus();
 }
@@ -4697,25 +4705,12 @@ function _patchAdminInfAmmo(){
 }
 _patchAdminInfAmmo();
 
-// ── One-hit kill hook (applied per-frame in enemy damage) ─────────
-// Patch into enemy hurtEnemy / shootUpdate logic
-var _ohkPatchDone=false;
-function _patchOneHitKill(){
-  if(_ohkPatchDone)return;
-  _ohkPatchDone=true;
-  // We patch the game loop: every frame, if adminOneHitOn, set all chasing enemies to 1 hp
-  // Done inline in updEnemies loop below via updAdminCheats()
-}
-_patchOneHitKill();
+// ── One-hit kill hook — applied at aggro time inside Enemy.prototype.update ────
+// (no per-frame loop needed; see the state==='patrol' → chase transition block)
 
 function updAdminCheats(dt){
+  // God mode: keep player fully healed and invincible
   if(adminGodModeOn){player.invT=999;if(player.hp<uSt.maxHp){player.hp=uSt.maxHp;updHPHUD();}}
-  if(adminOneHitOn){
-    for(var _i=0;_i<enemies.length;_i++){
-      var _e=enemies[_i];
-      if(_e.alive&&!_e.dead&&_e.state==='chase') _e.hp=1;
-    }
-  }
 }
 
 window.adminTravelToWorld=adminTravelToWorld;
@@ -4743,6 +4738,26 @@ window.adminFeatureAllOff=adminFeatureAllOff;
 window.adminSpawnEnemy=adminSpawnEnemy;
 window.adminSpawnCrowd=adminSpawnCrowd;
 window.adminLock=adminLock;
+
+// ── Reset all admin toggles — called on death or world change ─────
+function adminResetToggles(){
+  var wasActive=adminGodModeOn||adminInfAmmoOn||adminOneHitOn||adminSpeedOn;
+  // God mode off
+  if(adminGodModeOn){
+    adminGodModeOn=false;
+    uSt.maxHp=_adminOrigMaxHp||100;
+    player.invT=0;
+  }
+  // Infinite ammo off
+  adminInfAmmoOn=false;
+  // One-hit kill off
+  adminOneHitOn=false;
+  // Speed hack off
+  if(adminSpeedOn){adminSpeedOn=false;uSt.spd=1;}
+  // Only notify if at least one toggle was actually on
+  if(wasActive) notify('⚙ ADMIN CHEATS RESET',1200);
+}
+window.adminResetToggles=adminResetToggles;
 
 
 // ── WEAPON INSPECT (hold I) ──────────────────────────────────────
