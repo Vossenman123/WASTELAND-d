@@ -308,8 +308,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
 }
 
 /* Hide crosshair lines while any scope is active */
-#xhair.ads .xl.h,#xhair.ads .xl.v,
-#xhair.ads-iron .xl.h,#xhair.ads-iron .xl.v{opacity:0;}
+#xhair.ads .xl.h,#xhair.ads .xl.v{opacity:0;}
 
 /* Start */
 #start{position:fixed;inset:0;z-index:100;background:#000;
@@ -972,7 +971,7 @@ var ziplines = [];
 var grappHook={state:'idle',fx:0,fy:0,fz:0,tx:0,ty:0,tz:0,vx:0,vy:0,vz:0,dist:0,cooldown:0,lineMesh:null,ballMesh:null};
 
 // Permanent lights (kept across worlds)
-var ambLight = new THREE.AmbientLight(0x667755,0.5); // reduced; hemisphere takes over
+var ambLight = new THREE.AmbientLight(0x667755,0.5); // reduced; hemisphere provides sky/ground bounce
 scene.add(ambLight);
 // Hemisphere light: sky colour on top faces, ground bounce on bottom faces
 var hemLight = new THREE.HemisphereLight(0x88aacc,0x443322,0.55);
@@ -1329,20 +1328,21 @@ var wallMat   = new THREE.MeshStandardMaterial({map:wallTexBase,color:0xaab099,r
 var worldIdx = 0;
 var levelInWorld = 0;
 
+// Per-world hemisphere sky / ground colours (one entry per WORLDS entry)
+var HEM_SKY=[0x7799cc,0x3a5a22,0xbbd0ee,0x001530,0x2a1000,0x0d0025];
+var HEM_GND=[0x3a2810,0x1a2a08,0x7888a0,0x080f18,0x180500,0x05000f];
+
 function setWorldTheme(wi){
   var W=WORLDS[wi];
   scene.fog = new THREE.FogExp2(W.fog,W.fogD);
   scene.background = new THREE.Color(W.sky);
   ambLight.color.setHex(W.amb);
-  ambLight.intensity = W.ambI*0.55; // hemisphere takes the rest
+  ambLight.intensity = W.ambI;
   sunLight.color.setHex(W.sunCol);
   sunLight.intensity = W.sunI;
   groundMat.color.setHex(W.ground);
-  // Per-world hemisphere sky/ground colours
-  var hemSky=[0x7799cc,0x3a5a22,0xbbd0ee,0x001530,0x2a1000,0x0d0025];
-  var hemGnd=[0x3a2810,0x1a2a08,0x7888a0,0x080f18,0x180500,0x05000f];
-  hemLight.color.setHex(hemSky[wi]||0x778899);
-  hemLight.groundColor.setHex(hemGnd[wi]||0x332211);
+  hemLight.color.setHex(HEM_SKY[wi]||0x778899);
+  hemLight.groundColor.setHex(HEM_GND[wi]||0x332211);
   document.getElementById('loc-txt').textContent = W.name + ' · WORLD '+(wi+1);
 }
 
