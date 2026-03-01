@@ -420,6 +420,15 @@ canvas#c{display:block;width:100vw;height:100vh;}
 .ptab-panel.active{display:block;}
 /* ── SKILL TREE ── */
 #skill-tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px;}
+#auto-spend-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  margin:8px 0 4px;padding:7px 18px;
+  font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;
+  background:linear-gradient(135deg,rgba(170,68,255,0.18),rgba(61,255,170,0.12));
+  border:1px solid rgba(170,68,255,0.55);color:#cc88ff;
+  cursor:pointer;transition:background 0.15s,border-color 0.15s;}
+#auto-spend-btn:hover{background:linear-gradient(135deg,rgba(170,68,255,0.35),rgba(61,255,170,0.22));border-color:#aa44ff;}
+#auto-spend-btn:disabled{opacity:0.35;cursor:not-allowed;}
 .sk-node{border:1px solid rgba(255,215,0,0.25);padding:12px;background:rgba(255,215,0,0.03);
   cursor:pointer;transition:all 0.15s;position:relative;}
 .sk-node:hover:not(.locked){border-color:rgba(255,215,0,0.6);background:rgba(255,215,0,0.08);}
@@ -600,6 +609,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
     <div id="ptab-skills" class="ptab-panel">
       <div id="skill-pts-display">🌟 SKILL POINTS: 0</div>
       <div class="p-section-title">SPEND POINTS TO UNLOCK UPGRADES (1 point per level)</div>
+      <button id="auto-spend-btn" onclick="autoSpendSkills()">⚡ AUTO-SPEND ALL POINTS</button>
       <div id="skill-tree"></div>
     </div>
 
@@ -3157,7 +3167,7 @@ Enemy.prototype.update=function(dt,px,pz){
     this.hpBg.visible=this.hpFg.visible=true;
   }else{this.hpBg.visible=this.hpFg.visible=false;}
 
-  if(this.isBoss){document.getElementById('bbf').style.width=(this.hp/this.maxHp*100)+'%';}
+  if(this.isBoss&&this.alive){document.getElementById('bbf').style.width=(this.hp/this.maxHp*100)+'%';}
 
   if(dist<this.T.detR){
     // Alert scream - only cluster-mates within 8 units also enter chase
@@ -3297,6 +3307,7 @@ Enemy.prototype.hit=function(dmg,hx,hy,hz,isHead){
   hitNum(hx||this.x,hy||(this.sz*1.5),hz||this.z,actual,isHead);
   if(this.hp<=0){
     this.hp=0;this.alive=false;
+    if(this.isBoss) hideBossBar();
     if(this.T.explode){
       spawnParts(this.x,this.sz,this.z,0xddff00,20);
       // AoE on player
@@ -5733,6 +5744,8 @@ var SKILL_NODES=[
 function updSkillPtsDisplay(){
   var el=document.getElementById('skill-pts-display');
   if(el) el.textContent='🌟 SKILL POINTS: '+skillPoints;
+  var btn=document.getElementById('auto-spend-btn');
+  if(btn) btn.disabled=(skillPoints<=0);
 }
 function buildSkillTree(){
   var container=document.getElementById('skill-tree');
@@ -5773,6 +5786,46 @@ function buildSkillTree(){
       container.appendChild(card);
     });
   });
+}
+
+// ── AUTO-SPEND: spends all skill points using a priority queue ─────────
+// Priority order: Survival → Combat → Mobility → Utility → Special
+// Within each category: lowest cost first, then lowest current level first
+function autoSpendSkills(){
+  if(skillPoints<=0){notify('⚠ NO SKILL POINTS TO SPEND',1200);return;}
+  var CAT_ORDER={Survival:0,Combat:1,Mobility:2,Utility:3,Special:4};
+  var spent=0;
+  var safety=0;
+  while(skillPoints>0&&safety<500){
+    safety++;
+    // Build sorted list of affordable, non-maxed nodes
+    var available=SKILL_NODES.filter(function(n){
+      var lvl=skillLevels[n.id]||0;
+      return lvl<n.maxLvl&&skillPoints>=n.cost;
+    }).sort(function(a,b){
+      // Sort by category priority first
+      var cp=(CAT_ORDER[a.cat]||99)-(CAT_ORDER[b.cat]||99);
+      if(cp!==0)return cp;
+      // Then by cost ascending (buy cheaper skills first)
+      if(a.cost!==b.cost)return a.cost-b.cost;
+      // Then by current level ascending (fill low levels first)
+      return (skillLevels[a.id]||0)-(skillLevels[b.id]||0);
+    });
+    if(available.length===0)break;
+    var node=available[0];
+    skillPoints-=node.cost;
+    skillLevels[node.id]=(skillLevels[node.id]||0)+1;
+    node.fn();
+    spent++;
+  }
+  if(spent>0){
+    notify('⚡ AUTO-SPENT '+spent+' SKILL POINT'+(spent>1?'S':'')+' — '+skillPoints+' REMAINING',2500);
+    beep(660,0.15,'sine',0.06);
+    buildSkillTree();
+    updSkillPtsDisplay();
+  }else{
+    notify('⚠ NOT ENOUGH POINTS FOR ANY SKILL',1200);
+  }
 }
 
 // Give 1 skill point per level-up (patch into gainXP)
