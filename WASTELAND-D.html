@@ -403,7 +403,9 @@ canvas#c{display:block;width:100vw;height:100vh;}
         <div class="ctrl-row"><span class="ctrl-act">Sprint (hold)</span><span class="ctrl-key">Shift</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Dash</span><span class="ctrl-key">Alt</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Jump / Vault</span><span class="ctrl-key">Space / E</span></div>
-        <div class="ctrl-row"><span class="ctrl-act">Jetpack</span><span class="ctrl-key">F</span></div>
+        <div class="ctrl-row"><span class="ctrl-act">Jetpack</span><span class="ctrl-key">J</span></div>
+        <div class="ctrl-row"><span class="ctrl-act">Knife</span><span class="ctrl-key">F</span></div>
+        <div class="ctrl-row"><span class="ctrl-act">Grapple Hook</span><span class="ctrl-key">RMB</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Shoot</span><span class="ctrl-key">Click</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Reload</span><span class="ctrl-key">R</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Grenade</span><span class="ctrl-key">G</span></div>
@@ -704,6 +706,8 @@ var COLS = [];
 var radLights = [];
 var portal = null;
 var ziplines = [];
+// ── GRAPPLING HOOK STATE ─────────────────────────────────────────────
+var grappHook={state:'idle',fx:0,fy:0,fz:0,tx:0,ty:0,tz:0,vx:0,vy:0,vz:0,dist:0,cooldown:0,lineMesh:null,ballMesh:null};
 
 // Permanent lights (kept across worlds)
 var ambLight = new THREE.AmbientLight(0x667755,0.9);
@@ -719,12 +723,31 @@ scene.add(sunLight);
 var muzzleL = new THREE.PointLight(0xff8822,0,6);
 muzzleL.position.set(0,1.7,-2); scene.add(muzzleL);
 
+// ── GRAPPLE HOOK VISUALS (persistent, not cleared with world) ────────
+(function(){
+  var pts=[new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,0)];
+  var lg=new THREE.BufferGeometry().setFromPoints(pts);
+  grappHook.lineMesh=new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x00ffcc}));
+  grappHook.lineMesh.visible=false;
+  scene.add(grappHook.lineMesh);
+  grappHook.ballMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(.13,6,4),
+    new THREE.MeshBasicMaterial({color:0x00ffcc,emissive:0x00ccaa,emissiveIntensity:1}));
+  grappHook.ballMesh.visible=false;
+  scene.add(grappHook.ballMesh);
+})();
+
 function addW(obj){scene.add(obj);worldObjs.push(obj);return obj;}
 function addWL(light){scene.add(light);worldObjs.push(light);return light;}
 
 function clearWorld(){
   for(var i=0;i<worldObjs.length;i++) scene.remove(worldObjs[i]);
   worldObjs=[];COLS=[];radLights=[];ziplines=[];portal=null;
+  // Reset grapple hook
+  grappHook.state='idle';grappHook.cooldown=0;grappHook.dist=0;
+  if(grappHook.lineMesh)grappHook.lineMesh.visible=false;
+  if(grappHook.ballMesh)grappHook.ballMesh.visible=false;
+  player.onGrapple=false;
   for(var i=0;i<enemies.length;i++) scene.remove(enemies[i].group);
   enemies=[];
   for(var i=0;i<BPOOL.length;i++){BPOOL[i].active=false;BPOOL[i].mesh.visible=false;}
@@ -2447,47 +2470,47 @@ function updSpitProjs(dt){
 // ── ENEMY TYPES ────────────────────────────────────────────────────────
 var ETYPES=[
   // skinCol = pale dead flesh; rotCol = dark rot used for claws/wounds
-  {name:'ZOMBIE',  hp:65,  spd:1.1,dmg:10,col:0x556633,eye:0xff2200,coins:12,sz:1.0,atkR:1.8,detR:16,
+  {name:'ZOMBIE',  hp:65,  spd:3.5,dmg:10,col:0x556633,eye:0xff2200,coins:12,sz:1.0,atkR:1.8,detR:16,
    skinCol:0xd4c898,rotCol:0x5a1a00,zombie:true},   // pallid yellowish flesh + dark-blood rot
-  {name:'RUNNER',  hp:45,  spd:2.0,dmg:8, col:0x7a5522,eye:0xff8800,coins:10,sz:.85,atkR:1.4,detR:20,
+  {name:'RUNNER',  hp:45,  spd:6.5,dmg:8, col:0x7a5522,eye:0xff8800,coins:10,sz:.85,atkR:1.4,detR:20,
    skinCol:0xb8956a,rotCol:0x6b3a11,zombie:true},   // leathery tan decay
-  {name:'SPITTER', hp:60,  spd:1.4,dmg:0, col:0x445522,eye:0xaaff22,coins:14,sz:1.0,atkR:12,detR:18,ranged:true,
+  {name:'SPITTER', hp:60,  spd:3.0,dmg:0, col:0x445522,eye:0xaaff22,coins:14,sz:1.0,atkR:12,detR:18,ranged:true,
    skinCol:0x44bb22,rotCol:0x1a6600,zombie:true},   // toxic acid-green, clearly mutated
-  {name:'BLOATER', hp:140, spd:0.9,dmg:14,col:0x556633,eye:0xddff00,coins:20,sz:1.35,atkR:2.0,detR:14,explode:true,
+  {name:'BLOATER', hp:140, spd:2.5,dmg:14,col:0x556633,eye:0xddff00,coins:20,sz:1.35,atkR:2.0,detR:14,explode:true,
    skinCol:0x8acc44,rotCol:0x2a5500,zombie:true},   // swollen mottled green
-  {name:'ARMORED', hp:200, spd:1.0,dmg:20,col:0x7799aa,eye:0x44aaff,coins:30,sz:1.1,atkR:1.8,detR:16,armor:.45,
+  {name:'ARMORED', hp:200, spd:3.5,dmg:20,col:0x7799aa,eye:0x44aaff,coins:30,sz:1.1,atkR:1.8,detR:16,armor:.45,
    skinCol:0x889aaa,rotCol:0x334455},               // grey-blue armoured flesh
-  {name:'GIANT',   hp:320, spd:0.8,dmg:28,col:0x4a6633,eye:0xff6600,coins:50,sz:1.85,atkR:2.5,detR:14,
+  {name:'GIANT',   hp:320, spd:2.5,dmg:28,col:0x4a6633,eye:0xff6600,coins:50,sz:1.85,atkR:2.5,detR:14,
    skinCol:0xaaaaaa,rotCol:0x333322,zombie:true},   // massive grey-rotted corpse
 ];
 // Mini-bosses: index = worldIdx (0-5)
 var BOSS_TYPES=[
-  {name:'BRUTE ALPHA',  hp:1200,spd:2.4,dmg:32,col:0xcc3300,eye:0xff0000,coins:220,sz:2.3,atkR:2.8,detR:40,shockwave:true,
+  {name:'BRUTE ALPHA',  hp:1200,spd:4.5,dmg:32,col:0xcc3300,eye:0xff0000,coins:220,sz:2.3,atkR:2.8,detR:40,shockwave:true,
    skinCol:0x8b1a00,rotCol:0x3d0000},
-  {name:'SWAMP TITAN',  hp:1500,spd:1.9,dmg:36,col:0x2a5a1a,eye:0x88ff22,coins:280,sz:2.5,atkR:3.0,detR:38,shockwave:true,ranged:true,
+  {name:'SWAMP TITAN',  hp:1500,spd:4.0,dmg:36,col:0x2a5a1a,eye:0x88ff22,coins:280,sz:2.5,atkR:3.0,detR:38,shockwave:true,ranged:true,
    skinCol:0x3a7a22,rotCol:0x1a4408,zombie:true},
-  {name:'FROST WARDEN', hp:1800,spd:2.1,dmg:40,col:0x5577aa,eye:0x44aaff,coins:340,sz:2.4,atkR:2.6,detR:42,shockwave:true,
+  {name:'FROST WARDEN', hp:1800,spd:4.2,dmg:40,col:0x5577aa,eye:0x44aaff,coins:340,sz:2.4,atkR:2.6,detR:42,shockwave:true,
    skinCol:0x6688cc,rotCol:0x223366},
-  {name:'SPECIMEN X',   hp:2200,spd:2.3,dmg:45,col:0x226633,eye:0x00ffaa,coins:400,sz:2.6,atkR:3.0,detR:44,shockwave:true,ranged:true,
+  {name:'SPECIMEN X',   hp:2200,spd:4.5,dmg:45,col:0x226633,eye:0x00ffaa,coins:400,sz:2.6,atkR:3.0,detR:44,shockwave:true,ranged:true,
    skinCol:0x33aa66,rotCol:0x114422,zombie:true},
-  {name:'EMBER LORD',   hp:2600,spd:2.2,dmg:50,col:0xaa3300,eye:0xff6600,coins:460,sz:2.8,atkR:3.2,detR:46,shockwave:true,
+  {name:'EMBER LORD',   hp:2600,spd:4.5,dmg:50,col:0xaa3300,eye:0xff6600,coins:460,sz:2.8,atkR:3.2,detR:46,shockwave:true,
    skinCol:0xcc4400,rotCol:0x662200},
-  {name:'VOID STALKER', hp:3000,spd:2.6,dmg:56,col:0x330066,eye:0xcc00ff,coins:520,sz:3.0,atkR:3.5,detR:50,shockwave:true,ranged:true,
+  {name:'VOID STALKER', hp:3000,spd:5.0,dmg:56,col:0x330066,eye:0xcc00ff,coins:520,sz:3.0,atkR:3.5,detR:50,shockwave:true,ranged:true,
    skinCol:0x5500aa,rotCol:0x22004c},
 ];
 // World end-bosses: index = worldIdx (0-5)
 var WORLD_BOSSES=[
-  {name:'THE DIRECTOR',    hp:3500,spd:2.2,dmg:50,col:0x881100,eye:0xff0000,coins:800, sz:3.5,atkR:3.5,detR:55,shockwave:true,ranged:true,
+  {name:'THE DIRECTOR',    hp:3500,spd:3.5,dmg:50,col:0x881100,eye:0xff0000,coins:800, sz:3.5,atkR:3.5,detR:55,shockwave:true,ranged:true,
    skinCol:0xaa1100,rotCol:0x440000,endBoss:true},
-  {name:'HYDRA PRIME',     hp:4500,spd:1.9,dmg:60,col:0x1a5500,eye:0xaaff00,coins:1000,sz:4.0,atkR:3.8,detR:55,shockwave:true,ranged:true,
+  {name:'HYDRA PRIME',     hp:4500,spd:3.2,dmg:60,col:0x1a5500,eye:0xaaff00,coins:1000,sz:4.0,atkR:3.8,detR:55,shockwave:true,ranged:true,
    skinCol:0x226600,rotCol:0x0a3300,endBoss:true,zombie:true},
-  {name:'BLIZZARD GOLEM',  hp:5500,spd:1.7,dmg:70,col:0x4466aa,eye:0x88ddff,coins:1200,sz:4.5,atkR:4.0,detR:55,shockwave:true,
+  {name:'BLIZZARD GOLEM',  hp:5500,spd:3.0,dmg:70,col:0x4466aa,eye:0x88ddff,coins:1200,sz:4.5,atkR:4.0,detR:55,shockwave:true,
    skinCol:0x5588cc,rotCol:0x2244aa,endBoss:true},
-  {name:'DR. MUTAGEN',     hp:6500,spd:2.0,dmg:78,col:0x115522,eye:0x00ff88,coins:1400,sz:4.0,atkR:4.2,detR:60,shockwave:true,ranged:true,
+  {name:'DR. MUTAGEN',     hp:6500,spd:3.5,dmg:78,col:0x115522,eye:0x00ff88,coins:1400,sz:4.0,atkR:4.2,detR:60,shockwave:true,ranged:true,
    skinCol:0x22aa66,rotCol:0x0a4422,endBoss:true,zombie:true},
-  {name:'THE LAVA TITAN',  hp:8000,spd:1.8,dmg:88,col:0x882200,eye:0xff4400,coins:1600,sz:5.0,atkR:4.5,detR:60,shockwave:true,
+  {name:'THE LAVA TITAN',  hp:8000,spd:3.0,dmg:88,col:0x882200,eye:0xff4400,coins:1600,sz:5.0,atkR:4.5,detR:60,shockwave:true,
    skinCol:0xcc3300,rotCol:0x440800,endBoss:true},
-  {name:'DIGITAL OVERLORD',hp:9500,spd:2.4,dmg:95,col:0x220055,eye:0xee00ff,coins:2000,sz:5.5,atkR:5.0,detR:65,shockwave:true,ranged:true,
+  {name:'DIGITAL OVERLORD',hp:9500,spd:4.0,dmg:95,col:0x220055,eye:0xee00ff,coins:2000,sz:5.5,atkR:5.0,detR:65,shockwave:true,ranged:true,
    skinCol:0x6600cc,rotCol:0x330066,endBoss:true},
 ];
 
@@ -2739,7 +2762,7 @@ Enemy.prototype.update=function(dt,px,pz){
       }
       this.patT=1.5+Math.random()*2.5;
     }
-    var sp=this.T.spd*.22*(this._hordeBuff?1.1:1);
+    var sp=this.T.spd*.45*(this._hordeBuff?1.1:1);
     var nx=this.x+Math.sin(this.patA)*sp*dt,nz=this.z+Math.cos(this.patA)*sp*dt;
     if(!chkCol(nx,nz,.36)){this.x=nx;this.z=nz;}else this.patA+=Math.PI*.5;
   }else{
@@ -3110,7 +3133,9 @@ var player={hp:100,alive:true,
   streak:0,streakT:0,
   slowmoT:0,slowmo:false,
   combo:0,comboT:0,lastComboKill:0,
-  poisoned:0
+  poisoned:0,
+  knifeT:0,
+  onGrapple:false
 };
 var yaw=0,pitch=0,locked=false;
 var _lastShiftUp=0;
@@ -3130,6 +3155,7 @@ window.addEventListener('keydown',function(e){K[e.code]=true;
   if(e.code==='KeyZ') throwFlare();
   if(e.code==='KeyH') throwFreeze();
   if(e.code==='KeyT') tryStompAttack();
+  if(e.code==='KeyF') doKnifeAttack();
   // Double-tap Shift = dash
   if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&_lastShiftUp>0&&(performance.now()-_lastShiftUp)<300){
     executeDash();_lastShiftUp=0;
@@ -3158,10 +3184,120 @@ document.addEventListener('mousemove',function(e){
   if(!locked||!gameRunning||shopOpen)return;
   yaw-=e.movementX*.002;pitch=Math.max(-1.1,Math.min(1.1,pitch-e.movementY*.002));
 });
+document.addEventListener('contextmenu',function(e){if(gameRunning&&locked)e.preventDefault();});
 document.addEventListener('mousedown',function(e){
   if(e.button===0&&gameRunning&&locked&&!shopOpen){if(curWep.auto)player.autoShooting=true;else doShoot();}
+  if(e.button===2&&gameRunning&&locked&&!shopOpen) startGrapple();
 });
-document.addEventListener('mouseup',function(){player.autoShooting=false;});
+document.addEventListener('mouseup',function(e){player.autoShooting=false;if(e.button===2) releaseGrapple();});
+
+// ── KNIFE (F key) ──────────────────────────────────────────────────────
+function doKnifeAttack(){
+  if(!player.alive||player.knifeT>0||shopOpen)return;
+  player.knifeT=0.6; // 0.6 s cooldown
+  // Forward direction (horizontal, ignores pitch so you don't miss while looking up/down)
+  var fwx=-Math.sin(yaw),fwz=-Math.cos(yaw);
+  var hit=false;
+  for(var i=0;i<enemies.length;i++){
+    var e=enemies[i];
+    if(!e.alive||e.dead)continue;
+    var dx=e.x-camera.position.x,dz=e.z-camera.position.z;
+    var dist=Math.sqrt(dx*dx+dz*dz);
+    if(dist>2.5)continue;
+    // 140-degree front arc
+    if(dist>0.01&&((dx/dist)*fwx+(dz/dist)*fwz)<0.12)continue;
+    var killed=e.hit(150*uSt.dmgMult,e.x,e.sz,e.z,false);
+    spawnParts(e.x,e.sz,e.z,0xdd0000,8);
+    if(killed){gainCoins(e.T.coins);player.kills++;addKillFeed(e.T.name,false,e.isBoss);checkWaveClear();}
+    hit=true;
+  }
+  // Weapon lunge: push gun forward then pull back
+  if(wMesh){wMesh.position.z=-0.20;setTimeout(function(){if(wMesh)wMesh.position.z=0;},90);}
+  // Brief blood-red screen flash using existing crit-vfx element
+  var fl=document.getElementById('crit-vfx');
+  if(fl){fl.style.background='radial-gradient(ellipse,rgba(180,0,0,.45) 0%,transparent 70%)';
+    fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},110);}
+  // Sound
+  beep(hit?140:200, 0.05,'sawtooth',0.25);
+  notify(hit?'🗡 STAB!':'🗡 KNIFE',400);
+}
+
+// ── GRAPPLING HOOK (Right Mouse Button) ────────────────────────────────
+var GRAPPLE_SPD=55,GRAPPLE_PULL=20,GRAPPLE_MAXDIST=35;
+function startGrapple(){
+  if(!player.alive||shopOpen)return;
+  if(grappHook.state!=='idle'||grappHook.cooldown>0)return;
+  grappHook.state='flying';
+  grappHook.fx=camera.position.x;
+  grappHook.fy=camera.position.y;
+  grappHook.fz=camera.position.z;
+  grappHook.dist=0;
+  var dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  grappHook.vx=dir.x*GRAPPLE_SPD;
+  grappHook.vy=dir.y*GRAPPLE_SPD;
+  grappHook.vz=dir.z*GRAPPLE_SPD;
+  grappHook.lineMesh.visible=true;
+  grappHook.ballMesh.visible=true;
+  beep(280,.06,'square',.18);
+  notify('🪝 GRAPPLE!',600);
+}
+function releaseGrapple(){
+  if(grappHook.state==='idle')return;
+  if(grappHook.state==='attached') player.vy=Math.max(player.vy,6); // upward kick
+  grappHook.state='idle';grappHook.cooldown=1.5;
+  grappHook.lineMesh.visible=false;grappHook.ballMesh.visible=false;
+  player.onGrapple=false;
+}
+function updGrapple(dt){
+  if(grappHook.cooldown>0) grappHook.cooldown=Math.max(0,grappHook.cooldown-dt);
+  if(grappHook.state==='idle')return;
+  var cpx=camera.position.x,cpy=camera.position.y,cpz=camera.position.z;
+  if(grappHook.state==='flying'){
+    grappHook.fx+=grappHook.vx*dt;
+    grappHook.fy+=grappHook.vy*dt;
+    grappHook.fz+=grappHook.vz*dt;
+    grappHook.dist+=GRAPPLE_SPD*dt;
+    var hitWall=chkCol(grappHook.fx,grappHook.fz,.1);
+    // Also check the building collision at hook height (approximate via COLS)
+    if(!hitWall){
+      for(var ci=0;ci<COLS.length;ci++){var c=COLS[ci];
+        if(grappHook.fy<c.h+.5&&grappHook.fx>c.minX&&grappHook.fx<c.maxX&&grappHook.fz>c.minZ&&grappHook.fz<c.maxZ){hitWall=true;break;}
+      }
+    }
+    var oob=Math.abs(grappHook.fx)>72||grappHook.fz<-82||grappHook.fz>12;
+    if(hitWall&&!oob){
+      grappHook.state='attached';
+      grappHook.tx=grappHook.fx;grappHook.ty=grappHook.fy;grappHook.tz=grappHook.fz;
+      player.onGrapple=true;
+      beep(380,.08,'square',.20);
+      notify('🪝 HOOKED!',700);
+    }else if(grappHook.dist>=GRAPPLE_MAXDIST||oob){
+      releaseGrapple();return;
+    }
+  }
+  if(grappHook.state==='attached'){
+    var dx=grappHook.tx-cpx,dy=grappHook.ty-cpy,dz=grappHook.tz-cpz;
+    var d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(d<1.2){releaseGrapple();return;}
+    var nx=dx/d,ny=dy/d,nz=dz/d;
+    camera.position.x+=nx*GRAPPLE_PULL*dt;
+    camera.position.y+=ny*GRAPPLE_PULL*dt;
+    camera.position.z+=nz*GRAPPLE_PULL*dt;
+    player.vy=ny*GRAPPLE_PULL; // override vertical physics
+    player.onGround=false;
+    // Hook ball stays at attach point
+    grappHook.fx=grappHook.tx;grappHook.fy=grappHook.ty;grappHook.fz=grappHook.tz;
+  }
+  // Update rope geometry
+  var pos=grappHook.lineMesh.geometry.attributes.position;
+  if(pos){
+    pos.setXYZ(0,cpx,cpy,cpz);
+    pos.setXYZ(1,grappHook.fx,grappHook.fy,grappHook.fz);
+    pos.needsUpdate=true;
+    grappHook.lineMesh.geometry.computeBoundingSphere();
+  }
+  grappHook.ballMesh.position.set(grappHook.fx,grappHook.fy,grappHook.fz);
+}
 
 // ── SHOOT ──────────────────────────────────────────────────────────────
 function doShoot(){
@@ -4465,7 +4601,7 @@ function loop(){
   }
 
   // ── JETPACK (realistic thrust — hold F to fly, gravity fights thrust) ──
-  var jkey=K['KeyF'];
+  var jkey=K['KeyJ'];
   if(jkey&&player.jpFuel>0&&player.jpCooldown<=0) startJet();
   else if(!jkey&&player.jetting) stopJet();
   if(player.jetting){
@@ -4626,6 +4762,9 @@ function loop(){
   updDashAnim(dt);
   updAdrenaline();
   tryWallRun();
+  // Knife cooldown + grapple hook
+  if(player.knifeT>0) player.knifeT=Math.max(0,player.knifeT-dt);
+  updGrapple(dt);
   updAdminCheats(dt);
 
   updNapalmZones(dt);
@@ -4845,7 +4984,7 @@ var FEATS={
 
 var FEAT_META=[
   {key:'zipline',icon:'🪝',name:'ZIPLINES',desc:'Ride ziplines across the map'},
-  {key:'jetpack',icon:'✈️',name:'JETPACK',desc:'F key — aerial traversal'},
+  {key:'jetpack',icon:'✈️',name:'JETPACK',desc:'J key — aerial traversal'},
   {key:'dash',icon:'💨',name:'DASH',desc:'Alt key to dash (hold direction + press Alt)'},
   {key:'grenades',icon:'💣',name:'GRENADES',desc:'G key — throw grenades'},
   {key:'shield',icon:'🛡',name:'ENERGY SHIELD',desc:'X key — absorbs one hit'},
@@ -6400,7 +6539,7 @@ loop=function(){
   }
 
   // ── JETPACK (realistic thrust) ──
-  var jkey=K['KeyF'];
+  var jkey=K['KeyJ'];
   if(FEATS.jetpack){
     if(jkey&&player.jpFuel>0&&player.jpCooldown<=0) startJet();
     else if(!jkey&&player.jetting) stopJet();
