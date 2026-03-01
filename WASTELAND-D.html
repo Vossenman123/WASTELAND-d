@@ -394,6 +394,26 @@ canvas#c{display:block;width:100vw;height:100vh;}
 .ctrl-act{color:rgba(61,255,170,0.65);letter-spacing:1px;}
 /* Feature toggles */
 #feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;}
+/* ── Feature search bar ── */
+#feat-search-wrap{
+  display:flex;align-items:center;gap:8px;
+  margin:8px 0 10px;padding:6px 10px;
+  background:rgba(0,0,0,0.35);border:1px solid rgba(61,255,170,0.25);
+}
+#feat-search-icon{font-size:12px;flex-shrink:0;opacity:0.7;}
+#feat-search{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--g);font-family:'Orbitron',monospace;font-size:9px;
+  letter-spacing:1px;caret-color:var(--g);}
+#feat-search::placeholder{color:rgba(61,255,170,0.3);}
+#feat-search-clear{
+  background:transparent;border:none;color:rgba(61,255,170,0.45);
+  font-size:11px;cursor:pointer;padding:0 2px;line-height:1;
+  display:none;}
+#feat-search-clear:hover{color:var(--g);}
+#feat-search-count{
+  font-family:'Orbitron',monospace;font-size:7px;
+  color:rgba(61,255,170,0.4);white-space:nowrap;letter-spacing:1px;}
 .feat-card{border:1px solid rgba(61,255,170,0.18);padding:10px 12px;
   background:rgba(61,255,170,0.02);display:flex;align-items:center;gap:10px;cursor:pointer;
   transition:all 0.15s;user-select:none;}
@@ -598,7 +618,16 @@ canvas#c{display:block;width:100vw;height:100vh;}
     <!-- ═══ TAB: FEATURES ═══ -->
     <div id="ptab-features" class="ptab-panel">
       <div class="p-section-title">⚙ FEATURE TOGGLES — ALL ENABLED BY DEFAULT</div>
+      <div id="feat-search-wrap">
+        <span id="feat-search-icon">🔍</span>
+        <input id="feat-search" type="text" placeholder="Search features…"
+          oninput="filterFeats(this.value)"
+          autocomplete="off" spellcheck="false"/>
+        <button id="feat-search-clear" onclick="clearFeatSearch()" title="Clear search">✕</button>
+        <span id="feat-search-count"></span>
+      </div>
       <div id="feat-grid"></div>
+      <div id="feat-noresult" style="display:none;text-align:center;padding:24px;font-size:9px;color:rgba(61,255,170,0.35);letter-spacing:2px;">NO FEATURES MATCH YOUR SEARCH</div>
       <div id="pause-btns" style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         <button id="pause-allon" onclick="featureAllOn()">ENABLE ALL</button>
         <button id="pause-alloff" onclick="featureAllOff()">DISABLE ALL</button>
@@ -5691,10 +5720,29 @@ function toggleFeat(key){
   var card=document.getElementById('fcard-'+key);
   if(card) card.classList.toggle('off',!FEATS[key]);
 }
-function featureAllOn(){
-  Object.keys(FEATS).forEach(function(k){FEATS[k]=true;});
-  buildPauseMenu();
+function filterFeats(query){
+  var q=(query||'').trim().toLowerCase();
+  var clearBtn=document.getElementById('feat-search-clear');
+  var countEl=document.getElementById('feat-search-count');
+  var noResult=document.getElementById('feat-noresult');
+  if(clearBtn) clearBtn.style.display=q?'block':'none';
+  var visible=0;
+  FEAT_META.forEach(function(f){
+    var card=document.getElementById('fcard-'+f.key);
+    if(!card)return;
+    var match=!q||f.name.toLowerCase().indexOf(q)!==-1||f.desc.toLowerCase().indexOf(q)!==-1;
+    card.style.display=match?'':'none';
+    if(match) visible++;
+  });
+  if(countEl) countEl.textContent=q?(visible+' / '+FEAT_META.length):'';
+  if(noResult) noResult.style.display=(q&&visible===0)?'block':'none';
 }
+function clearFeatSearch(){
+  var inp=document.getElementById('feat-search');
+  if(inp){inp.value='';inp.focus();}
+  filterFeats('');
+}
+window.filterFeats=filterFeats;window.clearFeatSearch=clearFeatSearch;
 function featureAllOff(){
   Object.keys(FEATS).forEach(function(k){FEATS[k]=false;});
   buildPauseMenu();
