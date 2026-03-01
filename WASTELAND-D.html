@@ -211,6 +211,25 @@ canvas#c{display:block;width:100vw;height:100vh;}
   background:rgba(255,100,0,0.08);border:3px solid rgba(255,140,0,0.6);
   opacity:0;transition:opacity 0.2s;}
 
+/* ── ADS / SCOPE OVERLAY ── */
+#ads-overlay{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity 0.08s;}
+#ads-overlay::before,#ads-overlay::after{content:'';position:absolute;background:rgba(0,0,0,0.82);}
+/* black bars top/bottom to create letterbox scope effect */
+#ads-overlay::before{top:0;left:0;right:0;height:calc(50% - 56px);}
+#ads-overlay::after{bottom:0;left:0;right:0;height:calc(50% - 56px);}
+/* Scope ring drawn via box-shadow on a pseudo-circle */
+#ads-overlay .scope-ring{position:absolute;top:50%;left:50%;
+  width:112px;height:112px;margin:-56px 0 0 -56px;
+  border:2px solid rgba(61,255,170,0.85);border-radius:50%;
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.82),inset 0 0 24px rgba(61,255,170,0.12);
+  pointer-events:none;}
+/* Cross-lines inside scope */
+#ads-overlay .scope-ring::before,#ads-overlay .scope-ring::after{content:'';position:absolute;background:rgba(61,255,170,0.55);}
+#ads-overlay .scope-ring::before{top:50%;left:8px;right:8px;height:1px;transform:translateY(-50%);}
+#ads-overlay .scope-ring::after{left:50%;top:8px;bottom:8px;width:1px;transform:translateX(-50%);}
+/* Hide default crosshair lines when ADS, keep only center dot */
+#xhair.ads .xl.h,#xhair.ads .xl.v{opacity:0;}
+
 /* Start */
 #start{position:fixed;inset:0;z-index:100;background:#000;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
@@ -419,6 +438,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
 <div id="dash-tilt"></div>
 <div id="poison-overlay"></div>
 <div id="adrenaline-overlay"></div>
+<div id="ads-overlay"><div class="scope-ring"></div></div>
 
 <!-- Zombie Radar -->
 <div id="radar">
@@ -464,7 +484,8 @@ canvas#c{display:block;width:100vw;height:100vh;}
         <div class="ctrl-row"><span class="ctrl-act">Jump / Vault</span><span class="ctrl-key">Space / E</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Jetpack</span><span class="ctrl-key">C</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Knife</span><span class="ctrl-key">F</span></div>
-        <div class="ctrl-row"><span class="ctrl-act">Grapple Hook</span><span class="ctrl-key">RMB</span></div>
+        <div class="ctrl-row"><span class="ctrl-act">Scope / ADS</span><span class="ctrl-key">RMB</span></div>
+        <div class="ctrl-row"><span class="ctrl-act">Grapple Hook</span><span class="ctrl-key">MMB</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Shoot</span><span class="ctrl-key">Click</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Reload</span><span class="ctrl-key">R</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Grenade</span><span class="ctrl-key">G</span></div>
@@ -653,7 +674,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
     <!-- Controls -->
     <div id="sm-ctrl">
       <b>WASD</b> Move &nbsp;·&nbsp; <b>Shift</b> Sprint &nbsp;·&nbsp; <b>Alt</b> Dash &nbsp;·&nbsp; <b>Space/E</b> Jump/Vault<br>
-      <b>Click</b> Shoot &nbsp;·&nbsp; <b>RMB</b> Grapple &nbsp;·&nbsp; <b>F</b> Knife &nbsp;·&nbsp; <b>C</b> Jetpack &nbsp;·&nbsp; <b>R</b> Reload<br>
+      <b>Click</b> Shoot &nbsp;·&nbsp; <b>RMB</b> Scope/ADS &nbsp;·&nbsp; <b>MMB</b> Grapple &nbsp;·&nbsp; <b>F</b> Knife &nbsp;·&nbsp; <b>C</b> Jetpack &nbsp;·&nbsp; <b>R</b> Reload<br>
       <b>G</b> Grenade &nbsp;·&nbsp; <b>Q</b> Mine &nbsp;·&nbsp; <b>X</b> Shield &nbsp;·&nbsp; <b>B/Tab</b> Shop &nbsp;·&nbsp; <b>1-6</b> Weapons
     </div>
 
@@ -4571,6 +4592,7 @@ var shopTab='weapons';
 function toggleShop(){shopOpen?closeShop():openShop();}
 function openShop(){
   if(!gameRunning)return;
+  stopADS();
   shopOpen=true;document.exitPointerLock();
   renderShop();document.getElementById('shop').classList.add('open');
 }
@@ -7086,6 +7108,10 @@ loop=function(){
   updMinigunSpinup(dt2);
   updHungerMode(dt2);
   applyWoundEffect();
+  // Knife cooldown, grapple hook physics, ADS zoom
+  if(player.knifeT>0) player.knifeT=Math.max(0,player.knifeT-dt2);
+  updGrapple(dt2);
+  updADS(dt2);
 
   // ── HP REGEN ──
   if(uSt.hpRegen>0&&player.alive&&player.hp<uSt.maxHp){
