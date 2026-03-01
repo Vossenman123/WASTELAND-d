@@ -1881,16 +1881,16 @@ function updSpitProjs(dt){
 
 // ── ENEMY TYPES ────────────────────────────────────────────────────────
 var ETYPES=[
-  {name:'ZOMBIE',  hp:65,  spd:1.6,dmg:10,col:0x556633,eye:0xff2200,coins:12,sz:1.0,atkR:1.8,detR:16,
+  {name:'ZOMBIE',  hp:65,  spd:1.1,dmg:10,col:0x556633,eye:0xff2200,coins:12,sz:1.0,atkR:1.8,detR:16,
    skinCol:0x4a5e2a,rotCol:0x2d3d1a,zombie:true},
-  {name:'RUNNER',  hp:45,  spd:3.5,dmg:8, col:0x7a5522,eye:0xff8800,coins:10,sz:.85,atkR:1.4,detR:20,
+  {name:'RUNNER',  hp:45,  spd:2.0,dmg:8, col:0x7a5522,eye:0xff8800,coins:10,sz:.85,atkR:1.4,detR:20,
    skinCol:0x6b4e2a,zombie:true},
-  {name:'SPITTER', hp:60,  spd:2.0,dmg:0, col:0x445522,eye:0xaaff22,coins:14,sz:1.0,atkR:12,detR:18,ranged:true,
+  {name:'SPITTER', hp:60,  spd:1.4,dmg:0, col:0x445522,eye:0xaaff22,coins:14,sz:1.0,atkR:12,detR:18,ranged:true,
    skinCol:0x3d5520,zombie:true},
-  {name:'BLOATER', hp:140, spd:1.4,dmg:14,col:0x556633,eye:0xddff00,coins:20,sz:1.35,atkR:2.0,detR:14,explode:true,
+  {name:'BLOATER', hp:140, spd:0.9,dmg:14,col:0x556633,eye:0xddff00,coins:20,sz:1.35,atkR:2.0,detR:14,explode:true,
    skinCol:0x4a5e2a,zombie:true},
-  {name:'ARMORED', hp:200, spd:1.5,dmg:20,col:0x7799aa,eye:0x44aaff,coins:30,sz:1.1,atkR:1.8,detR:16,armor:.45},
-  {name:'GIANT',   hp:320, spd:1.2,dmg:28,col:0x4a6633,eye:0xff6600,coins:50,sz:1.85,atkR:2.5,detR:14,
+  {name:'ARMORED', hp:200, spd:1.0,dmg:20,col:0x7799aa,eye:0x44aaff,coins:30,sz:1.1,atkR:1.8,detR:16,armor:.45},
+  {name:'GIANT',   hp:320, spd:0.8,dmg:28,col:0x4a6633,eye:0xff6600,coins:50,sz:1.85,atkR:2.5,detR:14,
    skinCol:0x3d5520,zombie:true},
 ];
 var BOSS_TYPES=[
@@ -2108,15 +2108,15 @@ Enemy.prototype.update=function(dt,px,pz){
   if(this.isBoss){document.getElementById('bbf').style.width=(this.hp/this.maxHp*100)+'%';}
 
   if(dist<this.T.detR){
-    // Alert scream - all cluster-mates and nearby zombies also enter chase
+    // Alert scream - only cluster-mates within 8 units also enter chase
     if(this.state==='patrol'){
       var _cx=this._groupCx,_cz=this._groupCz;
       enemies.forEach(function(e2){
         if(e2===this||!e2.alive||e2.state==='chase')return;
         var d2x=e2.x-this.x,d2z=e2.z-this.z;
-        // Cluster-mates (same origin within 8 units) always alerted
-        var sameCluster=(_cx!==undefined&&e2._groupCx===_cx&&e2._groupCz===_cz);
-        if(sameCluster||d2x*d2x+d2z*d2z<144) e2.state='chase';
+        // Cluster-mates within 8 units are alerted; others stay patrolling
+        var sameCluster=(_cx!==undefined&&e2._groupCx===_cx&&e2._groupCz===_cz&&d2x*d2x+d2z*d2z<64);
+        if(sameCluster||d2x*d2x+d2z*d2z<36) e2.state='chase';
       }.bind(this));
       // Apply one-hit kill the moment enemy enters chase state (not every frame)
       if(adminOneHitOn&&!this.isBoss) this.hp=1;
@@ -2139,13 +2139,13 @@ Enemy.prototype.update=function(dt,px,pz){
       }
       this.patT=1.5+Math.random()*2.5;
     }
-    var sp=this.T.spd*.22*(this._hordeBuff?1.4:1);
+    var sp=this.T.spd*.22*(this._hordeBuff?1.1:1);
     var nx=this.x+Math.sin(this.patA)*sp*dt,nz=this.z+Math.cos(this.patA)*sp*dt;
     if(!chkCol(nx,nz,.36)){this.x=nx;this.z=nz;}else this.patA+=Math.PI*.5;
   }else{
     var ndx=dist>.01?dx/dist:0,ndz=dist>.01?dz/dist:0;
     var stayRange=this.T.ranged?this.T.atkR-.5:this.T.atkR+.3;
-    var sp2=this.T.spd*(this._hordeBuff?1.4:1);
+    var sp2=this.T.spd*(this._hordeBuff?1.1:1);
     if(dist>stayRange){
       var nx2=this.x+ndx*sp2*dt,nz2=this.z+ndz*sp2*dt;
       if(!chkCol(nx2,nz2,.36)){this.x=nx2;this.z=nz2;this._stuckT=0;}
