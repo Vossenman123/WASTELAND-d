@@ -2446,17 +2446,19 @@ function updSpitProjs(dt){
 
 // ── ENEMY TYPES ────────────────────────────────────────────────────────
 var ETYPES=[
+  // skinCol = pale dead flesh; rotCol = dark rot used for claws/wounds
   {name:'ZOMBIE',  hp:65,  spd:1.1,dmg:10,col:0x556633,eye:0xff2200,coins:12,sz:1.0,atkR:1.8,detR:16,
-   skinCol:0x8a9a6a,rotCol:0x3d5534,zombie:true},
+   skinCol:0xd4c898,rotCol:0x5a1a00,zombie:true},   // pallid yellowish flesh + dark-blood rot
   {name:'RUNNER',  hp:45,  spd:2.0,dmg:8, col:0x7a5522,eye:0xff8800,coins:10,sz:.85,atkR:1.4,detR:20,
-   skinCol:0xbb8844,rotCol:0x6b4422,zombie:true},
+   skinCol:0xb8956a,rotCol:0x6b3a11,zombie:true},   // leathery tan decay
   {name:'SPITTER', hp:60,  spd:1.4,dmg:0, col:0x445522,eye:0xaaff22,coins:14,sz:1.0,atkR:12,detR:18,ranged:true,
-   skinCol:0x77aa22,rotCol:0x3d6600,zombie:true},
+   skinCol:0x44bb22,rotCol:0x1a6600,zombie:true},   // toxic acid-green, clearly mutated
   {name:'BLOATER', hp:140, spd:0.9,dmg:14,col:0x556633,eye:0xddff00,coins:20,sz:1.35,atkR:2.0,detR:14,explode:true,
-   skinCol:0x4a6a33,rotCol:0x2a3d18,zombie:true},
-  {name:'ARMORED', hp:200, spd:1.0,dmg:20,col:0x7799aa,eye:0x44aaff,coins:30,sz:1.1,atkR:1.8,detR:16,armor:.45},
+   skinCol:0x8acc44,rotCol:0x2a5500,zombie:true},   // swollen mottled green
+  {name:'ARMORED', hp:200, spd:1.0,dmg:20,col:0x7799aa,eye:0x44aaff,coins:30,sz:1.1,atkR:1.8,detR:16,armor:.45,
+   skinCol:0x889aaa,rotCol:0x334455},               // grey-blue armoured flesh
   {name:'GIANT',   hp:320, spd:0.8,dmg:28,col:0x4a6633,eye:0xff6600,coins:50,sz:1.85,atkR:2.5,detR:14,
-   skinCol:0x5a6655,rotCol:0x2a3322,zombie:true},
+   skinCol:0xaaaaaa,rotCol:0x333322,zombie:true},   // massive grey-rotted corpse
 ];
 // Mini-bosses: index = worldIdx (0-5)
 var BOSS_TYPES=[
@@ -2526,15 +2528,21 @@ Enemy.prototype._buildMesh=function(){
 
   // Tattered cloth on torso (zombie rags)
   if(T.zombie){
-    var rag1=new THREE.Mesh(new THREE.BoxGeometry(.12*s,.35*s,.05),new THREE.MeshLambertMaterial({color:0x2a1a0a}));
-    rag1.position.set(.15*s,.75*s,-.3*s);rag1.rotation.z=.4;g.add(rag1);
-    var rag2=new THREE.Mesh(new THREE.BoxGeometry(.1*s,.28*s,.05),new THREE.MeshLambertMaterial({color:0x1a0a05}));
-    rag2.position.set(-.12*s,.8*s,-.28*s);rag2.rotation.z=-.3;g.add(rag2);
-    // Exposed ribs (darker lines on torso)
-    for(var ri=0;ri<3;ri++){
-      var rib=new THREE.Mesh(new THREE.BoxGeometry(.38*s,.04,.04),new THREE.MeshBasicMaterial({color:0x1a1a0a}));
-      rib.position.set(0,(.55+ri*.18)*s,-.28*s);g.add(rib);
+    var rag1=new THREE.Mesh(new THREE.BoxGeometry(.18*s,.45*s,.06),new THREE.MeshLambertMaterial({color:0x2a1000}));
+    rag1.position.set(.18*s,.72*s,-.32*s);rag1.rotation.z=.5;g.add(rag1);
+    var rag2=new THREE.Mesh(new THREE.BoxGeometry(.14*s,.38*s,.06),new THREE.MeshLambertMaterial({color:0x1a0800}));
+    rag2.position.set(-.16*s,.78*s,-.30*s);rag2.rotation.z=-.4;g.add(rag2);
+    var rag3=new THREE.Mesh(new THREE.BoxGeometry(.10*s,.25*s,.06),new THREE.MeshLambertMaterial({color:0x221200}));
+    rag3.position.set(.05*s,.55*s,.30*s);rag3.rotation.z=.2;g.add(rag3);
+    // Exposed ribs — bone-yellow for high visibility
+    for(var ri=0;ri<4;ri++){
+      var rib=new THREE.Mesh(new THREE.BoxGeometry(.40*s,.055,.055),new THREE.MeshBasicMaterial({color:0xddcc88}));
+      rib.position.set(0,(.50+ri*.15)*s,-.29*s);g.add(rib);
     }
+    // Blood stains on torso
+    var bloodMat=new THREE.MeshBasicMaterial({color:0x880000});
+    var bl=new THREE.Mesh(new THREE.SphereGeometry(.08*s,5,4),bloodMat);
+    bl.position.set(.12*s,.90*s,-.28*s);g.add(bl);
   }
 
   // Head - zombie head slightly tilted
