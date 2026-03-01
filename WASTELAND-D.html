@@ -785,7 +785,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.autoClear = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.25;
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,0.05,200);
@@ -806,30 +806,30 @@ window.addEventListener('resize',function(){
 
 // ── WORLD DATA ────────────────────────────────────────────────────────
 var WORLDS = [
-  {name:'CITY RUINS',     fog:0x556644, sky:0x445533, fogD:0.018,
-   ground:0xaabb99,  bldg:[0xaab099,0x99a088,0xb0a088,0x88998a,0xa09888],
-   lights:[0xff9933,0xffcc44,0xffaa22], amb:0x667755, ambI:0.9,
-   sunCol:0xffd080, sunI:0.7, music:'ruins'},
-  {name:'TOXIC SWAMP',    fog:0x2a4a1a, sky:0x1e3a12, fogD:0.022,
-   ground:0x5a7a3a,  bldg:[0x445533,0x334422,0x556633,0x3a4a2a,0x445522],
-   lights:[0x66ff33,0x44ee22,0xaaff44], amb:0x335522, ambI:0.85,
-   sunCol:0x88cc44, sunI:0.5, music:'swamp'},
-  {name:'ARCTIC BASE',    fog:0x99aabb, sky:0x7799aa, fogD:0.015,
-   ground:0xddeeff,  bldg:[0xaabbcc,0x99aacc,0xbbccdd,0x889aaa,0x99aabc],
-   lights:[0x88ccff,0x44aaff,0xaaddff], amb:0x8899aa, ambI:1.0,
-   sunCol:0xddeeff, sunI:0.8, music:'arctic'},
-  {name:'UNDERGROUND LAB',fog:0x001828, sky:0x00101c, fogD:0.020,
-   ground:0x3a5566,  bldg:[0x2a3d55,0x334466,0x223344,0x2a4455,0x1a2d44],
-   lights:[0x00ccff,0x0088ff,0x44eeff], amb:0x112233, ambI:0.8,
-   sunCol:0x44aaff, sunI:0.4, music:'lab'},
-  {name:'LAVA FIELDS',    fog:0x3a1a00, sky:0x280f00, fogD:0.022,
-   ground:0x5a2211,  bldg:[0x442211,0x5a2a11,0x3a1a00,0x4a2211,0x332200],
-   lights:[0xff4400,0xff8800,0xff2200], amb:0x331100, ambI:0.8,
-   sunCol:0xff6600, sunI:0.6, music:'lava'},
-  {name:'DIGITAL VOID',   fog:0x0a0018, sky:0x060010, fogD:0.025,
-   ground:0x221a3a,  bldg:[0x1a1133,0x221144,0x1a0a2a,0x2a1a44,0x180a33],
-   lights:[0xff00ff,0xaa00ff,0x00ffff], amb:0x110022, ambI:0.75,
-   sunCol:0xcc00ff, sunI:0.5, music:'void'},
+  {name:'CITY RUINS',     fog:0x445533, sky:0x2a3322, fogD:0.016,
+   ground:0xaabb99,  bldg:[0xaab099,0x99a088,0xb0a088,0x88998a,0xa09888,0x909880,0xb8a898],
+   lights:[0xff9933,0xffcc44,0xffaa22,0xff8822], amb:0x556644, ambI:0.85,
+   sunCol:0xffe090, sunI:0.75, music:'ruins'},
+  {name:'TOXIC SWAMP',    fog:0x253d12, sky:0x182a0a, fogD:0.020,
+   ground:0x4a6a2a,  bldg:[0x445533,0x334422,0x556633,0x3a4a2a,0x445522,0x4a5530,0x3d4825],
+   lights:[0x66ff33,0x44ee22,0xaaff44,0x88ff55], amb:0x2a4418, ambI:0.80,
+   sunCol:0x99cc55, sunI:0.55, music:'swamp'},
+  {name:'ARCTIC BASE',    fog:0x8899aa, sky:0x607888, fogD:0.013,
+   ground:0xddeeff,  bldg:[0xaabbcc,0x99aacc,0xbbccdd,0x889aaa,0x99aabc,0xaabccc,0xb8c8d8],
+   lights:[0x88ccff,0x44aaff,0xaaddff,0x66bbff], amb:0x7a8d9e, ambI:0.95,
+   sunCol:0xeef8ff, sunI:0.9, music:'arctic'},
+  {name:'UNDERGROUND LAB',fog:0x001020, sky:0x000a14, fogD:0.018,
+   ground:0x2e4455,  bldg:[0x2a3d55,0x334466,0x223344,0x2a4455,0x1a2d44,0x253d55,0x1e3048],
+   lights:[0x00ccff,0x0088ff,0x44eeff,0x00aadd], amb:0x0e1e2d, ambI:0.75,
+   sunCol:0x55aadd, sunI:0.45, music:'lab'},
+  {name:'LAVA FIELDS',    fog:0x2a1200, sky:0x1a0800, fogD:0.020,
+   ground:0x4a1a08,  bldg:[0x442211,0x5a2a11,0x3a1a00,0x4a2211,0x332200,0x5a2800,0x3e1a05],
+   lights:[0xff4400,0xff8800,0xff2200,0xff6600], amb:0x281000, ambI:0.75,
+   sunCol:0xff7700, sunI:0.65, music:'lava'},
+  {name:'DIGITAL VOID',   fog:0x08001a, sky:0x040010, fogD:0.022,
+   ground:0x1e1530,  bldg:[0x1a1133,0x221144,0x1a0a2a,0x2a1a44,0x180a33,0x201038,0x14082a],
+   lights:[0xff00ff,0xaa00ff,0x00ffff,0xcc44ff], amb:0x0d0018, ambI:0.70,
+   sunCol:0xdd00ff, sunI:0.55, music:'void'},
 ];
 
 // ── WORLD OBJECTS (cleared between worlds) ────────────────────────────
@@ -1127,26 +1127,61 @@ function mkTex(w,h,fn){
   var t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;
 }
 var baseGroundTex = mkTex(512,512,function(c,w,h){
-  c.fillStyle='#2a3a22';c.fillRect(0,0,w,h);
-  for(var i=0;i<5000;i++){var b=30+Math.floor(Math.random()*35);
-    c.fillStyle='rgb('+(b)+',' +(b+6)+','+Math.floor(b*0.65)+')';
-    c.fillRect(Math.random()*w,Math.random()*h,Math.random()*4+1,Math.random()*2+1);}
-  c.strokeStyle='rgba(0,0,0,0.2)';
-  for(var i=0;i<20;i++){c.lineWidth=Math.random()+0.3;c.beginPath();
+  // Base fill with noise gradient
+  var grd=c.createLinearGradient(0,0,w,h);
+  grd.addColorStop(0,'#263320');grd.addColorStop(.5,'#2e3d28');grd.addColorStop(1,'#222c1e');
+  c.fillStyle=grd;c.fillRect(0,0,w,h);
+  // Multi-layer grain for richness
+  for(var i=0;i<7000;i++){
+    var b=22+Math.floor(Math.random()*42);
+    var g=b+Math.floor(Math.random()*10);
+    c.fillStyle='rgba('+(b)+','+(g)+','+Math.floor(b*0.55)+','+(0.35+Math.random()*0.55)+')';
+    c.fillRect(Math.random()*w,Math.random()*h,Math.random()*5+1,Math.random()*2+1);}
+  // Cracks
+  c.strokeStyle='rgba(0,0,0,0.28)';
+  for(var i=0;i<28;i++){c.lineWidth=Math.random()*1.2+0.3;c.beginPath();
     var cx=Math.random()*w,cy=Math.random()*h;c.moveTo(cx,cy);
-    for(var k=0;k<5;k++){cx+=Math.random()*22-11;cy+=Math.random()*22-11;c.lineTo(cx,cy);}c.stroke();}
+    for(var k=0;k<7;k++){cx+=Math.random()*18-9;cy+=Math.random()*18-9;c.lineTo(cx,cy);}c.stroke();}
+  // Scorch/stain patches
+  for(var i=0;i<12;i++){
+    var rx=Math.random()*w,ry=Math.random()*h,rr=8+Math.random()*22;
+    var sg=c.createRadialGradient(rx,ry,0,rx,ry,rr);
+    sg.addColorStop(0,'rgba(0,0,0,0.35)');sg.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=sg;c.beginPath();c.arc(rx,ry,rr,0,Math.PI*2);c.fill();}
+  // Gravel dots
+  c.fillStyle='rgba(180,165,130,0.12)';
+  for(var i=0;i<300;i++){c.beginPath();c.arc(Math.random()*w,Math.random()*h,Math.random()*2+.5,0,Math.PI*2);c.fill();}
 });
-baseGroundTex.repeat.set(22,22);
+baseGroundTex.repeat.set(26,26);
 
 var wallTexBase = mkTex(256,256,function(c,w,h){
-  c.fillStyle='#303028';c.fillRect(0,0,w,h);
-  for(var i=0;i<2000;i++){var b=28+Math.floor(Math.random()*28);
-    c.fillStyle='rgba('+(b)+','+(b)+','+(Math.floor(b*0.8))+',0.6)';
+  // Base concrete
+  c.fillStyle='#2c2a24';c.fillRect(0,0,w,h);
+  // Concrete texture noise
+  for(var i=0;i<3000;i++){var b=24+Math.floor(Math.random()*32);
+    c.fillStyle='rgba('+(b)+','+(b)+','+(Math.floor(b*0.78))+','+(0.4+Math.random()*0.5)+')';
     c.fillRect(Math.random()*w,Math.random()*h,Math.random()*3+1,Math.random()*3+1);}
-  // Brick lines
-  c.strokeStyle='rgba(0,0,0,0.15)';c.lineWidth=1;
-  for(var y=0;y<h;y+=16){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
-  for(var x=0;x<w;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
+  // Brick rows with staggered columns
+  var bh=18,bw=34;
+  c.strokeStyle='rgba(0,0,0,0.22)';c.lineWidth=1.5;
+  for(var y=0;y<h;y+=bh){
+    c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();
+    var off=(Math.floor(y/bh)%2===0)?0:bw/2;
+    for(var x=off;x<w+bw;x+=bw){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+bh);c.stroke();}}
+  // Mortar highlight
+  c.strokeStyle='rgba(255,255,220,0.04)';c.lineWidth=1;
+  for(var y=1;y<h;y+=bh){c.beginPath();c.moveTo(0,y+1);c.lineTo(w,y+1);c.stroke();}
+  // Damage marks / graffiti
+  c.strokeStyle='rgba(0,0,0,0.18)';
+  for(var i=0;i<10;i++){c.lineWidth=.7+Math.random();c.beginPath();
+    var cx=Math.random()*w,cy=Math.random()*h;c.moveTo(cx,cy);
+    for(var k=0;k<4;k++){cx+=Math.random()*12-6;cy+=Math.random()*12-6;c.lineTo(cx,cy);}c.stroke();}
+  // Water stains
+  for(var i=0;i<6;i++){
+    var sx=Math.random()*w,sy=Math.random()*h*0.5,sl=20+Math.random()*60;
+    var sg=c.createLinearGradient(sx,sy,sx,sy+sl);
+    sg.addColorStop(0,'rgba(0,0,0,0.18)');sg.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=sg;c.fillRect(sx-3,sy,6,sl);}
 });
 
 // Current ground/wall materials (updated per world)
