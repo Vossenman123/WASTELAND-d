@@ -205,19 +205,71 @@ canvas#c{display:block;width:100vw;height:100vh;}
   opacity:0;transition:opacity 0.2s;}
 
 /* Start */
-#start{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.97);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;}
-#start .logo{font-family:'Orbitron',monospace;font-size:clamp(20px,5vw,52px);
-  color:var(--g);text-shadow:0 0 20px var(--g),0 0 40px var(--g);letter-spacing:5px;text-align:center;}
-#start .sub{font-size:9px;letter-spacing:4px;color:rgba(255,215,0,0.7);text-align:center;}
-.dvd{height:1px;width:260px;background:rgba(61,255,170,0.2);}
-#start .ctrl{font-size:7px;color:rgba(61,255,170,0.45);letter-spacing:2px;line-height:2.4;text-align:center;}
-#start button{padding:12px 34px;background:transparent;border:2px solid var(--g);color:var(--g);
-  font-family:'Orbitron',monospace;font-size:11px;letter-spacing:4px;cursor:pointer;
-  box-shadow:0 0 20px rgba(61,255,170,0.25);transition:all 0.2s;}
-#start button:hover{background:rgba(61,255,170,0.08);}
-.wrn{font-size:7px;color:var(--r);letter-spacing:2px;animation:blk 1.2s infinite;}
-@keyframes blk{0%,100%{opacity:1}50%{opacity:0.25}}
+#start{position:fixed;inset:0;z-index:100;background:#000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  overflow:hidden;}
+/* Animated scanline + vignette overlay on top of the menu */
+#start::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);}
+#start::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse at 50% 40%,transparent 40%,rgba(0,0,0,0.65) 100%);}
+/* Scrolling grid background */
+#sm-grid{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+#sm-grid svg{position:absolute;inset:0;width:100%;height:100%;opacity:0.07;}
+/* Content sits above overlays */
+#sm-content{position:relative;z-index:2;display:flex;flex-direction:column;
+  align-items:center;gap:16px;max-width:900px;width:100%;padding:20px;}
+/* Classified tag */
+#sm-tag{font-size:7px;letter-spacing:5px;color:rgba(255,60,60,0.7);
+  border:1px solid rgba(255,60,60,0.25);padding:4px 14px;
+  text-transform:uppercase;animation:sm-blink 1.8s infinite;}
+@keyframes sm-blink{0%,100%{opacity:1}50%{opacity:0.3}}
+/* Main logo */
+#sm-logo{text-align:center;line-height:1;}
+#sm-logo-main{font-family:'Orbitron',monospace;font-size:clamp(36px,8vw,82px);
+  font-weight:700;letter-spacing:8px;color:var(--g);display:block;
+  text-shadow:0 0 18px var(--g),0 0 40px rgba(61,255,170,0.4),0 0 80px rgba(61,255,170,0.2);
+  animation:sm-pulse 3s ease-in-out infinite;}
+@keyframes sm-pulse{0%,100%{text-shadow:0 0 18px var(--g),0 0 40px rgba(61,255,170,0.4)}
+  50%{text-shadow:0 0 28px var(--g),0 0 60px rgba(61,255,170,0.6),0 0 100px rgba(61,255,170,0.3)}}
+#sm-logo-3d{font-family:'Orbitron',monospace;font-size:clamp(12px,3vw,28px);
+  color:var(--y);letter-spacing:18px;display:block;margin-top:4px;
+  text-shadow:0 0 12px var(--y);padding-left:18px;}
+/* Divider line */
+.sm-div{width:100%;max-width:500px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--g),transparent);}
+/* Stats row */
+#sm-stats{display:flex;gap:clamp(14px,3vw,40px);flex-wrap:wrap;justify-content:center;}
+.sm-stat{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;}
+.sm-stat-val{font-family:'Orbitron',monospace;font-size:clamp(18px,4vw,30px);
+  color:var(--g);text-shadow:0 0 10px var(--g);}
+.sm-stat-lbl{font-size:6px;letter-spacing:3px;color:rgba(61,255,170,0.45);text-transform:uppercase;}
+/* World list */
+#sm-worlds{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.sm-world{border:1px solid rgba(61,255,170,0.2);padding:6px 12px;font-size:7px;
+  letter-spacing:2px;color:rgba(61,255,170,0.55);cursor:default;
+  transition:all 0.2s;min-width:110px;text-align:center;}
+.sm-world:hover{border-color:var(--g);color:var(--g);
+  box-shadow:0 0 10px rgba(61,255,170,0.2);background:rgba(61,255,170,0.04);}
+.sm-world-num{font-family:'Orbitron',monospace;font-size:9px;color:var(--y);display:block;margin-bottom:3px;}
+/* Controls hint */
+#sm-ctrl{font-size:6.5px;color:rgba(61,255,170,0.35);letter-spacing:1.5px;
+  line-height:2.2;text-align:center;}
+#sm-ctrl b{color:rgba(255,215,0,0.6);}
+/* Play button */
+#play-btn{padding:14px 48px;background:transparent;border:2px solid var(--g);color:var(--g);
+  font-family:'Orbitron',monospace;font-size:clamp(10px,2vw,13px);letter-spacing:5px;cursor:pointer;
+  box-shadow:0 0 20px rgba(61,255,170,0.2),inset 0 0 20px rgba(61,255,170,0.03);
+  transition:all 0.25s;position:relative;overflow:hidden;}
+#play-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,
+  rgba(61,255,170,0.08) 0%,transparent 60%);transition:opacity 0.25s;opacity:0;}
+#play-btn:hover{background:rgba(61,255,170,0.07);box-shadow:0 0 35px rgba(61,255,170,0.4);
+  border-color:var(--g);letter-spacing:7px;}
+#play-btn:hover::before{opacity:1;}
+#play-btn:active{transform:scale(0.97);}
+/* Warning blinking line */
+.sm-wrn{font-size:7px;color:var(--r);letter-spacing:3px;animation:blk 1.1s infinite;}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:0.2}}
 
 /* Death */
 #dead{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;
@@ -403,7 +455,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
         <div class="ctrl-row"><span class="ctrl-act">Sprint (hold)</span><span class="ctrl-key">Shift</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Dash</span><span class="ctrl-key">Alt</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Jump / Vault</span><span class="ctrl-key">Space / E</span></div>
-        <div class="ctrl-row"><span class="ctrl-act">Jetpack</span><span class="ctrl-key">J</span></div>
+        <div class="ctrl-row"><span class="ctrl-act">Jetpack</span><span class="ctrl-key">C</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Knife</span><span class="ctrl-key">F</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Grapple Hook</span><span class="ctrl-key">RMB</span></div>
         <div class="ctrl-row"><span class="ctrl-act">Shoot</span><span class="ctrl-key">Click</span></div>
@@ -546,18 +598,64 @@ canvas#c{display:block;width:100vw;height:100vh;}
   background:rgba(200,220,255,0.85);transition:opacity 0.05s;"></div>
 
 <div id="start">
-  <div class="logo">WASTELAND 3D</div>
-  <div class="sub">6 WORLDS · WAVE SURVIVAL</div>
-  <div class="dvd"></div>
-  <div class="ctrl">
-    WASD — Move &nbsp;·&nbsp; Shift HOLD — Sprint &nbsp;·&nbsp; Alt — DASH<br>
-    Space — Jump/Vault &nbsp;·&nbsp; F — Jetpack &nbsp;·&nbsp; R — Reload &nbsp;·&nbsp; Click — Shoot<br>
-    G — Grenade &nbsp;·&nbsp; Q — Mine &nbsp;·&nbsp; X — Shield &nbsp;·&nbsp; Ctrl — Dodge<br>
-    Z — Decoy Flare &nbsp;·&nbsp; H — Freeze Bomb &nbsp;·&nbsp; T — Ground Stomp<br>
-    B / Tab — Shop &nbsp;·&nbsp; 1-6 — Weapon
+  <!-- Animated grid background -->
+  <div id="sm-grid">
+    <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <defs>
+        <pattern id="g1" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+          <path d="M60 0L0 0L0 60" fill="none" stroke="#3dffaa" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#g1)"/>
+    </svg>
   </div>
-  <button id="play-btn">▶ BEGIN SURVIVAL</button>
-  <div class="wrn">☢ MULTIPLE HOSTILE ENTITIES DETECTED</div>
+
+  <div id="sm-content">
+    <!-- Classified tag -->
+    <div id="sm-tag">☢ SECTOR ALPHA · BIOHAZARD LEVEL 5 · CLEARANCE REQUIRED</div>
+
+    <!-- Main logo -->
+    <div id="sm-logo">
+      <span id="sm-logo-main">WASTELAND</span>
+      <span id="sm-logo-3d">3D</span>
+    </div>
+
+    <div class="sm-div"></div>
+
+    <!-- Quick stats -->
+    <div id="sm-stats">
+      <div class="sm-stat"><div class="sm-stat-val">16</div><div class="sm-stat-lbl">Weapons</div></div>
+      <div class="sm-stat"><div class="sm-stat-val">6</div><div class="sm-stat-lbl">Worlds</div></div>
+      <div class="sm-stat"><div class="sm-stat-val">10</div><div class="sm-stat-lbl">Waves</div></div>
+      <div class="sm-stat"><div class="sm-stat-val">30+</div><div class="sm-stat-lbl">Enemies</div></div>
+      <div class="sm-stat"><div class="sm-stat-val">25+</div><div class="sm-stat-lbl">Skills</div></div>
+    </div>
+
+    <!-- World preview -->
+    <div id="sm-worlds">
+      <div class="sm-world"><span class="sm-world-num">W1</span>CITY RUINS</div>
+      <div class="sm-world"><span class="sm-world-num">W2</span>TOXIC SWAMP</div>
+      <div class="sm-world"><span class="sm-world-num">W3</span>ARCTIC BASE</div>
+      <div class="sm-world"><span class="sm-world-num">W4</span>UNDERGROUND LAB</div>
+      <div class="sm-world"><span class="sm-world-num">W5</span>LAVA FIELDS</div>
+      <div class="sm-world"><span class="sm-world-num">W6</span>DIGITAL VOID</div>
+    </div>
+
+    <div class="sm-div"></div>
+
+    <!-- Controls -->
+    <div id="sm-ctrl">
+      <b>WASD</b> Move &nbsp;·&nbsp; <b>Shift</b> Sprint &nbsp;·&nbsp; <b>Alt</b> Dash &nbsp;·&nbsp; <b>Space/E</b> Jump/Vault<br>
+      <b>Click</b> Shoot &nbsp;·&nbsp; <b>RMB</b> Grapple &nbsp;·&nbsp; <b>F</b> Knife &nbsp;·&nbsp; <b>C</b> Jetpack &nbsp;·&nbsp; <b>R</b> Reload<br>
+      <b>G</b> Grenade &nbsp;·&nbsp; <b>Q</b> Mine &nbsp;·&nbsp; <b>X</b> Shield &nbsp;·&nbsp; <b>B/Tab</b> Shop &nbsp;·&nbsp; <b>1-6</b> Weapons
+    </div>
+
+    <!-- Play button -->
+    <button id="play-btn">▶ &nbsp; BEGIN SURVIVAL</button>
+
+    <!-- Warning -->
+    <div class="sm-wrn">☢ &nbsp; MULTIPLE HOSTILE ENTITIES DETECTED IN ALL SECTORS</div>
+  </div>
 </div>
 
 <div id="hud">
@@ -785,35 +883,207 @@ function beep(f,d,t,v,f2){
     g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);
     o.start();o.stop(AC.currentTime+d);}catch(e){}
 }
+// Noise burst through bandpass filter
+function _noise(dur,centreHz,Q,vol,delayS){
+  if(!AC)return;
+  try{
+    var bufLen=Math.floor(AC.sampleRate*(dur+0.01));
+    var buf=AC.createBuffer(1,bufLen,AC.sampleRate);
+    var dd=buf.getChannelData(0);
+    for(var ii=0;ii<bufLen;ii++)dd[ii]=(Math.random()*2-1);
+    var src=AC.createBufferSource();src.buffer=buf;
+    var flt=AC.createBiquadFilter();flt.type='bandpass';
+    flt.frequency.value=centreHz||1000;flt.Q.value=Q||1;
+    var g=AC.createGain();var t0=AC.currentTime+(delayS||0);
+    g.gain.setValueAtTime(vol||0.25,t0);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+    src.connect(flt);flt.connect(g);g.connect(AC.destination);
+    src.start(t0);src.stop(t0+dur+0.02);
+  }catch(e){}
+}
+// Tone with full ADSR envelope
+function _tone(freq,atk,sus,rel,type,vol,delayS,freq2){
+  if(!AC)return;
+  try{
+    var o=AC.createOscillator();var g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type=type||'sawtooth';
+    var t0=AC.currentTime+(delayS||0);
+    var v=vol||0.15;
+    o.frequency.setValueAtTime(freq,t0);
+    if(freq2)o.frequency.exponentialRampToValueAtTime(Math.max(1,freq2),t0+atk+sus+rel);
+    g.gain.setValueAtTime(0.001,t0);
+    g.gain.linearRampToValueAtTime(v,t0+Math.max(0.001,atk));
+    g.gain.setValueAtTime(v,t0+Math.max(0.001,atk)+sus);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+Math.max(0.001,atk)+sus+Math.max(0.001,rel));
+    o.start(t0);o.stop(t0+atk+sus+rel+0.02);
+  }catch(e){}
+}
 var SFX={
-  pistol:function(){beep(180,0.07,'sawtooth',0.12);beep(80,0.1,'square',0.06);},
-  shotgun:function(){for(var i=0;i<4;i++)(function(i){setTimeout(function(){beep(100+Math.random()*60,0.12,'sawtooth',0.1);},i*10);})(i);},
-  smg:function(){beep(250,0.04,'square',0.07);},
-  sniper:function(){beep(120,0.15,'sawtooth',0.18,60);},
-  rocket:function(){beep(60,0.4,'sawtooth',0.2);beep(120,0.3,'square',0.1);},
-  energy:function(){beep(800,0.2,'sine',0.12,200);},
-  // New weapon sounds
-  burst:function(){for(var i=0;i<3;i++)(function(i){setTimeout(function(){beep(200,0.05,'square',0.08);},i*80);})(i);},
-  plasma:function(){beep(600,0.1,'sine',0.10,300);},
-  flame:function(){beep(80,0.06,'sawtooth',0.08);beep(140,0.04,'noise'||'sawtooth',0.04);},
-  minigun:function(){beep(350,0.025,'square',0.06);},
-  dblbarrel:function(){for(var i=0;i<6;i++)(function(i){setTimeout(function(){beep(90+Math.random()*50,0.1,'sawtooth',0.09);},i*8);})(i);},
-  railgun:function(){beep(50,0.5,'sawtooth',0.25,80);beep(400,0.3,'sine',0.15,40);},
-  grenadeL:function(){beep(55,0.35,'sawtooth',0.2);beep(110,0.2,'square',0.08);},
-  crossbow:function(){beep(400,0.08,'square',0.06);beep(200,0.12,'sine',0.05);},
-  laserpistol:function(){beep(1200,0.06,'sine',0.08,50);},
-  incsmg:function(){beep(220,0.04,'sawtooth',0.06);},
-  reload:function(){beep(500,0.05,'square',0.04);setTimeout(function(){beep(700,0.06,'square',0.04);},130);},
-  hurt:function(){beep(180,0.18,'sawtooth',0.15);},
-  die:function(){beep(55,0.8,'sawtooth',0.2);},
-  coin:function(){beep(880,0.07,'sine',0.07);setTimeout(function(){beep(1100,0.1,'sine',0.07);},90);},
-  wave:function(){beep(220,0.15,'sawtooth',0.1);setTimeout(function(){beep(440,0.3,'sine',0.1);},200);},
-  boss:function(){for(var i=0;i<3;i++)(function(i){setTimeout(function(){beep(60+i*30,0.3,'sawtooth',0.15);},i*200);})(i);},
-  jet:function(){beep(80,0.06,'sawtooth',0.07);},
-  buy:function(){beep(660,0.1,'sine',0.07);setTimeout(function(){beep(880,0.12,'sine',0.07);},130);},
-  portal:function(){beep(440,0.5,'sine',0.1,880);},
-  vault:function(){beep(300,0.1,'square',0.05);},
-  zip:function(){beep(600,0.3,'sine',0.1,200);},
+  // ── GUNS ──────────────────────────────────────────────────────────────
+  pistol:function(){
+    _noise(0.04,2200,1.2,0.22);
+    _tone(155,0,0.08,0.07,'sawtooth',0.16,0,70);
+    _noise(0.12,600,0.6,0.10,0.02);
+  },
+  shotgun:function(){
+    for(var i=0;i<5;i++)_noise(0.14-i*.02,1000+i*200,0.5,0.18,i*0.012);
+    _tone(80,0,0.15,0.12,'sawtooth',0.22);
+    _noise(0.25,300,0.3,0.14,0.01);
+  },
+  smg:function(){
+    _noise(0.03,2800,1.5,0.14);
+    _tone(220,0,0.03,0.04,'square',0.08,0,180);
+  },
+  sniper:function(){
+    _noise(0.05,4500,2.5,0.32);
+    _tone(90,0,0.28,0.40,'sawtooth',0.28,0,40);
+    _noise(0.35,500,0.4,0.12,0.05);
+  },
+  rocket:function(){
+    _tone(55,0.01,0.18,0.55,'sawtooth',0.30,0,30);
+    _noise(0.45,600,0.7,0.35,0.01);
+    _noise(0.30,200,0.4,0.18,0.08);
+  },
+  energy:function(){
+    _tone(900,0.01,0.12,0.12,'sine',0.18,0,250);
+    _tone(1800,0.005,0.08,0.08,'sine',0.08,0.01,600);
+    _noise(0.08,3500,3,0.10);
+  },
+  burst:function(){
+    for(var i=0;i<3;i++){
+      _noise(0.04,2400,1.4,0.16,i*0.09);
+      _tone(200,0,0.04,0.04,'square',0.09,i*0.09);
+    }
+  },
+  plasma:function(){
+    _tone(700,0.005,0.08,0.10,'sine',0.14,0,350);
+    _tone(350,0.005,0.10,0.08,'sawtooth',0.06,0.01,180);
+    _noise(0.06,4000,4,0.08,0.005);
+  },
+  flame:function(){
+    _noise(0.09,900,0.4,0.13);
+    _noise(0.07,400,0.3,0.08,0.01);
+    _tone(120,0,0.07,0.03,'sawtooth',0.05);
+  },
+  minigun:function(){
+    _noise(0.022,3200,2,0.13);
+    _tone(380,0,0.018,0.01,'square',0.07);
+  },
+  dblbarrel:function(){
+    for(var i=0;i<8;i++)_noise(0.12,800+i*150,0.5,0.16,i*0.009);
+    _tone(70,0,0.18,0.14,'sawtooth',0.28);
+    _noise(0.30,300,0.35,0.16,0.015);
+  },
+  railgun:function(){
+    _noise(0.06,6000,3,0.35);
+    _tone(45,0.02,0.45,0.55,'sawtooth',0.32,0,70);
+    _tone(600,0.005,0.20,0.25,'sine',0.14,0.01,80);
+  },
+  grenadeL:function(){
+    _tone(55,0,0.30,0.40,'sawtooth',0.22);
+    _noise(0.40,700,0.8,0.28,0.02);
+    _noise(0.25,200,0.4,0.14,0.06);
+  },
+  crossbow:function(){
+    _noise(0.05,1800,3,0.18);
+    _tone(380,0.005,0.06,0.10,'square',0.07,0,200);
+  },
+  laserpistol:function(){
+    _tone(1400,0.002,0.05,0.06,'sine',0.12,0,80);
+    _tone(2800,0.001,0.03,0.04,'sine',0.06,0.01,900);
+  },
+  incsmg:function(){
+    _noise(0.04,1600,1,0.12);
+    _tone(280,0,0.04,0.04,'sawtooth',0.07,0,220);
+    _noise(0.06,800,0.5,0.06,0.01);
+  },
+  // ── GAME EVENTS ──────────────────────────────────────────────────────
+  reload:function(){
+    _tone(600,0.01,0.03,0.04,'square',0.06);
+    _noise(0.05,2000,2,0.08,0.04);
+    _tone(900,0.01,0.03,0.04,'square',0.07,0.14);
+    _tone(1200,0.01,0.04,0.05,'square',0.08,0.28);
+  },
+  hurt:function(){
+    _noise(0.12,1400,0.8,0.22);
+    _tone(180,0,0.14,0.08,'sawtooth',0.16,0,120);
+  },
+  die:function(){
+    _tone(60,0.01,0.35,0.80,'sawtooth',0.28,0,30);
+    _noise(0.70,400,0.5,0.20,0.05);
+    _tone(180,0,0.25,0.40,'sawtooth',0.10,0.08,80);
+  },
+  coin:function(){
+    _tone(1100,0.005,0.04,0.06,'sine',0.10);
+    _tone(1650,0.005,0.05,0.07,'sine',0.10,0.07);
+  },
+  wave:function(){
+    _tone(220,0.02,0.12,0.08,'sawtooth',0.11);
+    _tone(330,0.02,0.14,0.10,'sawtooth',0.09,0.18);
+    _tone(440,0.02,0.18,0.14,'sine',0.10,0.38);
+  },
+  levelup:function(){
+    var notes=[440,550,660,880,1100];
+    notes.forEach(function(hz,i){
+      _tone(hz,0.01,0.10,0.12,'sine',0.14+i*0.02,i*0.10);
+      _tone(hz*2,0.005,0.06,0.08,'sine',0.06,i*0.10+0.02);
+    });
+    _noise(0.08,3000,2,0.08,0.48);
+  },
+  boss:function(){
+    for(var i=0;i<4;i++){
+      _tone(55+i*20,0.02,0.25,0.20,'sawtooth',0.22-i*0.02,i*0.22);
+      _noise(0.25,400+i*100,0.6,0.18,i*0.22+0.03);
+    }
+  },
+  jet:function(){
+    _noise(0.07,800,0.5,0.08);
+    _tone(90,0,0.05,0.03,'sawtooth',0.07);
+  },
+  buy:function(){
+    _tone(660,0.01,0.07,0.08,'sine',0.09);
+    _tone(990,0.01,0.08,0.09,'sine',0.09,0.12);
+  },
+  portal:function(){
+    _tone(440,0.05,0.35,0.30,'sine',0.12,0,1200);
+    _tone(220,0.05,0.35,0.30,'sine',0.08,0.05,880);
+    _noise(0.60,2000,1.5,0.08,0.10);
+  },
+  vault:function(){
+    _noise(0.06,1800,2,0.12);
+    _tone(320,0.005,0.06,0.06,'square',0.06,0,450);
+  },
+  zip:function(){
+    _tone(800,0.01,0.15,0.20,'sine',0.12,0,180);
+    _noise(0.30,1200,1,0.08,0.02);
+  },
+  knife:function(hit){
+    _noise(0.05,2600,2.5,hit?0.28:0.16);
+    if(hit){_tone(120,0,0.08,0.06,'sawtooth',0.18,0.01,80);_noise(0.12,600,0.8,0.14,0.03);}
+  },
+  grappleFire:function(){
+    _tone(300,0.005,0.05,0.08,'square',0.14,0,600);
+    _noise(0.05,1600,2,0.10);
+  },
+  grappleHit:function(){
+    _noise(0.04,3000,3,0.22);
+    _tone(180,0,0.06,0.08,'square',0.12,0.01,250);
+  },
+  zombieGroan:function(){
+    var b=50+Math.random()*25;
+    _tone(b,0.05,0.35+Math.random()*.20,0.25,'sawtooth',0.04+Math.random()*.03,0,b*.7+Math.random()*8);
+    _tone(b*1.5,0.03,0.20,0.18,'sawtooth',0.02,0.08);
+  },
+  zombieScream:function(){
+    var b=80+Math.random()*40;
+    _tone(b*2,0.01,0.20,0.15,'sawtooth',0.06,0,b*3);
+    _noise(0.25,1200,0.7,0.08,0.02);
+  },
+  zombieSnarl:function(){
+    _noise(0.18,900,0.6,0.12);
+    _tone(70+Math.random()*30,0.02,0.12,0.10,'sawtooth',0.05,0,55);
+  },
 };
 
 // ── TEXTURES ───────────────────────────────────────────────────────────
@@ -905,9 +1175,9 @@ function buildWorld(wi){
     [[-4,-8,.3],[6,-6,-.5],[-10,-5,1.2],[12,-25,.8],[-5,-18,-.2],[20,-14,.4]].forEach(function(c){addCar(c[0],c[1],c[2],wi);});
     var LC0=W.lights;[[-4,-15],[8,-20],[-12,-30],[16,-38],[-6,-42],[22,-28]].forEach(function(p,i){addStreetLight(p[0],p[1],LC0[i%LC0.length]);});
     // Ziplines FROM ground to rooftops
-    addZiplineToRoof(-8,-3, -8,-15, 9, wi);
-    addZiplineToRoof(10,-3, 10,-12, 9, wi);
-    addZiplineToRoof(-5,-30, -5,-35, 11, wi);
+    addZiplineToRoof(-8,-3, -8,-15, 14, wi);
+    addZiplineToRoof(10,-3, 10,-12, 14, wi);
+    addZiplineToRoof(-5,-30, -5,-35, 16, wi);
 
   }else if(wi===1){
     // ── WORLD 1: TOXIC SWAMP — Open wetlands, elevated platforms, pipes
@@ -935,9 +1205,9 @@ function buildWorld(wi){
     [[-4,-10,.3,6],[3,-10,.3,6],[-8,-3,6,.3],[18,-22,.3,8],[-15,-22,.3,8]].forEach(function(w2){addWallObj(w2[0],w2[1],w2[2],w2[3]);});
     [[-5,-8],[-12,-10],[6,-6],[16,-20],[-8,-22],[10,-30],[-20,-32],[22,-36]].forEach(function(p,i){addBarrel(p[0],p[1],wi,i%2===0);});
     var LC1=W.lights;[[-6,-18],[10,-25],[-14,-35],[20,-42]].forEach(function(p,i){addStreetLight(p[0],p[1],LC1[i%LC1.length]);});
-    addZiplineToRoof(-10,-3, -10,-18, 8, wi);
-    addZiplineToRoof(8,-3,   8,-20,  6, wi);
-    addZiplineToRoof(-5,-26, -5,-32, 10, wi);
+    addZiplineToRoof(-10,-3, -10,-18, 12, wi);
+    addZiplineToRoof(8,-3,   8,-20,  10, wi);
+    addZiplineToRoof(-5,-26, -5,-32, 15, wi);
 
   }else if(wi===2){
     // ── WORLD 2: ARCTIC BASE — Military compound, bunkers, ice formations
@@ -965,9 +1235,9 @@ function buildWorld(wi){
     [[-6,-6,8,.4],[6,-6,.4,8],[-14,-5,.4,8],[14,-5,.4,8],[-20,-26,10,.4],[18,-26,10,.4]].forEach(function(w2){addWallObj(w2[0],w2[1],w2[2],w2[3]);});
     [[-5,-8],[-14,-8],[6,-6],[18,-14],[-8,-28],[12,-32],[-22,-38],[28,-38]].forEach(function(p,i){addBarrel(p[0],p[1],wi,i%3===0);});
     var LC2=W.lights;[[-8,-18],[12,-22],[-18,-38],[24,-40]].forEach(function(p,i){addStreetLight(p[0],p[1],LC2[i%LC2.length]);});
-    addZiplineToRoof(-12,-3, -12,-16, 5, wi);
-    addZiplineToRoof(10,-3,  10,-14,  6, wi);
-    addZiplineToRoof(-6,-22, -6,-28,  7, wi);
+    addZiplineToRoof(-12,-3, -12,-16, 8, wi);
+    addZiplineToRoof(10,-3,  10,-14,  9, wi);
+    addZiplineToRoof(-6,-22, -6,-28,  10, wi);
 
   }else if(wi===3){
     // ── WORLD 3: UNDERGROUND LAB — Maze-like corridors, server rooms, vaults
@@ -995,9 +1265,9 @@ function buildWorld(wi){
     [[-6,-6,8,.3],[6,-6,.3,8],[-14,-14,.3,10],[14,-14,.3,10],[-10,-40,12,.3],[8,-40,.3,12]].forEach(function(w2){addWallObj(w2[0],w2[1],w2[2],w2[3]);});
     [[-5,-8],[5,-8],[-10,-15],[10,-15],[-16,-25],[16,-25],[-8,-38],[8,-38]].forEach(function(p,i){addBarrel(p[0],p[1],wi,i%2===0);});
     var LC3=W.lights;[[-4,-12],[4,-12],[-14,-22],[14,-22],[-4,-42],[4,-42]].forEach(function(p,i){addStreetLight(p[0],p[1],LC3[i%LC3.length]);});
-    addZiplineToRoof(-10,-3, -10,-12, 7, wi);
-    addZiplineToRoof(10,-3,   10,-12, 8, wi);
-    addZiplineToRoof(4,-28,   4,-34,  9, wi);
+    addZiplineToRoof(-10,-3, -10,-12, 10, wi);
+    addZiplineToRoof(10,-3,   10,-12, 12, wi);
+    addZiplineToRoof(4,-28,   4,-34,  20, wi);
 
   }else if(wi===4){
     // ── WORLD 4: LAVA FIELDS — Jagged rocks, magma channels, lava bridges
@@ -1025,9 +1295,9 @@ function buildWorld(wi){
     [[-8,-5,.4,8],[8,-5,.4,8],[-20,-22,10,.4],[20,-22,10,.4],[-10,-42,8,.4],[10,-42,8,.4]].forEach(function(w2){addWallObj(w2[0],w2[1],w2[2],w2[3]);});
     [[-5,-6],[-14,-6],[6,-5],[18,-12],[-8,-20],[12,-24],[-18,-32],[20,-36],[0,-46]].forEach(function(p,i){addBarrel(p[0],p[1],wi,i%2===0);});
     var LC4=W.lights;[[-6,-16],[10,-20],[-16,-38],[22,-40],[0,-32]].forEach(function(p,i){addStreetLight(p[0],p[1],LC4[i%LC4.length]);});
-    addZiplineToRoof(-12,-3, -12,-14, 8, wi);
-    addZiplineToRoof(10,-3,   10,-10, 10, wi);
-    addZiplineToRoof(-6,-20,  -6,-26, 9, wi);
+    addZiplineToRoof(-12,-3, -12,-14, 12, wi);
+    addZiplineToRoof(10,-3,   10,-10, 15, wi);
+    addZiplineToRoof(-6,-20,  -6,-26, 14, wi);
 
   }else{
     // ── WORLD 5: DIGITAL VOID — Floating platforms, glitch towers, neon grid
@@ -1055,9 +1325,9 @@ function buildWorld(wi){
     [[-8,-5,.4,8],[8,-5,.4,8],[-18,-20,12,.4],[18,-20,12,.4],[0,-50,14,.4]].forEach(function(w2){addWallObj(w2[0],w2[1],w2[2],w2[3]);});
     [[-5,-8],[6,-6],[-12,-12],[14,-16],[-8,-28],[10,-32],[-20,-40],[22,-44]].forEach(function(p,i){addBarrel(p[0],p[1],wi,i%2===0);});
     var LC5=W.lights;[[-6,-18],[12,-22],[-16,-38],[22,-40],[0,-30]].forEach(function(p,i){addStreetLight(p[0],p[1],LC5[i%LC5.length]);});
-    addZiplineToRoof(-10,-3, -10,-14, 12, wi);
-    addZiplineToRoof(10,-3,   10,-12, 15, wi);
-    addZiplineToRoof(-5,-22,  -5,-28, 10, wi);
+    addZiplineToRoof(-10,-3, -10,-14, 18, wi);
+    addZiplineToRoof(10,-3,   10,-12, 22, wi);
+    addZiplineToRoof(-5,-22,  -5,-28, 15, wi);
   }
 
   // Common elements for all worlds
@@ -2546,26 +2816,26 @@ Enemy.prototype._buildMesh=function(){
   // Torso - zombie torso slightly hunched
   var torso=new THREE.Mesh(new THREE.CylinderGeometry(.22*s,.30*s,.85*s,7),bm);
   torso.position.y=.88*s;
-  if(T.zombie) torso.rotation.x=.18; // hunch forward
+  if(T.zombie) torso.rotation.x=-.18; // hunch FORWARD toward +Z (player)
   torso.castShadow=true;g.add(torso);this.torso=torso;
 
-  // Tattered cloth on torso (zombie rags)
+  // Tattered cloth on torso (zombie rags) — on FRONT face (+Z)
   if(T.zombie){
     var rag1=new THREE.Mesh(new THREE.BoxGeometry(.18*s,.45*s,.06),new THREE.MeshLambertMaterial({color:0x2a1000}));
-    rag1.position.set(.18*s,.72*s,-.32*s);rag1.rotation.z=.5;g.add(rag1);
+    rag1.position.set(.18*s,.72*s,.32*s);rag1.rotation.z=.5;g.add(rag1);
     var rag2=new THREE.Mesh(new THREE.BoxGeometry(.14*s,.38*s,.06),new THREE.MeshLambertMaterial({color:0x1a0800}));
-    rag2.position.set(-.16*s,.78*s,-.30*s);rag2.rotation.z=-.4;g.add(rag2);
+    rag2.position.set(-.16*s,.78*s,.30*s);rag2.rotation.z=-.4;g.add(rag2);
     var rag3=new THREE.Mesh(new THREE.BoxGeometry(.10*s,.25*s,.06),new THREE.MeshLambertMaterial({color:0x221200}));
-    rag3.position.set(.05*s,.55*s,.30*s);rag3.rotation.z=.2;g.add(rag3);
+    rag3.position.set(.05*s,.55*s,-.30*s);rag3.rotation.z=.2;g.add(rag3);
     // Exposed ribs — bone-yellow for high visibility
     for(var ri=0;ri<4;ri++){
       var rib=new THREE.Mesh(new THREE.BoxGeometry(.40*s,.055,.055),new THREE.MeshBasicMaterial({color:0xddcc88}));
-      rib.position.set(0,(.50+ri*.15)*s,-.29*s);g.add(rib);
+      rib.position.set(0,(.50+ri*.15)*s,.29*s);g.add(rib);
     }
     // Blood stains on torso
     var bloodMat=new THREE.MeshBasicMaterial({color:0x880000});
     var bl=new THREE.Mesh(new THREE.SphereGeometry(.08*s,5,4),bloodMat);
-    bl.position.set(.12*s,.90*s,-.28*s);g.add(bl);
+    bl.position.set(.12*s,.90*s,.28*s);g.add(bl);
   }
 
   // Head - zombie head slightly tilted
@@ -2574,28 +2844,28 @@ Enemy.prototype._buildMesh=function(){
   if(T.zombie) head.rotation.z=(Math.random()-.5)*.3; // random tilt
   head.castShadow=true;g.add(head);this.headMesh=head;
 
-  // Wound on head (zombie only)
+  // Wound on head (zombie only) — on FRONT face (+Z)
   if(T.zombie){
     var wound=new THREE.Mesh(new THREE.SphereGeometry(.08*s,5,4),new THREE.MeshBasicMaterial({color:0x880000}));
-    wound.position.set((Math.random()-.5)*.15*s,.05*s,-.18*s);head.add(wound);
+    wound.position.set((Math.random()-.5)*.15*s,.05*s,.18*s);head.add(wound);
   }
 
-  // Eyes - zombie eyes glow red/yellow
+  // Eyes — on FRONT face (+Z)
   var self=this;
   [-1,1].forEach(function(sx){
     var eye=new THREE.Mesh(new THREE.SphereGeometry(.042*s,4,3),em);
-    eye.position.set(sx*.095*s,.03,-.205*s);head.add(eye);
+    eye.position.set(sx*.095*s,.03,.205*s);head.add(eye);
     var el=new THREE.PointLight(T.eye,T.zombie?.8:.6,T.zombie?3:2.5);el.position.copy(eye.position);head.add(el);
   });
 
-  // Jaw (zombie - hanging open)
+  // Jaw (zombie - hanging open) — on FRONT face (+Z)
   if(T.zombie){
     var jaw=new THREE.Mesh(new THREE.BoxGeometry(.14*s,.07*s,.12*s),bm);
-    jaw.position.set(0,-.18*s,-.12*s);jaw.rotation.x=.35;head.add(jaw);this.jaw=jaw;
-    // Teeth
+    jaw.position.set(0,-.18*s,.12*s);jaw.rotation.x=-.35;head.add(jaw);this.jaw=jaw;
+    // Teeth — protruding forward
     for(var ti=0;ti<4;ti++){
       var tooth=new THREE.Mesh(new THREE.BoxGeometry(.025*s,.05*s,.025*s),new THREE.MeshBasicMaterial({color:0xddcc99}));
-      tooth.position.set((ti-1.5)*.045*s,-.03*s,-.06*s);jaw.add(tooth);
+      tooth.position.set((ti-1.5)*.045*s,-.03*s,.06*s);jaw.add(tooth);
     }
   }
 
@@ -2620,7 +2890,7 @@ Enemy.prototype._buildMesh=function(){
     var helm=new THREE.Mesh(new THREE.SphereGeometry(.26*s,6,5),new THREE.MeshLambertMaterial({color:0x334455}));
     helm.position.y=1.58*s;g.add(helm);
     var visor=new THREE.Mesh(new THREE.BoxGeometry(.24*s,.1*s,.05),new THREE.MeshBasicMaterial({color:T.eye}));
-    visor.position.set(0,1.6*s,-.26*s);g.add(visor);
+    visor.position.set(0,1.6*s,.26*s);g.add(visor);
   }
 
   // Boss: crown + glowing collar
@@ -2642,21 +2912,21 @@ Enemy.prototype._buildMesh=function(){
     // Forearm (zombie: bent forward)
     var fore=new THREE.Mesh(new THREE.CylinderGeometry(.06*s,.07*s,.45*s,5),bm);
     fore.position.y=-.55*s;
-    if(T.zombie){fore.rotation.x=-.5;} // reach forward
+    if(T.zombie){fore.rotation.x=.5;} // reach FORWARD toward +Z (player)
     armGrp.add(fore);
     // Hand/claw
     if(T.zombie){
       var claw=new THREE.Mesh(new THREE.SphereGeometry(.07*s,5,4),rotMat);
       claw.position.y=-.3*s;fore.add(claw);
-      // Finger claws
+      // Finger claws — protrude forward (+Z)
       for(var ci=0;ci<3;ci++){
         var finger=new THREE.Mesh(new THREE.BoxGeometry(.02*s,.1*s,.02*s),darkMat);
-        finger.position.set((ci-1)*.04*s,-.1*s,-.03*s);claw.add(finger);
+        finger.position.set((ci-1)*.04*s,-.1*s,.03*s);claw.add(finger);
       }
     }
     armGrp.position.set(sx*.38*s,1.05*s,0);
     armGrp.rotation.z=sx*(T.zombie?.25:.4);
-    if(T.zombie) armGrp.rotation.x=-.3; // arms reach forward for zombies
+    if(T.zombie) armGrp.rotation.x=.3; // arms reach FORWARD toward +Z (player)
     armGrp.castShadow=true;g.add(armGrp);self.arms.push(armGrp);
   });
 
@@ -2665,10 +2935,10 @@ Enemy.prototype._buildMesh=function(){
   [-1,1].forEach(function(sx){
     var leg=new THREE.Mesh(new THREE.CylinderGeometry(.1*s,.08*s,.6*s,5),bm);
     leg.position.set(sx*.14*s,.29*s,0);leg.castShadow=true;g.add(leg);self.legs.push(leg);
-    // Torn pants (zombie)
+    // Torn pants (zombie) — on FRONT face (+Z)
     if(T.zombie){
       var tear=new THREE.Mesh(new THREE.BoxGeometry(.06*s,.2*s,.04),new THREE.MeshLambertMaterial({color:0x1a0a05}));
-      tear.position.set(0,.1*s,-.1*s);leg.add(tear);
+      tear.position.set(0,.1*s,.1*s);leg.add(tear);
     }
   });
 
@@ -2834,14 +3104,17 @@ Enemy.prototype.update=function(dt,px,pz){
   }
   // Bloater pulse
   if(this.vein) this.vein.scale.setScalar(1+Math.sin(this.animT*4)*.07);
-  // Zombie groan sounds
+  // Zombie groan sounds — varied types based on state
   if(this.T.zombie&&this.state==='chase'){
     this.groanT-=dt;
     if(this.groanT<=0){
-      this.groanT=3+Math.random()*4;
+      this.groanT=2.5+Math.random()*3.5;
       var dx2=camera.position.x-this.x,dz2=camera.position.z-this.z;
-      if(dx2*dx2+dz2*dz2<200){
-        beep(55+Math.random()*20,0.4+Math.random()*.3,'sawtooth',0.03+Math.random()*.03,40+Math.random()*15);
+      if(dx2*dx2+dz2*dz2<220){
+        var r=Math.random();
+        if(r<0.5)SFX.zombieGroan();
+        else if(r<0.75)SFX.zombieSnarl();
+        else SFX.zombieScream();
       }
     }
   }
@@ -3218,7 +3491,7 @@ function doKnifeAttack(){
   if(fl){fl.style.background='radial-gradient(ellipse,rgba(180,0,0,.45) 0%,transparent 70%)';
     fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},110);}
   // Sound
-  beep(hit?140:200, 0.05,'sawtooth',0.25);
+  SFX.knife(hit);
   notify(hit?'🗡 STAB!':'🗡 KNIFE',400);
 }
 
@@ -3238,7 +3511,7 @@ function startGrapple(){
   grappHook.vz=dir.z*GRAPPLE_SPD;
   grappHook.lineMesh.visible=true;
   grappHook.ballMesh.visible=true;
-  beep(280,.06,'square',.18);
+  SFX.grappleFire();
   notify('🪝 GRAPPLE!',600);
 }
 function releaseGrapple(){
@@ -3269,7 +3542,7 @@ function updGrapple(dt){
       grappHook.state='attached';
       grappHook.tx=grappHook.fx;grappHook.ty=grappHook.fy;grappHook.tz=grappHook.fz;
       player.onGrapple=true;
-      beep(380,.08,'square',.20);
+      SFX.grappleHit();
       notify('🪝 HOOKED!',700);
     }else if(grappHook.dist>=GRAPPLE_MAXDIST||oob){
       releaseGrapple();return;
@@ -3910,7 +4183,7 @@ function checkBloodMoon(){
 
 // ── FEATURE 16: STOMP ATTACK (crouch + space = ground slam) ───────────
 function tryStompAttack(){
-  if(!K['KeyC']&&!K['ControlLeft'])return; // only when crouching
+  if(!K['ControlLeft'])return; // only when holding Ctrl (crouching)
   if(player.onGround)return; // only in air
   // Slam down
   player.vy=-20;
@@ -4601,7 +4874,7 @@ function loop(){
   }
 
   // ── JETPACK (realistic thrust — hold F to fly, gravity fights thrust) ──
-  var jkey=K['KeyJ'];
+  var jkey=K['KeyC'];
   if(jkey&&player.jpFuel>0&&player.jpCooldown<=0) startJet();
   else if(!jkey&&player.jetting) stopJet();
   if(player.jetting){
@@ -4984,7 +5257,7 @@ var FEATS={
 
 var FEAT_META=[
   {key:'zipline',icon:'🪝',name:'ZIPLINES',desc:'Ride ziplines across the map'},
-  {key:'jetpack',icon:'✈️',name:'JETPACK',desc:'J key — aerial traversal'},
+  {key:'jetpack',icon:'✈️',name:'JETPACK',desc:'C key — aerial traversal'},
   {key:'dash',icon:'💨',name:'DASH',desc:'Alt key to dash (hold direction + press Alt)'},
   {key:'grenades',icon:'💣',name:'GRENADES',desc:'G key — throw grenades'},
   {key:'shield',icon:'🛡',name:'ENERGY SHIELD',desc:'X key — absorbs one hit'},
@@ -5814,7 +6087,7 @@ window.addEventListener('keydown',function(e){
   // New feature keys (only when game running and not paused/shopped)
   if(!pauseOpen&&!shopOpen&&player.alive){
     if(e.code==='KeyN'&&FEATS.nightVision) toggleNightVision();
-    if(e.code==='KeyC'&&FEATS.emp) triggerEMP();
+    if(e.code==='KeyL'&&FEATS.emp) triggerEMP();
     if(e.code==='KeyU'&&FEATS.airstrike) callAirstrike();
     if(e.code==='KeyY'&&FEATS.timeBomb) placeTimeBomb();
     if(e.code==='KeyI'&&FEATS.echoSonar) triggerSonar();
@@ -5836,7 +6109,7 @@ function gainXP(n){
     // Level up bonuses
     uSt.dmgMult+=0.05;uSt.maxHp+=10;player.hp=Math.min(uSt.maxHp,player.hp+10);
     notify('⭐ LEVEL UP! LVL '+playerLevel+' — +10 HP, +5% DMG!',3000);
-    beep(880,0.4,'sine',0.1,1100);
+    SFX.levelup();
     updHPHUD();
   }
   var el=document.getElementById('xp-fill');
@@ -6539,7 +6812,7 @@ loop=function(){
   }
 
   // ── JETPACK (realistic thrust) ──
-  var jkey=K['KeyJ'];
+  var jkey=K['KeyC'];
   if(FEATS.jetpack){
     if(jkey&&player.jpFuel>0&&player.jpCooldown<=0) startJet();
     else if(!jkey&&player.jetting) stopJet();
