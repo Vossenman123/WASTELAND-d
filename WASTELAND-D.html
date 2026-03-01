@@ -2611,7 +2611,7 @@ window.addEventListener('keydown',function(e){K[e.code]=true;
   if(e.key==='0') switchWeapon(9);
 });
 window.addEventListener('keyup',function(e){K[e.code]=false;
-  if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&gameRunning&&!shopOpen) _lastShiftUp=performance.now();
+  if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&gameRunning&&!shopOpen&&!pauseOpen) _lastShiftUp=performance.now();
 });
 window.addEventListener('wheel',function(e){
   if(!gameRunning||shopOpen||pauseOpen||!player.alive)return;
