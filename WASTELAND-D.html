@@ -4254,7 +4254,7 @@ function doReload(){
   player.reloading=true;
   player.rldT=curWep.rl*Math.max(.4,uSt.rldMult);
   SFX.reload();notify('RELOADING...');
-  document.getElementById('rlt').textContent='◌ RELOADING';
+  if(_DOM.rlt) _DOM.rlt.textContent='◌ RELOADING';
   if(wMesh){wMesh.rotation.x=.45;wMesh.position.y=-.25;}
 }
 
@@ -4755,7 +4755,7 @@ function checkBloodMoon(){
     // No speed boost — difficulty comes from enemy HP and count scaling
     notify('🌕 BLOOD MOON RISES! ENEMIES ENRAGED!',3000);
     beep(55,2,'sawtooth',0.15);
-    document.getElementById('lowhp').style.borderColor='#aa0000';
+    if(_DOM.lowhp) _DOM.lowhp.style.borderColor='#aa0000';
   }
 }
 
@@ -4958,8 +4958,8 @@ function updElecFences(dt){
 
 // ── JETPACK ───────────────────────────────────────────────────────────
 function startJet(){if(player.jpFuel<=0||player.jpCooldown>0)return;
-  player.jetting=true;document.getElementById('jflame').style.opacity='1';}
-function stopJet(){player.jetting=false;document.getElementById('jflame').style.opacity='0';}
+  player.jetting=true;if(_DOM.jflame)_DOM.jflame.style.opacity='1';}
+function stopJet(){player.jetting=false;if(_DOM.jflame)_DOM.jflame.style.opacity='0';}
 
 // ── VAULT ─────────────────────────────────────────────────────────────
 function tryVault(){
@@ -4996,7 +4996,7 @@ function hurtPlayer(dmg){
   player.streak=0; // break streak on hit
   // Rage resets on hit
   if(player.rageActive){player.rageActive=false;uSt.dmgMult/=2;
-    document.getElementById('lowhp').style.border='6px solid #ff0000';document.getElementById('lowhp').style.opacity='0';}
+    if(_DOM.lowhp){_DOM.lowhp.style.border='6px solid #ff0000';_DOM.lowhp.style.opacity='0';}}
   SFX.hurt();
   var fl=document.getElementById('dmg');fl.style.opacity='.9';
   addTimer(function(){fl.style.opacity='0';},200);
@@ -5031,13 +5031,13 @@ function gainCoins(n){
 // ── HUD ───────────────────────────────────────────────────────────────
 function updHPHUD(){
   var pct=player.hp/uSt.maxHp;
-  document.getElementById('hpf').style.width=(pct*100)+'%';
-  document.getElementById('hpf').style.background=pct>.5?'linear-gradient(90deg,#00ff88,#3dffaa)':pct>.25?'linear-gradient(90deg,#ff9900,#ffcc22)':'linear-gradient(90deg,#ff2200,#ff6600)';
-  document.getElementById('hpn').textContent=Math.ceil(player.hp);
+  var _hpf=document.getElementById('hpf');
+  _hpf.style.width=(pct*100)+'%';
+  _hpf.style.background=pct>.5?'linear-gradient(90deg,#00ff88,#3dffaa)':pct>.25?'linear-gradient(90deg,#ff9900,#ffcc22)':'linear-gradient(90deg,#ff2200,#ff6600)';
+  if(_DOM.hpn){_DOM.hpn.textContent=Math.ceil(player.hp);_DOM.hpn.classList.toggle('crit',pct<.25);}
+  else{var _h=document.getElementById('hpn');_h.textContent=Math.ceil(player.hp);_h.classList.toggle('crit',pct<.25);}
   document.getElementById('hpt').textContent=Math.ceil(player.hp)+'/'+uSt.maxHp;
-  var hpnEl=_DOM.hpn||document.getElementById('hpn');
-  hpnEl.classList.toggle('crit',pct<.25);
-  var lh=document.getElementById('lowhp');
+  var lh=_DOM.lowhp||document.getElementById('lowhp');
   lh.style.animation=pct<.25?'blk .6s infinite':'none';lh.style.opacity=pct<.25?'1':'0';
 }
 function updAmmoHUD(){
@@ -6785,7 +6785,7 @@ function retryWorld(){
   player.onZipline=false;player.zipProgress=0;player.zipIdx=-1;player.zipCooldown=0;
   player.ammo=curWep.clip;player.res=Math.floor(curWep.res*uSt.ammoMul);
   updHPHUD();
-  document.getElementById('lowhp').style.opacity='0';
+  if(_DOM.lowhp) _DOM.lowhp.style.opacity='0';
   // Rebuild current world (worldIdx unchanged) and start wave 1
   var tr=document.getElementById('wtrans');
   document.getElementById('wt-name').textContent='RESTARTING: '+WORLDS[worldIdx].name;
@@ -6868,7 +6868,7 @@ var hasDoubleJumped=false;
 // Patch into vault/jump logic
 var _origTryVault=tryVault;
 tryVault=function(){
-  if(FEATS.doubleJump&&!player.onGround&&!hasDoubleJumped&&player.vy<0){
+  if(FEATS.doubleJump&&!player.onGround&&!hasDoubleJumped){
     hasDoubleJumped=true;player.vy=7*(uSt.jumpMult||1);
     notify('↑ DOUBLE JUMP!',500);
     spawnParts(camera.position.x,camera.position.y-.5,camera.position.z,0x44ccff,6);
@@ -7550,7 +7550,7 @@ loop=function(){
       var take=Math.min(need,player.res);
       player.ammo+=take;player.res-=take;
       SFX.reload();notify('LOADED');
-      document.getElementById('rlt').textContent='';
+      if(_DOM.rlt) _DOM.rlt.textContent='';
       updAmmoHUD();
       if(wMesh){wMesh.rotation.x=0;wMesh.rotation.z=0;wMesh.position.y=-.14;}
     }
@@ -7770,8 +7770,7 @@ loop=function(){
     if(player.rageT<=0){
       player.rageActive=false;uSt.dmgMult/=2;player.streak=0;
       notify('RAGE ENDED',1500);
-      document.getElementById('lowhp').style.border='6px solid #ff0000';
-      document.getElementById('lowhp').style.opacity='0';
+      if(_DOM.lowhp){_DOM.lowhp.style.border='6px solid #ff0000';_DOM.lowhp.style.opacity='0';}
     }
   }
   if(player.streakT>0){player.streakT-=dt2;if(player.streakT<=0)player.streak=0;}
@@ -7781,10 +7780,10 @@ loop=function(){
     player.jpFuel=Math.max(0,player.jpFuel-dt2*2);
     if(player.slowmoT<=0||player.jpFuel<=0){
       player.slowmo=false;
-      document.getElementById('slowmo-overlay').style.opacity='0';
+      if(_DOM.slowmoOv) _DOM.slowmoOv.style.opacity='0';
       notify('BULLET TIME ENDED',1000);
     }else{
-      document.getElementById('slowmo-overlay').style.opacity='0.5';
+      if(_DOM.slowmoOv) _DOM.slowmoOv.style.opacity='0.5';
     }
   }
 
