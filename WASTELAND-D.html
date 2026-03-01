@@ -2290,8 +2290,9 @@ function chkColH(x,z,y,r){
   r=r||.4;
   if(Math.abs(x)>65||z>9||z<-75)return true;
   for(var i=0;i<COLS.length;i++){var c=COLS[i];
-    // Only block if player is below top of obstacle
-    if(y<c.h+1.5&&x+r>c.minX&&x-r<c.maxX&&z+r>c.minZ&&z-r<c.maxZ)return true;}
+    // Block horizontal movement only if player is strictly BELOW the rooftop.
+    // Player standing on roof has y = c.h+1.75, so use c.h+1.7 as threshold.
+    if(y<c.h+1.7&&x+r>c.minX&&x-r<c.maxX&&z+r>c.minZ&&z-r<c.maxZ)return true;}
   return false;
 }
 
@@ -3870,8 +3871,25 @@ function loop(){
   // ── GRAVITY & JUMP ──
   player.vy-=20*dt;
   camera.position.y+=player.vy*dt;
+  // ── ROOF LANDING: snap to top of any building the player stands on ──
+  if(player.vy<=0){
+    for(var _ri=0;_ri<COLS.length;_ri++){var _rc=COLS[_ri];
+      var _roofY=_rc.h+1.75;
+      if(camera.position.y<=_roofY&&camera.position.y>_roofY-0.5&&
+         camera.position.x>_rc.minX&&camera.position.x<_rc.maxX&&
+         camera.position.z>_rc.minZ&&camera.position.z<_rc.maxZ){
+        camera.position.y=_roofY;player.vy=0;player.onGround=true;player.vaulting=false;break;
+      }
+    }
+  }
   if(camera.position.y<=1.75){camera.position.y=1.75;player.vy=0;player.onGround=true;player.vaulting=false;}
-  else player.onGround=false;
+  else if(!player.onGround) player.onGround=false;
+  // ── HEAD BOB — applied after physics so it doesn't interfere with gravity ──
+  if(player.onGround&&player.vy===0){
+    var _floorY=camera.position.y; // floor is whatever surface we're on
+    var _isMoving=(K['KeyW']||K['KeyS']||K['KeyA']||K['KeyD']||K['ArrowUp']||K['ArrowDown']||K['ArrowLeft']||K['ArrowRight']||Math.abs(txVec.x)>.05||Math.abs(txVec.y)>.05);
+    if(_isMoving) camera.position.y=_floorY+Math.abs(Math.sin(player.footT))*.043;
+  }
 
   // Space = jump/vault
   if((K['Space']||K['KeyE'])&&!K['_spaceConsumed']){
@@ -3936,7 +3954,6 @@ function loop(){
       if(!chkColH(nx,camera.position.z,curY)) camera.position.x=nx;
       if(!chkColH(camera.position.x,nz,curY)) camera.position.z=nz;
       player.footT+=dt*spd*2.4;
-      if(player.onGround) camera.position.y=1.75+Math.sin(player.footT)*.043;
     }
   }
 
@@ -5514,10 +5531,10 @@ Enemy.prototype.hit=function(dmg,hx,hy,hz,isHead){
 };
 
 // ── Patch doShoot to add weapon heat and poison darts ─────────────
-var _origDoShoot=doShoot;
+var _origDoShootHeat=doShoot; // renamed to avoid collision with admin inf-ammo patch
 doShoot=function(){
   if(weaponOverheated&&FEATS.weaponOverheat){notify('🌡 WEAPON OVERHEATED!',600);return;}
-  _origDoShoot();
+  _origDoShootHeat();
   addWeaponHeat();
   // Poison darts - patch the ray hit result
 };
@@ -5767,11 +5784,30 @@ loop=function(){
   prevY=camera.position.y;
   player.vy-=20*dt2;
   camera.position.y+=player.vy*dt2;
+  // ── ROOF LANDING: snap to top of any building the player stands on ──
+  if(player.vy<=0){
+    for(var _ri2=0;_ri2<COLS.length;_ri2++){var _rc2=COLS[_ri2];
+      var _roofY2=_rc2.h+1.75;
+      if(camera.position.y<=_roofY2&&camera.position.y>_roofY2-0.5&&
+         camera.position.x>_rc2.minX&&camera.position.x<_rc2.maxX&&
+         camera.position.z>_rc2.minZ&&camera.position.z<_rc2.maxZ){
+        camera.position.y=_roofY2;player.vy=0;
+        if(!player.onGround) checkFallShockwave();
+        player.onGround=true;player.vaulting=false;break;
+      }
+    }
+  }
   if(camera.position.y<=1.75){camera.position.y=1.75;player.vy=0;
     if(!player.onGround) checkFallShockwave();
     player.onGround=true;player.vaulting=false;
-  }else player.onGround=false;
+  }else if(!player.onGround) player.onGround=false;
   resetDoubleJump();
+  // ── HEAD BOB — applied after physics so it doesn't interfere with gravity ──
+  if(player.onGround&&player.vy===0){
+    var _floorY2=camera.position.y;
+    var _isMoving2=(K['KeyW']||K['KeyS']||K['KeyA']||K['KeyD']||K['ArrowUp']||K['ArrowDown']||K['ArrowLeft']||K['ArrowRight']||Math.abs(txVec.x)>.05||Math.abs(txVec.y)>.05);
+    if(_isMoving2) camera.position.y=_floorY2+Math.abs(Math.sin(player.footT))*.043;
+  }
 
   if((K['Space']||K['KeyE'])&&!K['_spaceConsumed']){
     K['_spaceConsumed']=true;tryVault();
@@ -5833,7 +5869,6 @@ loop=function(){
       if(!chkColH(nx,camera.position.z,curY)) camera.position.x=nx;
       if(!chkColH(camera.position.x,nz,curY)) camera.position.z=nz;
       player.footT+=dt2*spd*2.4;
-      if(player.onGround) camera.position.y=1.75+Math.sin(player.footT)*.043;
     }
   }
 
