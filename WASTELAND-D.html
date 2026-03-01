@@ -152,6 +152,13 @@ canvas#c{display:block;width:100vw;height:100vh;}
 .wc-tag{position:absolute;top:6px;right:6px;font-size:6px;padding:2px 4px;
   background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:var(--y);}
 #u-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+/* Auto-buy toolbar above the upgrade grid */
+#u-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+#auto-buy-btn{padding:7px 20px;background:transparent;border:1px solid var(--y);color:var(--y);
+  font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+#auto-buy-btn:hover{background:rgba(255,215,0,0.1);box-shadow:0 0 12px rgba(255,215,0,0.25);}
+#auto-buy-btn:active{transform:scale(0.97);}
+#auto-buy-result{font-size:7px;color:rgba(61,255,170,0.55);letter-spacing:1px;}
 .ucard{border:1px solid rgba(61,255,170,0.2);padding:12px;background:rgba(61,255,170,0.03);transition:all 0.15s;}
 .ucard:hover{border-color:rgba(61,255,170,0.5);}
 .uc-icon{font-size:24px;margin-bottom:6px;display:block;}
@@ -712,7 +719,13 @@ canvas#c{display:block;width:100vw;height:100vh;}
     <button class="shtab" onclick="setShopTab('tactical',this)">🤖 TACTICAL</button>
   </div>
   <div id="sh-weapons" class="sh-content active"><div id="w-grid"></div></div>
-  <div id="sh-upgrades" class="sh-content"><div id="u-grid"></div></div>
+  <div id="sh-upgrades" class="sh-content">
+    <div id="u-toolbar">
+      <button id="auto-buy-btn" onclick="autoBuyUpgrades()">⚡ AUTO-BUY ALL UPGRADES</button>
+      <span id="auto-buy-result"></span>
+    </div>
+    <div id="u-grid"></div>
+  </div>
   <div id="sh-perks" class="sh-content"><div id="p-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div></div>
   <div id="sh-consumables" class="sh-content"><div id="c-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div></div>
   <div id="sh-tactical" class="sh-content"><div id="t-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div></div>
@@ -4571,6 +4584,9 @@ function setShopTab(tab,btn){
   if(btn) btn.classList.add('active');
   var el=document.getElementById('sh-'+tab);
   if(el) el.classList.add('active');
+  // Clear auto-buy result label when leaving upgrades tab
+  var res=document.getElementById('auto-buy-result');
+  if(res&&tab!=='upgrades') res.textContent='';
   renderShopContent(tab);
 }
 window.setShopTab=setShopTab;
@@ -4704,6 +4720,48 @@ function shopUpgrade(id){
   player.coins-=u.cost[lvl];document.getElementById('coin-txt').textContent='⚙ '+player.coins;
   u.fn();uLvl[id]++;SFX.buy();notify('UPGRADED: '+u.name,1800);renderShop();
 }
+function autoBuyUpgrades(){
+  var bought=0,spent=0;
+  // Keep purchasing as long as we can afford something
+  var progress=true;
+  while(progress){
+    progress=false;
+    // Collect all currently affordable upgrades, sorted cheapest first
+    var affordable=[];
+    UPG.forEach(function(u){
+      var lvl=uLvl[u.id]||0;
+      if(lvl>=u.lvl)return; // already maxed
+      var cost=u.cost[lvl];
+      if(player.coins>=cost) affordable.push({u:u,cost:cost});
+    });
+    if(affordable.length===0)break;
+    affordable.sort(function(a,b){return a.cost-b.cost;});
+    var pick=affordable[0];
+    player.coins-=pick.cost;
+    pick.u.fn();
+    uLvl[pick.u.id]++;
+    spent+=pick.cost;
+    bought++;
+    progress=true;
+  }
+  // Update coin display
+  document.getElementById('coin-txt').textContent='⚙ '+player.coins;
+  document.getElementById('sh-coins').textContent='⚙ '+player.coins+' COINS';
+  var res=document.getElementById('auto-buy-result');
+  if(res){
+    if(bought>0){
+      res.textContent='✔ BOUGHT '+bought+' UPGRADE'+(bought>1?'S':'')+' · SPENT '+spent+' COINS';
+      res.style.color='rgba(61,255,170,0.7)';
+      SFX.buy();
+      notify('⚡ AUTO-BOUGHT '+bought+' UPGRADE'+(bought>1?'S':'')+'!',2200);
+    }else{
+      res.textContent='✘ NOT ENOUGH COINS FOR ANY UPGRADE';
+      res.style.color='rgba(255,68,68,0.7)';
+    }
+  }
+  renderShop();
+}
+window.autoBuyUpgrades=autoBuyUpgrades;
 function buyPerk(id){
   var p=PERKS.filter(function(x){return x.id===id;})[0];
   if(!p||p.owned||player.coins<p.cost)return;
