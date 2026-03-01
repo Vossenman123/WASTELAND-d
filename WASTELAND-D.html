@@ -2994,7 +2994,7 @@ function spawnWorldBoss(wi){
   // Apply world boss stats (scaled by worldIdx for increasing difficulty)
   var sc=1+wi*.25;
   b.T=Object.assign({},T);
-  b.T.spd*=(1+wi*.12);
+  b.T.spd*=(1+wi*.12); // apply world scaling once (constructor scaled the dummy BOSS_TYPES[0], we re-override here)
   b.hp=T.hp*sc;b.maxHp=b.hp;
   b.sz=T.sz;
   // Rebuild mesh with correct size
