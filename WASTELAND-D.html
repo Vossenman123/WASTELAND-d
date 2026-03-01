@@ -120,7 +120,30 @@ canvas#c{display:block;width:100vw;height:100vh;}
 #shdr h2{font-family:'Orbitron',monospace;font-size:clamp(13px,3vw,20px);
   color:var(--g);text-shadow:0 0 12px var(--g);letter-spacing:4px;}
 #sh-coins{font-family:'Orbitron',monospace;font-size:12px;color:var(--y);text-shadow:0 0 8px var(--y);}
-#sh-hint{font-size:7px;color:rgba(61,255,170,0.3);letter-spacing:2px;margin-bottom:12px;}
+#sh-hint{font-size:7px;color:rgba(61,255,170,0.3);letter-spacing:2px;margin-bottom:8px;}
+/* ── Quick Buy bar ── */
+#sh-quickbuy{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 12px;margin-bottom:14px;
+  background:rgba(0,0,0,0.45);
+  border:1px solid rgba(61,255,170,0.18);
+  border-left:3px solid rgba(61,255,170,0.55);
+}
+#sh-qb-label{
+  font-family:'Orbitron',monospace;font-size:7px;
+  color:rgba(61,255,170,0.45);letter-spacing:2px;
+  white-space:nowrap;margin-right:4px;}
+.sh-qb-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 14px;background:transparent;cursor:pointer;
+  font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;
+  transition:background 0.12s,border-color 0.12s;}
+#sh-qb-hp{  border:1px solid rgba(255,80,80,0.5); color:#ff8080;}
+#sh-qb-hp:hover:not(:disabled){  background:rgba(255,80,80,0.14); border-color:#ff5555;}
+#sh-qb-ammo{border:1px solid rgba(100,200,255,0.5);color:#88ccff;}
+#sh-qb-ammo:hover:not(:disabled){background:rgba(100,200,255,0.14);border-color:#66aaff;}
+.sh-qb-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.sh-qb-cost{font-size:7px;opacity:0.75;}
 #sh-tabs{display:flex;gap:8px;margin-bottom:16px;}
 .shtab{padding:8px 18px;background:transparent;border:1px solid rgba(61,255,170,0.3);
   color:rgba(61,255,170,0.6);font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;
@@ -845,6 +868,11 @@ canvas#c{display:block;width:100vw;height:100vh;}
 <div id="shop">
   <div id="shdr"><h2>⚙ WASTELAND SHOP</h2><div id="sh-coins">⚙ 0 COINS</div></div>
   <div id="sh-hint">[ B / TAB / ESC = close ]</div>
+  <div id="sh-quickbuy">
+    <span id="sh-qb-label">⚡ QUICK BUY</span>
+    <button id="sh-qb-hp"  onclick="buyQuickHP()"   class="sh-qb-btn">💉 HP REFILL  <span class="sh-qb-cost">⚙ 120</span></button>
+    <button id="sh-qb-ammo" onclick="buyQuickAmmo()" class="sh-qb-btn">📦 AMMO REFILL <span class="sh-qb-cost">⚙ 40</span></button>
+  </div>
   <div id="sh-tabs">
     <button class="shtab active" onclick="setShopTab('weapons',this)">🔫 WEAPONS</button>
     <button class="shtab" onclick="setShopTab('upgrades',this)">⚡ UPGRADES</button>
@@ -4802,6 +4830,7 @@ window.setShopTab=setShopTab;
 
 function renderShop(){
   document.getElementById('sh-coins').textContent='⚙ '+player.coins+' COINS';
+  updQuickBuy();
   renderShopContent(shopTab);
 }
 function renderShopContent(tab){
@@ -4984,6 +5013,42 @@ function buyConsumable(id){
   player.coins-=c.cost;gainCoins(0);c.fn();
   SFX.buy();renderShop();
 }
+
+// ── Quick Buy: HP & Ammo ───────────────────────────────────────────────
+var QB_HP_COST=120, QB_AMMO_COST=40;
+function buyQuickHP(){
+  if(player.hp>=uSt.maxHp){notify('❤ HP IS ALREADY FULL',1000);return;}
+  if(player.coins<QB_HP_COST){notify('⚠ NEED '+(QB_HP_COST-player.coins)+' MORE COINS',1200);return;}
+  player.coins-=QB_HP_COST;gainCoins(0);
+  player.hp=uSt.maxHp;updHPHUD();
+  SFX.buy();notify('💉 HP FULLY RESTORED!',1500);
+  renderShop();
+}
+function buyQuickAmmo(){
+  if(player.res>=Math.floor(curWep.res*uSt.ammoMul*2)&&player.ammo>=curWep.clip){
+    notify('📦 AMMO IS ALREADY FULL',1000);return;}
+  if(player.coins<QB_AMMO_COST){notify('⚠ NEED '+(QB_AMMO_COST-player.coins)+' MORE COINS',1200);return;}
+  player.coins-=QB_AMMO_COST;gainCoins(0);
+  player.ammo=curWep.clip;
+  player.res=Math.floor(curWep.res*uSt.ammoMul*2);
+  updAmmoHUD();
+  SFX.buy();notify('📦 AMMO FULLY RESTOCKED!',1500);
+  renderShop();
+}
+function updQuickBuy(){
+  var hpBtn=document.getElementById('sh-qb-hp');
+  var ammoBtn=document.getElementById('sh-qb-ammo');
+  if(!hpBtn||!ammoBtn)return;
+  var hpFull=player.hp>=uSt.maxHp;
+  hpBtn.disabled=(player.coins<QB_HP_COST||hpFull);
+  hpBtn.querySelector('.sh-qb-cost').textContent=
+    hpFull?'✓ FULL':'⚙ '+QB_HP_COST+(player.coins<QB_HP_COST?' (NEED '+(QB_HP_COST-player.coins)+' MORE)':'');
+  var ammoFull=(player.res>=Math.floor(curWep.res*uSt.ammoMul*2)&&player.ammo>=curWep.clip);
+  ammoBtn.disabled=(player.coins<QB_AMMO_COST||ammoFull);
+  ammoBtn.querySelector('.sh-qb-cost').textContent=
+    ammoFull?'✓ FULL':'⚙ '+QB_AMMO_COST+(player.coins<QB_AMMO_COST?' (NEED '+(QB_AMMO_COST-player.coins)+' MORE)':'');
+}
+window.buyQuickHP=buyQuickHP;window.buyQuickAmmo=buyQuickAmmo;
 window.buyPerk=buyPerk;window.buyConsumable=buyConsumable;
 window.shopBuy=shopBuy;window.shopEquip=shopEquip;window.shopUpgrade=shopUpgrade;
 window.placeTurret=placeTurret;
