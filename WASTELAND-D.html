@@ -5510,6 +5510,12 @@ document.getElementById('play-btn').addEventListener('click',function(){
   initRadar();
   addTimer(startWave,1500);
   CLOCK.start();requestAnimationFrame(loop);
+  // Request pointer lock immediately while we are inside the play-button click
+  // (a valid user-gesture context).  This ensures pointerlockchange fires for
+  // every subsequent ESC press — the most reliable path to open the pause menu
+  // in Chrome/Edge (which suppress the keydown event for Escape when locked).
+  var _plReq=document.getElementById('c').requestPointerLock();
+  if(_plReq&&_plReq.catch)_plReq.catch(function(){});
 });
 
 // Original loop kept as _origLoop (overridden below by new feature-aware version)
@@ -6756,8 +6762,8 @@ function openPause(){
 function closePause(){
   pauseOpen=false;
   document.getElementById('pause').classList.remove('open');
-  // Re-request pointer lock
-  if(gameRunning) document.getElementById('c').requestPointerLock();
+  // Re-request pointer lock (suppress rejection if called outside a user gesture)
+  if(gameRunning){var _r=document.getElementById('c').requestPointerLock();if(_r&&_r.catch)_r.catch(function(){});}
 }
 function doRespawn(){
   // Reset player to world spawn
