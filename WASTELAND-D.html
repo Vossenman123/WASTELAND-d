@@ -3460,9 +3460,14 @@ document.addEventListener('mousemove',function(e){
 document.addEventListener('contextmenu',function(e){if(gameRunning&&locked)e.preventDefault();});
 document.addEventListener('mousedown',function(e){
   if(e.button===0&&gameRunning&&locked&&!shopOpen){if(curWep.auto)player.autoShooting=true;else doShoot();}
-  if(e.button===2&&gameRunning&&locked&&!shopOpen) startGrapple();
+  if(e.button===1&&gameRunning&&locked&&!shopOpen){e.preventDefault();startGrapple();}
+  if(e.button===2&&gameRunning&&locked&&!shopOpen) startADS();
 });
-document.addEventListener('mouseup',function(e){player.autoShooting=false;if(e.button===2) releaseGrapple();});
+document.addEventListener('mouseup',function(e){
+  player.autoShooting=false;
+  if(e.button===1) releaseGrapple();
+  if(e.button===2) stopADS();
+});
 
 // ── KNIFE (F key) ──────────────────────────────────────────────────────
 function doKnifeAttack(){
@@ -3572,7 +3577,39 @@ function updGrapple(dt){
   grappHook.ballMesh.position.set(grappHook.fx,grappHook.fy,grappHook.fz);
 }
 
-// ── SHOOT ──────────────────────────────────────────────────────────────
+// ── ADS / SCOPE (Right Mouse Button) ──────────────────────────────────
+var adsActive=false;
+var ADS_FOV=30, NORMAL_FOV=78;
+var _adsFovT=0; // lerp timer 0..1
+function startADS(){
+  if(!player.alive||shopOpen)return;
+  adsActive=true;
+  var overlay=document.getElementById('ads-overlay');
+  if(overlay)overlay.style.opacity='1';
+  // Tighten crosshair
+  var xh=document.getElementById('xhair');
+  if(xh)xh.classList.add('ads');
+}
+function stopADS(){
+  adsActive=false;
+  var overlay=document.getElementById('ads-overlay');
+  if(overlay)overlay.style.opacity='0';
+  var xh=document.getElementById('xhair');
+  if(xh)xh.classList.remove('ads');
+}
+function updADS(dt){
+  var targetFOV=adsActive?ADS_FOV:NORMAL_FOV;
+  if(Math.abs(camera.fov-targetFOV)>0.5){
+    camera.fov+=(targetFOV-camera.fov)*Math.min(1,dt*14);
+    camera.updateProjectionMatrix();
+  }
+  // Hide weapon mesh when fully scoped in
+  if(wMesh){
+    var t=1-(camera.fov-ADS_FOV)/(NORMAL_FOV-ADS_FOV);
+    wMesh.visible=(t<0.85);
+  }
+}
+
 function doShoot(){
   if(!player.alive||player.reloading||player.shootT>0||shopOpen) return;
   if(player.ammo<=0){doReload();return;}
@@ -3603,7 +3640,7 @@ function doShoot(){
   updAmmoHUD();
 
   var pellets=curWep.pel||1;
-  var sp=curWep.spread||0;
+  var sp=(curWep.spread||0)*(adsActive?0.25:1)*(uSt.spreadMult||1);
   _rd.set(0,0,-1).applyQuaternion(camera.quaternion);
   for(var p=0;p<pellets;p++){
     var dir=_rd.clone();
@@ -5249,7 +5286,7 @@ var FEATS={
 ,dualWield:true        // Shop perk: dual-wield pistols for double shots
 ,fortify:true          // Place sandbag barriers (shop item)
 ,scoreboard:true       // Wave-end scoreboard popup
-,hungerMode:true       // Optional: HP drains slowly, kills restore HP
+,hungerMode:false      // Optional: HP drains slowly, kills restore HP (off by default)
 ,mutantBoss:true       // Special mutant boss every 3 worlds
 ,destructEnv:true      // Shoot crates / debris to scatter them
 ,xpMulti:true          // Score multiplier contributes to XP gain
@@ -5919,7 +5956,7 @@ function updBurstFire(dt){
       if(player.ammo>0&&!player.reloading){
         if(!uSt.berserker)player.ammo--;
         updAmmoHUD();
-        var pellets=curWep.pel||1,sp=curWep.spread||0;
+        var pellets=curWep.pel||1,sp=(curWep.spread||0)*(adsActive?0.25:1)*(uSt.spreadMult||1);
         _rd.set(0,0,-1).applyQuaternion(camera.quaternion);
         for(var _bp=0;_bp<pellets;_bp++){
           var dir=_rd.clone();
