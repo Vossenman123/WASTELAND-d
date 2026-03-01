@@ -622,7 +622,8 @@ canvas#c{display:block;width:100vw;height:100vh;}
 <div id="dead">
   <h1>YOU DIED</h1>
   <p id="dead-s">WAVE 1 · 0 KILLS</p>
-  <button onclick="location.reload()">▶ RETRY</button>
+  <button onclick="retryWorld()">▶ RETRY WORLD</button>
+  <button onclick="location.reload()" style="margin-top:8px;opacity:0.6;font-size:10px;">↺ START OVER (WORLD 1)</button>
 </div>
 
 <div id="tui">
@@ -3806,18 +3807,19 @@ var _coinBoostTimer=0;
 
 // ── WORLD TRANSITION ──────────────────────────────────────────────────
 function doWorldTransition(){
+  if(!portal)return; // guard: already transitioning, ignore repeated frame triggers
+  portal=null;       // null immediately so the game loop stops re-calling this
   var tr=document.getElementById('wtrans');
   var nextW=(worldIdx+1)%WORLDS.length;
   var nextWObj=WORLDS[nextW];
   document.getElementById('wt-name').textContent='ENTERING: '+nextWObj.name;
   document.getElementById('wt-sub').textContent='WORLD '+(nextW+1)+' / 6';
   tr.classList.add('show');
-  // Reset admin cheats when entering a new world
   adminResetToggles();
   addTimer(function(){
     worldIdx=nextW;levelInWorld++;
-    waveNum=0;boss5Spawned=boss10Spawned=false;
-    player.hp=Math.min(uSt.maxHp,player.hp+uSt.maxHp*.5); // restore 50% HP
+    waveNum=0;
+    player.hp=Math.min(uSt.maxHp,player.hp+uSt.maxHp*.5);
     player.ammo=curWep.clip;player.res=Math.floor(curWep.res*uSt.ammoMul);
     buildWorld(worldIdx);
     camera.position.set(0,1.75,0);player.vy=0;
@@ -5084,7 +5086,36 @@ function doRespawn(){
   notify('⚠ RESPAWNED AT SPAWN POINT',2000);
   closePause();
 }
-window.closePause=closePause;window.doRespawn=doRespawn;
+// Retry the CURRENT world from wave 1 (keep worldIdx, coins, weapons)
+function retryWorld(){
+  document.getElementById('dead').style.display='none';
+  // Reset wave state
+  waveNum=0;waveActive=false;wavePause=true;wavePauseT=2;
+  bloodMoonActive=false;
+  // Reset player state
+  player.alive=true;
+  player.hp=uSt.maxHp;
+  player.vy=0;player.jetting=false;stopJet();
+  player.reloading=false;player.shootT=0;
+  player.invT=0;player.dashCooldown=0;
+  player.onZipline=false;player.zipProgress=0;player.zipIdx=-1;player.zipCooldown=0;
+  player.ammo=curWep.clip;player.res=Math.floor(curWep.res*uSt.ammoMul);
+  updHPHUD();
+  document.getElementById('lowhp').style.opacity='0';
+  // Rebuild current world (worldIdx unchanged) and start wave 1
+  var tr=document.getElementById('wtrans');
+  document.getElementById('wt-name').textContent='RESTARTING: '+WORLDS[worldIdx].name;
+  document.getElementById('wt-sub').textContent='WORLD '+(worldIdx+1)+' — WAVE 1';
+  tr.classList.add('show');
+  addTimer(function(){
+    buildWorld(worldIdx);
+    camera.position.set(0,1.75,0);player.vy=0;
+    addTimer(function(){tr.classList.remove('show');
+      addTimer(function(){startWave();},1200);
+    },500);
+  },600);
+}
+window.closePause=closePause;window.doRespawn=doRespawn;window.retryWorld=retryWorld;
 
 function resetEnemySpawns(){
   // Remove all current enemies from scene
