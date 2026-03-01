@@ -11,10 +11,12 @@
 body{overflow:hidden;background:#000;font-family:'Share Tech Mono',monospace;touch-action:none;}
 canvas#c{display:block;width:100vw;height:100vh;}
 #crt{position:fixed;inset:0;pointer-events:none;z-index:4;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.02) 0,rgba(0,0,0,0.02) 1px,transparent 1px,transparent 2px);}
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 3px);}
 #crt::after{content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50%,transparent 50%,rgba(0,0,0,0.4) 100%);}
-
+  background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,0.72) 100%);}
+/* Subtle persistent chromatic grain – adds depth without affecting FPS */
+#crt::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(61,255,170,0.025) 0%,transparent 70%);}
 /* HUD */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10;color:var(--g);font-family:'Share Tech Mono',monospace;}
 #topbar{position:absolute;top:0;left:0;right:0;padding:7px 14px;
@@ -231,9 +233,9 @@ canvas#c{display:block;width:100vw;height:100vh;}
   opacity:0;transition:opacity 0.2s;}
 
 /* ── ADS / SCOPE OVERLAY ── */
-#ads-overlay{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity 0.09s;}
+#ads-overlay{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity 0.12s;}
 
-/* ─ SCOPE RING: sized by type ─ */
+/* shared scope ring */
 #ads-overlay .scope-ring{
   position:absolute;top:50%;left:50%;
   border-radius:50%;
@@ -242,81 +244,72 @@ canvas#c{display:block;width:100vw;height:100vh;}
 }
 
 /* ════ SNIPER SCOPE ════
-   Full black surround, large circle, thin green crosshairs, mil-dot ticks */
+   Clean tactical scope: dark-but-not-opaque surround, chrome ring, green crosshairs */
 #ads-overlay.scope-sniper .scope-ring{
-  width:min(72vh,72vw);height:min(72vh,72vw);
-  /* box-shadow punches out from center to cover the whole screen black */
-  box-shadow:0 0 0 9999px rgba(0,0,0,0.98),
-             inset 0 0 0 2px rgba(0,180,0,0.6),
-             inset 0 0 60px rgba(0,0,0,0.55);
-  background:radial-gradient(ellipse at center,rgba(0,0,0,0) 68%,rgba(0,0,0,0.55) 100%);
+  width:min(66vh,66vw);height:min(66vh,66vw);
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.90),
+             inset 0 0 0 2px rgba(0,210,0,0.8),
+             inset 0 0 0 4px rgba(0,0,0,0.95),
+             inset 0 0 40px rgba(0,0,0,0.25);
+  background:radial-gradient(circle at center,transparent 94%,rgba(0,0,0,0.6) 100%);
 }
-/* Sniper crosshair – full-length lines */
 #ads-overlay.scope-sniper .scope-ring::before,
 #ads-overlay.scope-sniper .scope-ring::after{
-  content:'';position:absolute;background:rgba(0,230,0,0.75);
+  content:'';position:absolute;background:rgba(0,220,0,0.8);
 }
-#ads-overlay.scope-sniper .scope-ring::before{
-  top:50%;left:0;right:0;height:1px;transform:translateY(-50%);
-}
-#ads-overlay.scope-sniper .scope-ring::after{
-  left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);
-}
-/* Mil-dot ticks on horizontal line (4 per side) */
+#ads-overlay.scope-sniper .scope-ring::before{top:50%;left:2%;right:2%;height:1px;transform:translateY(-50%);}
+#ads-overlay.scope-sniper .scope-ring::after{left:50%;top:2%;bottom:2%;width:1px;transform:translateX(-50%);}
 #ads-overlay.scope-sniper .scope-ring .mil{
   position:absolute;top:50%;transform:translateY(-50%);
-  width:2px;height:7px;background:rgba(0,230,0,0.85);margin-top:-3px;
+  width:2px;height:8px;background:rgba(0,220,0,0.9);margin-top:-4px;
 }
-/* Center dot */
 #ads-overlay.scope-sniper .scope-ring .mil-c{
   position:absolute;top:50%;left:50%;
-  width:4px;height:4px;border-radius:50%;
-  background:rgba(0,230,0,1);
-  transform:translate(-50%,-50%);
+  width:5px;height:5px;border-radius:50%;
+  background:#00ee00;transform:translate(-50%,-50%);
+  box-shadow:0 0 4px rgba(0,230,0,0.9);
 }
 
-/* ════ RIFLE / HOLOGRAPHIC SCOPE ════
-   Medium circle, slight vignette, thin cyan crosshairs + center dot */
+/* ════ RIFLE / HOLOGRAPHIC SCOPE ════ */
 #ads-overlay.scope-rifle .scope-ring{
-  width:min(54vh,54vw);height:min(54vh,54vw);
-  box-shadow:0 0 0 9999px rgba(0,0,0,0.82),
-             inset 0 0 0 1.5px rgba(61,255,200,0.5),
-             inset 0 0 30px rgba(0,0,0,0.3);
-  background:radial-gradient(ellipse at center,rgba(0,0,0,0) 60%,rgba(0,0,0,0.35) 100%);
+  width:min(58vh,58vw);height:min(58vh,58vw);
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.76),
+             inset 0 0 0 1.5px rgba(61,255,200,0.65),
+             inset 0 0 25px rgba(0,0,0,0.18);
+  background:transparent;
 }
 #ads-overlay.scope-rifle .scope-ring::before,
 #ads-overlay.scope-rifle .scope-ring::after{
-  content:'';position:absolute;background:rgba(61,255,200,0.6);
+  content:'';position:absolute;background:rgba(50,240,190,0.75);
 }
-#ads-overlay.scope-rifle .scope-ring::before{
-  top:50%;left:8%;right:8%;height:1px;transform:translateY(-50%);
-}
-#ads-overlay.scope-rifle .scope-ring::after{
-  left:50%;top:8%;bottom:8%;width:1px;transform:translateX(-50%);
-}
+#ads-overlay.scope-rifle .scope-ring::before{top:50%;left:10%;right:10%;height:1px;transform:translateY(-50%);}
+#ads-overlay.scope-rifle .scope-ring::after{left:50%;top:10%;bottom:10%;width:1px;transform:translateX(-50%);}
 #ads-overlay.scope-rifle .scope-ring .mil-c{
   position:absolute;top:50%;left:50%;
-  width:5px;height:5px;border-radius:50%;
-  background:rgba(255,80,80,0.95);
-  transform:translate(-50%,-50%);
-  box-shadow:0 0 4px rgba(255,80,80,0.8);
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,50,50,0.95);transform:translate(-50%,-50%);
+  box-shadow:0 0 6px rgba(255,60,60,0.85);
 }
 
-/* ════ IRON SIGHTS ════
-   No circle – just a subtle dark vignette to simulate close-focus aiming */
-#ads-overlay.scope-iron .scope-ring{
-  display:none;
-}
+/* ════ IRON SIGHTS ════  – vignette + floating red dot ════ */
+#ads-overlay.scope-iron .scope-ring{display:none;}
 #ads-overlay.scope-iron::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 65% 65% at 50% 50%,transparent 38%,rgba(0,0,0,0.5) 100%);
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 62% 62% at 50% 50%,transparent 36%,rgba(0,0,0,0.44) 100%);
+}
+/* red-dot reticle */
+#ads-overlay.scope-iron::after{
+  content:'';position:absolute;top:50%;left:50%;
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,40,40,0.95);
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 5px rgba(255,40,40,0.8);
   pointer-events:none;
 }
 
-/* Hide standard crosshair lines when scoped (all types) */
-#xhair.ads .xl.h,#xhair.ads .xl.v{opacity:0;}
-/* But keep them visible for iron sights */
-#xhair.ads-iron .xl.h,#xhair.ads-iron .xl.v{opacity:1;}
+/* Hide crosshair lines while any scope is active */
+#xhair.ads .xl.h,#xhair.ads .xl.v,
+#xhair.ads-iron .xl.h,#xhair.ads-iron .xl.v{opacity:0;}
 
 /* Start */
 #start{position:fixed;inset:0;z-index:100;background:#000;
@@ -916,13 +909,13 @@ canvas#c{display:block;width:100vw;height:100vh;}
 
 // ── RENDERER ──────────────────────────────────────────────────────────
 var renderer = new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2.0));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.autoClear = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
+renderer.toneMappingExposure = 1.35;
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,0.05,200);
@@ -979,16 +972,23 @@ var ziplines = [];
 var grappHook={state:'idle',fx:0,fy:0,fz:0,tx:0,ty:0,tz:0,vx:0,vy:0,vz:0,dist:0,cooldown:0,lineMesh:null,ballMesh:null};
 
 // Permanent lights (kept across worlds)
-var ambLight = new THREE.AmbientLight(0x667755,0.9);
+var ambLight = new THREE.AmbientLight(0x667755,0.5); // reduced; hemisphere takes over
 scene.add(ambLight);
-var sunLight = new THREE.DirectionalLight(0xffd080,0.7);
+// Hemisphere light: sky colour on top faces, ground bounce on bottom faces
+var hemLight = new THREE.HemisphereLight(0x88aacc,0x443322,0.55);
+scene.add(hemLight);
+var sunLight = new THREE.DirectionalLight(0xffd080,0.9);
 sunLight.position.set(40,80,-30);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.set(1024,1024);
-sunLight.shadow.camera.left=sunLight.shadow.camera.bottom=-80;
-sunLight.shadow.camera.right=sunLight.shadow.camera.top=80;
-sunLight.shadow.camera.far=250;
+sunLight.shadow.mapSize.set(2048,2048);
+sunLight.shadow.camera.left=sunLight.shadow.camera.bottom=-90;
+sunLight.shadow.camera.right=sunLight.shadow.camera.top=90;
+sunLight.shadow.camera.far=280;
 scene.add(sunLight);
+// Subtle cool fill light from below/side (simulates sky bounce)
+var fillLight = new THREE.DirectionalLight(0x6688bb,0.22);
+fillLight.position.set(-30,-20,20);
+scene.add(fillLight);
 var muzzleL = new THREE.PointLight(0xff8822,0,6);
 muzzleL.position.set(0,1.7,-2); scene.add(muzzleL);
 
@@ -1322,8 +1322,8 @@ var wallTexBase = mkTex(256,256,function(c,w,h){
 });
 
 // Current ground/wall materials (updated per world)
-var groundMat = new THREE.MeshLambertMaterial({map:baseGroundTex,color:0xaabb99});
-var wallMat   = new THREE.MeshLambertMaterial({map:wallTexBase,color:0xaab099});
+var groundMat = new THREE.MeshStandardMaterial({map:baseGroundTex,color:0xaabb99,roughness:0.92,metalness:0.0});
+var wallMat   = new THREE.MeshStandardMaterial({map:wallTexBase,color:0xaab099,roughness:0.86,metalness:0.04});
 
 // ── WORLD BUILDER ─────────────────────────────────────────────────────
 var worldIdx = 0;
@@ -1334,10 +1334,15 @@ function setWorldTheme(wi){
   scene.fog = new THREE.FogExp2(W.fog,W.fogD);
   scene.background = new THREE.Color(W.sky);
   ambLight.color.setHex(W.amb);
-  ambLight.intensity = W.ambI;
+  ambLight.intensity = W.ambI*0.55; // hemisphere takes the rest
   sunLight.color.setHex(W.sunCol);
   sunLight.intensity = W.sunI;
   groundMat.color.setHex(W.ground);
+  // Per-world hemisphere sky/ground colours
+  var hemSky=[0x7799cc,0x3a5a22,0xbbd0ee,0x001530,0x2a1000,0x0d0025];
+  var hemGnd=[0x3a2810,0x1a2a08,0x7888a0,0x080f18,0x180500,0x05000f];
+  hemLight.color.setHex(hemSky[wi]||0x778899);
+  hemLight.groundColor.setHex(hemGnd[wi]||0x332211);
   document.getElementById('loc-txt').textContent = W.name + ' · WORLD '+(wi+1);
 }
 
@@ -2595,7 +2600,7 @@ var WDEFS=[
    dStat:4,fStat:10,rStat:5},
   {id:'sniper',  name:'SNIPER',     icon:'🎯',price:400,
    dmg:120,hs:300,rof:1.2,rl:2.5,clip:5,  res:30, auto:false,spread:0,   col:0x447755,
-   scopeFOV:10,scopeType:'sniper',
+   scopeFOV:28,scopeType:'sniper',
    dStat:10,fStat:2,rStat:10},
   {id:'rocket',  name:'ROCKET',     icon:'🚀',price:650,
    dmg:200,hs:200,rof:2.5,rl:3.5,clip:4,  res:20, auto:false,spread:0,explosive:true,explR:6,col:0xaa7722,
@@ -2628,7 +2633,7 @@ var WDEFS=[
    dStat:9,fStat:2,rStat:2},
   {id:'railgun', name:'RAILGUN',       icon:'🔹',price:1200,
    dmg:280,hs:600,rof:2.2,rl:3.5,clip:3,  res:15, auto:false,spread:0,  pierce:true,col:0x0088ff,
-   scopeFOV:12,scopeType:'sniper',
+   scopeFOV:24,scopeType:'sniper',
    dStat:10,fStat:1,rStat:10},
   {id:'grenadeL',name:'GRENADE LNCHR',icon:'🟠',price:700,
    dmg:150,hs:150,rof:1.0,rl:3.0,clip:6,  res:30, auto:false,spread:.04,explosive:true,explR:7,col:0xaa5500,
@@ -2636,7 +2641,7 @@ var WDEFS=[
    dStat:9,fStat:2,rStat:7},
   {id:'crossbow',name:'CROSSBOW',     icon:'🏹',price:450,
    dmg:90,hs:250,rof:.9, rl:2.8, clip:10, res:50, auto:false,spread:0,  pierce:true,col:0x664422,
-   scopeFOV:16,scopeType:'sniper',
+   scopeFOV:32,scopeType:'sniper',
    dStat:9,fStat:3,rStat:9},
   {id:'laserpistol',name:'LASER PISTOL',icon:'🔦',price:500,
    dmg:38,hs:95, rof:.12,rl:1.5, clip:30, res:150,auto:false,spread:0,  col:0xff2266,
@@ -2657,10 +2662,10 @@ function buildWepMesh(w){
   wEquipT=0.35;
   if(wMesh) wScene.remove(wMesh);
   var g=new THREE.Group();
-  var mat=new THREE.MeshLambertMaterial({color:w.col});
-  var dk=new THREE.MeshLambertMaterial({color:new THREE.Color(w.col).multiplyScalar(.45)});
-  var blk=new THREE.MeshLambertMaterial({color:0x111111});
-  var metal=new THREE.MeshLambertMaterial({color:0x777777});
+  var mat=new THREE.MeshStandardMaterial({color:w.col,roughness:0.45,metalness:0.6});
+  var dk=new THREE.MeshStandardMaterial({color:new THREE.Color(w.col).multiplyScalar(.45),roughness:0.55,metalness:0.5});
+  var blk=new THREE.MeshStandardMaterial({color:0x111111,roughness:0.7,metalness:0.3});
+  var metal=new THREE.MeshStandardMaterial({color:0x777777,roughness:0.3,metalness:0.85});
   function bx(W,H,D,x,y,z,m){var mesh=new THREE.Mesh(new THREE.BoxGeometry(W,H,D),m||mat);mesh.position.set(x||0,y||0,z||0);g.add(mesh);return mesh;}
   function cy(r1,r2,h,x,y,z,rx,m){var mesh=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,8),m||mat);mesh.position.set(x||0,y||0,z||0);if(rx)mesh.rotation.x=rx;g.add(mesh);return mesh;}
   // Trigger guard helper: bottom bar + two side stubs
@@ -3675,7 +3680,12 @@ window.addEventListener('wheel',function(e){
   stopADS(); // reset scope when weapon changes
   buildWepMesh(w);updAmmoHUD();notify('EQUIPPED: '+w.name,800);
 },{passive:true});
-document.addEventListener('pointerlockchange',function(){locked=!!document.pointerLockElement;});
+document.addEventListener('pointerlockchange',function(){
+  locked=!!document.pointerLockElement;
+  // Escape key releases pointer lock in the browser before keydown fires;
+  // auto-open the pause menu so the player isn't left in a locked state.
+  if(!locked&&gameRunning&&!shopOpen&&!pauseOpen) openPause();
+});
 document.getElementById('c').addEventListener('click',function(){if(gameRunning&&!shopOpen)document.getElementById('c').requestPointerLock();});
 document.addEventListener('mousemove',function(e){
   if(!locked||!gameRunning||shopOpen)return;
@@ -3820,12 +3830,8 @@ function startADS(){
   }
   var xh=document.getElementById('xhair');
   if(xh){
-    // For iron sights keep standard crosshair; for scope types hide lines
-    if((curWep.scopeType||'iron')==='iron'){
-      xh.classList.add('ads-iron');
-    }else{
-      xh.classList.add('ads');
-    }
+    // Hide crosshair lines for all scope types; overlay provides the reticle
+    xh.classList.add('ads');
   }
 }
 function stopADS(){
