@@ -3680,11 +3680,13 @@ window.addEventListener('wheel',function(e){
   stopADS(); // reset scope when weapon changes
   buildWepMesh(w);updAmmoHUD();notify('EQUIPPED: '+w.name,800);
 },{passive:true});
+var LOCK_RELEASE_DEBOUNCE_MS=80; // window (ms) to ignore Escape keydown after pointer-lock release
+var lockReleasedAt=-1; // timestamp when pointer lock was released by Escape
 document.addEventListener('pointerlockchange',function(){
   locked=!!document.pointerLockElement;
   // Escape key releases pointer lock in the browser before keydown fires;
-  // auto-open the pause menu so the player isn't left in a locked state.
-  if(!locked&&gameRunning&&!shopOpen&&!pauseOpen) openPause();
+  // record the time so the keydown handler can ignore that Escape event.
+  if(!locked&&gameRunning&&!shopOpen&&!pauseOpen){lockReleasedAt=performance.now();openPause();}
 });
 document.getElementById('c').addEventListener('click',function(){if(gameRunning&&!shopOpen)document.getElementById('c').requestPointerLock();});
 document.addEventListener('mousemove',function(e){
@@ -6512,6 +6514,9 @@ window.addEventListener('keydown',function(e){
   if(!gameRunning)return;
   if(e.code==='KeyP'||(e.code==='Escape'&&!shopOpen)){
     e.preventDefault();
+    // If Escape just triggered a pointer-lock release (<LOCK_RELEASE_DEBOUNCE_MS ago), it was the
+    // same keypress that opened the pause – don't immediately close it again.
+    if(e.code==='Escape'&&performance.now()-lockReleasedAt<LOCK_RELEASE_DEBOUNCE_MS) return;
     if(pauseOpen) closePause();
     else if(!shopOpen) openPause();
   }
