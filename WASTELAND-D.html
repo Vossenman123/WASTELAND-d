@@ -212,23 +212,92 @@ canvas#c{display:block;width:100vw;height:100vh;}
   opacity:0;transition:opacity 0.2s;}
 
 /* ── ADS / SCOPE OVERLAY ── */
-#ads-overlay{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity 0.08s;}
-#ads-overlay::before,#ads-overlay::after{content:'';position:absolute;background:rgba(0,0,0,0.82);}
-/* black bars top/bottom to create letterbox scope effect */
-#ads-overlay::before{top:0;left:0;right:0;height:calc(50% - 56px);}
-#ads-overlay::after{bottom:0;left:0;right:0;height:calc(50% - 56px);}
-/* Scope ring drawn via box-shadow on a pseudo-circle */
-#ads-overlay .scope-ring{position:absolute;top:50%;left:50%;
-  width:112px;height:112px;margin:-56px 0 0 -56px;
-  border:2px solid rgba(61,255,170,0.85);border-radius:50%;
-  box-shadow:0 0 0 9999px rgba(0,0,0,0.82),inset 0 0 24px rgba(61,255,170,0.12);
-  pointer-events:none;}
-/* Cross-lines inside scope */
-#ads-overlay .scope-ring::before,#ads-overlay .scope-ring::after{content:'';position:absolute;background:rgba(61,255,170,0.55);}
-#ads-overlay .scope-ring::before{top:50%;left:8px;right:8px;height:1px;transform:translateY(-50%);}
-#ads-overlay .scope-ring::after{left:50%;top:8px;bottom:8px;width:1px;transform:translateX(-50%);}
-/* Hide default crosshair lines when ADS, keep only center dot */
+#ads-overlay{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity 0.09s;}
+
+/* ─ SCOPE RING: sized by type ─ */
+#ads-overlay .scope-ring{
+  position:absolute;top:50%;left:50%;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+
+/* ════ SNIPER SCOPE ════
+   Full black surround, large circle, thin green crosshairs, mil-dot ticks */
+#ads-overlay.scope-sniper .scope-ring{
+  width:min(72vh,72vw);height:min(72vh,72vw);
+  /* box-shadow punches out from center to cover the whole screen black */
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.98),
+             inset 0 0 0 2px rgba(0,180,0,0.6),
+             inset 0 0 60px rgba(0,0,0,0.55);
+  background:radial-gradient(ellipse at center,rgba(0,0,0,0) 68%,rgba(0,0,0,0.55) 100%);
+}
+/* Sniper crosshair – full-length lines */
+#ads-overlay.scope-sniper .scope-ring::before,
+#ads-overlay.scope-sniper .scope-ring::after{
+  content:'';position:absolute;background:rgba(0,230,0,0.75);
+}
+#ads-overlay.scope-sniper .scope-ring::before{
+  top:50%;left:0;right:0;height:1px;transform:translateY(-50%);
+}
+#ads-overlay.scope-sniper .scope-ring::after{
+  left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);
+}
+/* Mil-dot ticks on horizontal line (4 per side) */
+#ads-overlay.scope-sniper .scope-ring .mil{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:2px;height:7px;background:rgba(0,230,0,0.85);margin-top:-3px;
+}
+/* Center dot */
+#ads-overlay.scope-sniper .scope-ring .mil-c{
+  position:absolute;top:50%;left:50%;
+  width:4px;height:4px;border-radius:50%;
+  background:rgba(0,230,0,1);
+  transform:translate(-50%,-50%);
+}
+
+/* ════ RIFLE / HOLOGRAPHIC SCOPE ════
+   Medium circle, slight vignette, thin cyan crosshairs + center dot */
+#ads-overlay.scope-rifle .scope-ring{
+  width:min(54vh,54vw);height:min(54vh,54vw);
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.82),
+             inset 0 0 0 1.5px rgba(61,255,200,0.5),
+             inset 0 0 30px rgba(0,0,0,0.3);
+  background:radial-gradient(ellipse at center,rgba(0,0,0,0) 60%,rgba(0,0,0,0.35) 100%);
+}
+#ads-overlay.scope-rifle .scope-ring::before,
+#ads-overlay.scope-rifle .scope-ring::after{
+  content:'';position:absolute;background:rgba(61,255,200,0.6);
+}
+#ads-overlay.scope-rifle .scope-ring::before{
+  top:50%;left:8%;right:8%;height:1px;transform:translateY(-50%);
+}
+#ads-overlay.scope-rifle .scope-ring::after{
+  left:50%;top:8%;bottom:8%;width:1px;transform:translateX(-50%);
+}
+#ads-overlay.scope-rifle .scope-ring .mil-c{
+  position:absolute;top:50%;left:50%;
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(255,80,80,0.95);
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 4px rgba(255,80,80,0.8);
+}
+
+/* ════ IRON SIGHTS ════
+   No circle – just a subtle dark vignette to simulate close-focus aiming */
+#ads-overlay.scope-iron .scope-ring{
+  display:none;
+}
+#ads-overlay.scope-iron::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 65% 65% at 50% 50%,transparent 38%,rgba(0,0,0,0.5) 100%);
+  pointer-events:none;
+}
+
+/* Hide standard crosshair lines when scoped (all types) */
 #xhair.ads .xl.h,#xhair.ads .xl.v{opacity:0;}
+/* But keep them visible for iron sights */
+#xhair.ads-iron .xl.h,#xhair.ads-iron .xl.v{opacity:1;}
 
 /* Start */
 #start{position:fixed;inset:0;z-index:100;background:#000;
@@ -438,7 +507,12 @@ canvas#c{display:block;width:100vw;height:100vh;}
 <div id="dash-tilt"></div>
 <div id="poison-overlay"></div>
 <div id="adrenaline-overlay"></div>
-<div id="ads-overlay"><div class="scope-ring"></div></div>
+<div id="ads-overlay"><div class="scope-ring">
+  <span class="mil" style="left:20%"></span><span class="mil" style="left:30%"></span>
+  <span class="mil" style="left:40%"></span><span class="mil" style="left:60%"></span>
+  <span class="mil" style="left:70%"></span><span class="mil" style="left:80%"></span>
+  <span class="mil-c"></span>
+</div></div>
 
 <!-- Zombie Radar -->
 <div id="radar">
@@ -2446,52 +2520,68 @@ function spawnPortal(){
 var WDEFS=[
   {id:'pistol',  name:'PISTOL',     icon:'🔫',price:0,
    dmg:28,hs:65, rof:.18,rl:2.0,  clip:24, res:120,auto:false,spread:0,   col:0x6688aa,
+   scopeFOV:52,scopeType:'iron',
    dStat:3,fStat:7,rStat:6},
   {id:'shotgun', name:'SHOTGUN',    icon:'🪖',price:150,
    dmg:16,hs:30, rof:.65,rl:2.8,  clip:8,  res:48, auto:false,spread:.1,pel:6,col:0xaa6633,
+   scopeFOV:58,scopeType:'iron',
    dStat:7,fStat:3,rStat:2},
   {id:'smg',     name:'SMG',        icon:'⚡',price:250,
    dmg:14,hs:28, rof:.07,rl:2.2,  clip:40, res:200,auto:true, spread:.04, col:0x555599,
+   scopeFOV:42,scopeType:'rifle',
    dStat:4,fStat:10,rStat:5},
   {id:'sniper',  name:'SNIPER',     icon:'🎯',price:400,
    dmg:120,hs:300,rof:1.2,rl:2.5,clip:5,  res:30, auto:false,spread:0,   col:0x447755,
+   scopeFOV:10,scopeType:'sniper',
    dStat:10,fStat:2,rStat:10},
   {id:'rocket',  name:'ROCKET',     icon:'🚀',price:650,
    dmg:200,hs:200,rof:2.5,rl:3.5,clip:4,  res:20, auto:false,spread:0,explosive:true,explR:6,col:0xaa7722,
+   scopeFOV:56,scopeType:'iron',
    dStat:9,fStat:1,rStat:8},
   {id:'energy',  name:'ENERGY CANNON',icon:'🔮',price:1000,
    dmg:80,hs:180, rof:.35,rl:2.0, clip:16, res:80, auto:false,spread:0,   col:0x44aaff,
+   scopeFOV:38,scopeType:'rifle',
    dStat:8,fStat:6,rStat:9},
   // ── 10 NEW WEAPONS ──
   {id:'burst',   name:'BURST RIFLE',  icon:'🔸',price:350,
    dmg:32,hs:80, rof:.45,rl:2.4, clip:30, res:180,auto:false,spread:.02,burst:3,burstDelay:.08,col:0x779944,
+   scopeFOV:36,scopeType:'rifle',
    dStat:6,fStat:6,rStat:7},
   {id:'plasma',  name:'PLASMA RIFLE', icon:'🔷',price:750,
    dmg:55,hs:140,rof:.28,rl:2.2, clip:20, res:80, auto:true, spread:.02,explosive:false,col:0x22ddff,
+   scopeFOV:40,scopeType:'rifle',
    dStat:7,fStat:8,rStat:8},
   {id:'flame',   name:'FLAMETHROWER', icon:'🔥',price:600,
    dmg:8, hs:12, rof:.05,rl:2.8, clip:60, res:120,auto:true, spread:.18,flameGun:true,col:0xff6600,
+   scopeFOV:62,scopeType:'iron',
    dStat:5,fStat:9,rStat:3},
   {id:'minigun', name:'MINIGUN',       icon:'⚙',price:900,
    dmg:10,hs:20, rof:.04,rl:4.5, clip:120,res:400,auto:true, spread:.07,spinup:true,col:0x888888,
+   scopeFOV:60,scopeType:'iron',
    dStat:3,fStat:10,rStat:4},
   {id:'dblbarrel',name:'DBL BARREL',  icon:'💥',price:200,
    dmg:28,hs:50, rof:0.9,rl:2.2, clip:2,  res:40, auto:false,spread:.14,pel:9,col:0xcc8833,
+   scopeFOV:55,scopeType:'iron',
    dStat:9,fStat:2,rStat:2},
   {id:'railgun', name:'RAILGUN',       icon:'🔹',price:1200,
    dmg:280,hs:600,rof:2.2,rl:3.5,clip:3,  res:15, auto:false,spread:0,  pierce:true,col:0x0088ff,
+   scopeFOV:12,scopeType:'sniper',
    dStat:10,fStat:1,rStat:10},
   {id:'grenadeL',name:'GRENADE LNCHR',icon:'🟠',price:700,
    dmg:150,hs:150,rof:1.0,rl:3.0,clip:6,  res:30, auto:false,spread:.04,explosive:true,explR:7,col:0xaa5500,
+   scopeFOV:54,scopeType:'iron',
    dStat:9,fStat:2,rStat:7},
   {id:'crossbow',name:'CROSSBOW',     icon:'🏹',price:450,
    dmg:90,hs:250,rof:.9, rl:2.8, clip:10, res:50, auto:false,spread:0,  pierce:true,col:0x664422,
+   scopeFOV:16,scopeType:'sniper',
    dStat:9,fStat:3,rStat:9},
   {id:'laserpistol',name:'LASER PISTOL',icon:'🔦',price:500,
    dmg:38,hs:95, rof:.12,rl:1.5, clip:30, res:150,auto:false,spread:0,  col:0xff2266,
+   scopeFOV:44,scopeType:'rifle',
    dStat:5,fStat:8,rStat:8},
   {id:'incsmg',  name:'INCENDIARY SMG',icon:'🌡',price:550,
    dmg:12,hs:24, rof:.09,rl:2.2, clip:35, res:140,auto:true, spread:.05,burning:true,col:0xff4400,
+   scopeFOV:44,scopeType:'rifle',
    dStat:4,fStat:10,rStat:5},
 ];
 var curWep = WDEFS[0];
@@ -3518,6 +3608,7 @@ window.addEventListener('wheel',function(e){
   var w=owned[ni];
   curWep=w;player.ammo=Math.min(w.clip,player.ammo>0?player.ammo:w.clip);
   player.res=Math.floor(w.res*uSt.ammoMul);
+  stopADS(); // reset scope when weapon changes
   buildWepMesh(w);updAmmoHUD();notify('EQUIPPED: '+w.name,800);
 },{passive:true});
 document.addEventListener('pointerlockchange',function(){locked=!!document.pointerLockElement;});
@@ -3570,7 +3661,7 @@ function doKnifeAttack(){
 }
 
 // ── GRAPPLING HOOK (Right Mouse Button) ────────────────────────────────
-var GRAPPLE_SPD=55,GRAPPLE_PULL=20,GRAPPLE_MAXDIST=35;
+var GRAPPLE_SPD=60,GRAPPLE_PULL=28,GRAPPLE_MAXDIST=38;
 function startGrapple(){
   if(!player.alive||shopOpen)return;
   if(grappHook.state!=='idle'||grappHook.cooldown>0)return;
@@ -3590,7 +3681,12 @@ function startGrapple(){
 }
 function releaseGrapple(){
   if(grappHook.state==='idle')return;
-  if(grappHook.state==='attached') player.vy=Math.max(player.vy,6); // upward kick
+  if(grappHook.state==='attached'){
+    // Launch the player in the direction they were travelling + upward boost
+    var dx=grappHook.tx-camera.position.x,dy=grappHook.ty-camera.position.y,dz=grappHook.tz-camera.position.z;
+    var d=Math.sqrt(dx*dx+dy*dy+dz*dz)||1;
+    player.vy=Math.max(5, (dy/d)*GRAPPLE_PULL*0.7+4);
+  }
   grappHook.state='idle';grappHook.cooldown=1.5;
   grappHook.lineMesh.visible=false;grappHook.ballMesh.visible=false;
   player.onGrapple=false;
@@ -3630,7 +3726,7 @@ function updGrapple(dt){
     camera.position.x+=nx*GRAPPLE_PULL*dt;
     camera.position.y+=ny*GRAPPLE_PULL*dt;
     camera.position.z+=nz*GRAPPLE_PULL*dt;
-    player.vy=ny*GRAPPLE_PULL; // override vertical physics
+    player.vy=0; // gravity is already skipped via onGrapple; zero vy so release feels clean
     player.onGround=false;
     // Hook ball stays at attach point
     grappHook.fx=grappHook.tx;grappHook.fy=grappHook.ty;grappHook.fz=grappHook.tz;
@@ -3648,34 +3744,49 @@ function updGrapple(dt){
 
 // ── ADS / SCOPE (Right Mouse Button) ──────────────────────────────────
 var adsActive=false;
-var ADS_FOV=30, NORMAL_FOV=78;
-var _adsFovT=0; // lerp timer 0..1
+var NORMAL_FOV=78;
 function startADS(){
   if(!player.alive||shopOpen)return;
   adsActive=true;
   var overlay=document.getElementById('ads-overlay');
-  if(overlay)overlay.style.opacity='1';
-  // Tighten crosshair
+  if(overlay){
+    overlay.style.opacity='1';
+    var st=curWep.scopeType||'iron';
+    overlay.className='scope-'+st; // drives CSS scope visuals
+  }
   var xh=document.getElementById('xhair');
-  if(xh)xh.classList.add('ads');
+  if(xh){
+    // For iron sights keep standard crosshair; for scope types hide lines
+    if((curWep.scopeType||'iron')==='iron'){
+      xh.classList.add('ads-iron');
+    }else{
+      xh.classList.add('ads');
+    }
+  }
 }
 function stopADS(){
   adsActive=false;
   var overlay=document.getElementById('ads-overlay');
-  if(overlay)overlay.style.opacity='0';
+  if(overlay){overlay.style.opacity='0';overlay.className='';}
   var xh=document.getElementById('xhair');
-  if(xh)xh.classList.remove('ads');
+  if(xh){xh.classList.remove('ads');xh.classList.remove('ads-iron');}
 }
 function updADS(dt){
-  var targetFOV=adsActive?ADS_FOV:NORMAL_FOV;
-  if(Math.abs(camera.fov-targetFOV)>0.5){
+  var targetFOV=adsActive?(curWep.scopeFOV||52):NORMAL_FOV;
+  if(Math.abs(camera.fov-targetFOV)>0.3){
     camera.fov+=(targetFOV-camera.fov)*Math.min(1,dt*14);
     camera.updateProjectionMatrix();
   }
-  // Hide weapon mesh when fully scoped in
+  // Hide weapon mesh when fully scoped in (sniper/rifle only; iron sights keep weapon visible)
   if(wMesh){
-    var t=1-(camera.fov-ADS_FOV)/(NORMAL_FOV-ADS_FOV);
-    wMesh.visible=(t<0.85);
+    var st=curWep.scopeType||'iron';
+    if(st==='sniper'||st==='rifle'){
+      var sFOV=curWep.scopeFOV||52;
+      var t=(camera.fov-sFOV)/(NORMAL_FOV-sFOV);
+      wMesh.visible=(t>0.18); // hide weapon when >82% zoomed in
+    }else{
+      wMesh.visible=true;
+    }
   }
 }
 
@@ -4618,6 +4729,7 @@ function switchWeapon(idx){
   curWep=w;
   player.ammo=Math.min(w.clip,player.ammo>0?player.ammo:w.clip);
   player.res=Math.floor(w.res*uSt.ammoMul);
+  stopADS();
   buildWepMesh(w);updAmmoHUD();notify('EQUIPPED: '+w.name,1200);
 }
 
@@ -4768,6 +4880,7 @@ function shopEquip(id){
   if(!w||!ownedWeps[id])return;
   curWep=w;player.ammo=Math.min(w.clip,player.ammo>0?player.ammo:w.clip);
   player.res=Math.floor(w.res*uSt.ammoMul);
+  stopADS();
   buildWepMesh(w);updAmmoHUD();notify('EQUIPPED: '+w.name,1200);renderShop();
 }
 function shopUpgrade(id){
@@ -6991,7 +7104,7 @@ loop=function(){
 
   // ── GRAVITY & JUMP ──
   prevY=camera.position.y;
-  player.vy-=20*dt2;
+  if(!player.onGrapple) player.vy-=20*dt2; // gravity suspended while grappling
   camera.position.y+=player.vy*dt2;
   // ── ROOF LANDING: snap to top of any building the player stands on ──
   if(player.vy<=0){
