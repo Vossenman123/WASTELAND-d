@@ -3474,16 +3474,16 @@ Enemy.prototype.update=function(dt,px,pz){
   var dx=tpx-this.x,dz=tpz-this.z;
   var dist=Math.sqrt(dx*dx+dz*dz);
 
-  // HP bar face player
+  // HP bar face player (reuse pre-allocated vectors to avoid GC pressure)
   if(dist<20){
-    var wp=new THREE.Vector3(px,this.hpBg.getWorldPosition(new THREE.Vector3()).y,pz);
-    this.hpBg.lookAt(wp);this.hpFg.lookAt(wp);
+    this.hpBg.getWorldPosition(_hpLookAt);_hpLookAt.x=px;_hpLookAt.z=pz;
+    this.hpBg.lookAt(_hpLookAt);this.hpFg.lookAt(_hpLookAt);
     this.hpFg.scale.x=this.hp/this.maxHp;
     this.hpFg.position.x=-(1-this.hp/this.maxHp)*.375*this.sz;
     this.hpBg.visible=this.hpFg.visible=true;
   }else{this.hpBg.visible=this.hpFg.visible=false;}
 
-  if(this.isBoss&&this.alive){document.getElementById('bbf').style.width=(this.hp/this.maxHp*100)+'%';}
+  if(this.isBoss&&this.alive&&_DOM.bbf){_DOM.bbf.style.width=(this.hp/this.maxHp*100)+'%';}
 
   if(dist<this.T.detR){
     // Alert scream - only cluster-mates within 8 units also enter chase
@@ -3944,8 +3944,14 @@ window.addEventListener('wheel',function(e){
 },{passive:true});
 document.addEventListener('pointerlockchange',function(){
   locked=!!document.pointerLockElement;
-  // Pointer-lock state only. Pause toggling is handled entirely in
-  // the keydown handler (Escape) and visibilitychange (alt-tab).
+  // When the browser releases pointer-lock (user pressed Escape), it suppresses
+  // the keydown event for Escape entirely in Chrome/Edge/Safari.  The only
+  // reliable signal is this pointerlockchange event.  Open the pause menu
+  // unless WE intentionally released the lock (shop open or pause already open
+  // – both set their flag before calling exitPointerLock, so the guard works).
+  if(!locked && gameRunning && !pauseOpen && !shopOpen){
+    openPause();
+  }
 });
 // Alt-tab / window blur: auto-pause when the tab loses visibility.
 // Registered once at page load (not inside startGame) to avoid duplicate listeners.
@@ -4541,6 +4547,11 @@ var _rgt=new THREE.Vector3();
 var _mv=new THREE.Vector3();
 // Pre-allocated hitNum projection vector
 var _hnV3=new THREE.Vector3();
+// Pre-allocated enemy HP-bar look-at vector (avoids 2× alloc per enemy per frame)
+var _hpLookAt=new THREE.Vector3();
+// Pre-allocated wall-run direction vectors
+var _wrFwd=new THREE.Vector3();
+var _wrRgt=new THREE.Vector3();
 var hudUpdateFrame=0;
 // Cached hot DOM elements (populated in startGame)
 var _DOM={};
@@ -4846,11 +4857,11 @@ var wallRunT=0;
 var wallRunning=false;
 function tryWallRun(){
   if(player.onGround)return;
-  // Check if close to a wall horizontally
-  var fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
-  var rgt=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  // Check if close to a wall horizontally (reuse pre-allocated vectors)
+  _wrFwd.set(-Math.sin(yaw),0,-Math.cos(yaw));
+  _wrRgt.set(Math.cos(yaw),0,-Math.sin(yaw));
   var cx=camera.position.x,cz=camera.position.z;
-  var onWall=chkCol(cx+rgt.x*.7,cz+rgt.z*.7)||chkCol(cx-rgt.x*.7,cz-rgt.z*.7);
+  var onWall=chkCol(cx+_wrRgt.x*.7,cz+_wrRgt.z*.7)||chkCol(cx-_wrRgt.x*.7,cz-_wrRgt.z*.7);
   if(onWall&&!wallRunning&&player.vy<0&&wallRunT<=0){
     wallRunning=true;wallRunT=1.5;
     player.vy=Math.max(player.vy,-1); // slow fall
@@ -5490,6 +5501,11 @@ document.getElementById('play-btn').addEventListener('click',function(){
   _DOM.chroma   = document.getElementById('chroma');
   _DOM.hitRing  = document.getElementById('hit-ring');
   _DOM.hpn      = document.getElementById('hpn');
+  _DOM.bbf      = document.getElementById('bbf');
+  _DOM.rlt      = document.getElementById('rlt');
+  _DOM.lowhp    = document.getElementById('lowhp');
+  _DOM.slowmoOv = document.getElementById('slowmo-overlay');
+  _DOM.jflame   = document.getElementById('jflame');
   buildWorld(0);setupTouch();
   initRadar();
   addTimer(startWave,1500);
