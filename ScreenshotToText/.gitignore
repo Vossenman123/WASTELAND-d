@@ -1,0 +1,22 @@
+# .NET build artifacts
+bin/
+obj/
+out/
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# NuGet
+*.nupkg
+packages/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.log
