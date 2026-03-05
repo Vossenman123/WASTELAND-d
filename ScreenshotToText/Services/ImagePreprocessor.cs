@@ -57,22 +57,33 @@ public static class ImagePreprocessor
     }
 
     /// <summary>
-    /// Enhances the contrast of an image.
+    /// Enhances the contrast of an image using direct pixel buffer access.
     /// </summary>
     private static SKBitmap EnhanceContrast(SKBitmap source, float contrastFactor)
     {
-        var result = new SKBitmap(source.Width, source.Height);
+        var result = new SKBitmap(source.Width, source.Height, source.ColorType, source.AlphaType);
         float intercept = 128 * (1 - contrastFactor);
 
-        for (int y = 0; y < source.Height; y++)
+        var srcPixels = source.GetPixelSpan();
+        var dstPtr = result.GetPixels();
+
+        unsafe
         {
-            for (int x = 0; x < source.Width; x++)
+            var dst = (byte*)dstPtr.ToPointer();
+            int bytesPerPixel = source.BytesPerPixel;
+            int totalPixels = source.Width * source.Height;
+
+            for (int i = 0; i < totalPixels; i++)
             {
-                var pixel = source.GetPixel(x, y);
-                byte r = ClampToByte(pixel.Red * contrastFactor + intercept);
-                byte g = ClampToByte(pixel.Green * contrastFactor + intercept);
-                byte b = ClampToByte(pixel.Blue * contrastFactor + intercept);
-                result.SetPixel(x, y, new SKColor(r, g, b, pixel.Alpha));
+                int offset = i * bytesPerPixel;
+                // SKBitmap stores pixels as BGRA (or RGBA depending on platform)
+                dst[offset + 0] = ClampToByte(srcPixels[offset + 0] * contrastFactor + intercept); // B/R
+                dst[offset + 1] = ClampToByte(srcPixels[offset + 1] * contrastFactor + intercept); // G
+                dst[offset + 2] = ClampToByte(srcPixels[offset + 2] * contrastFactor + intercept); // R/B
+                if (bytesPerPixel >= 4)
+                {
+                    dst[offset + 3] = srcPixels[offset + 3]; // Alpha - unchanged
+                }
             }
         }
 

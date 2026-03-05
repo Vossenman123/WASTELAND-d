@@ -131,7 +131,11 @@ public sealed class OcrService : IDisposable
 
             process.Start();
             var stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit(30000);
+            if (!process.WaitForExit(30000))
+            {
+                process.Kill();
+                throw new InvalidOperationException("Tesseract CLI timed out after 30 seconds.");
+            }
 
             if (process.ExitCode != 0)
             {

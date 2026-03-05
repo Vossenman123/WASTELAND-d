@@ -44,19 +44,32 @@ public static class ScreenshotService
 
     private static bool CaptureWindows(string outputPath)
     {
-        // Use PowerShell to take a screenshot on Windows
-        var script = $@"
+        // Validate the path to prevent command injection
+        if (outputPath.IndexOfAny(new[] { '`', '$', '\n', '\r', '\0' }) >= 0)
+        {
+            Console.WriteLine("Error: Invalid characters in output path.");
+            return false;
+        }
+
+        // Use PowerShell with environment variable to safely pass the path
+        var envVarName = "SCREENSHOT_OUTPUT_PATH";
+        Environment.SetEnvironmentVariable(envVarName, outputPath);
+
+        var script = @"
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+$outPath = $env:SCREENSHOT_OUTPUT_PATH
 $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
 $bitmap = New-Object System.Drawing.Bitmap($screen.Width, $screen.Height)
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
-$bitmap.Save('{outputPath.Replace("'", "''")}', [System.Drawing.Imaging.ImageFormat]::Png)
+$bitmap.Save($outPath, [System.Drawing.Imaging.ImageFormat]::Png)
 $graphics.Dispose()
 $bitmap.Dispose()
 ";
-        return RunProcess("powershell", $"-NoProfile -Command \"{script}\"");
+        var result = RunProcess("powershell", $"-NoProfile -Command \"{script}\"");
+        Environment.SetEnvironmentVariable(envVarName, null);
+        return result;
     }
 
     private static bool CaptureLinux(string outputPath)
@@ -95,7 +108,11 @@ $bitmap.Dispose()
                 CreateNoWindow = true
             };
             process.Start();
-            process.WaitForExit(10000); // 10 second timeout
+            if (!process.WaitForExit(10000)) // 10 second timeout
+            {
+                process.Kill();
+                return false;
+            }
             return process.ExitCode == 0;
         }
         catch
