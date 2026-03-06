@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>🐀 Rat CEO — Bedrijfsadvies met Rattenlogica</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap');
+:root{--g:#3dffaa;--r:#ff4444;--y:#ffd700;--b:#44ccff;--bg:#0a1a0a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--g);font-family:'Share Tech Mono',monospace;min-height:100vh;
+  overflow-y:auto;}
+
+/* CRT effect */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px);}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:radial-gradient(ellipse at 50%,transparent 50%,rgba(0,0,0,0.35) 100%);}
+
+/* Container */
+#app{max-width:700px;margin:0 auto;padding:24px 18px 60px;position:relative;z-index:1;}
+
+/* Header */
+#header{border-bottom:1px solid rgba(61,255,170,0.2);padding-bottom:14px;margin-bottom:20px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+#header h1{font-family:'Orbitron',monospace;font-size:clamp(18px,4vw,28px);
+  color:var(--y);text-shadow:0 0 16px var(--y),0 0 32px rgba(255,215,0,0.3);letter-spacing:5px;}
+#header-sub{font-family:'Orbitron',monospace;font-size:9px;color:rgba(61,255,170,0.5);
+  letter-spacing:3px;}
+
+/* Rat ASCII art */
+#rat-ascii{font-size:11px;line-height:1.25;color:rgba(61,255,170,0.55);white-space:pre;
+  text-align:center;margin:20px 0;text-shadow:0 0 6px rgba(61,255,170,0.25);
+  animation:ratGlow 3s ease-in-out infinite alternate;}
+@keyframes ratGlow{
+  0%{text-shadow:0 0 4px rgba(61,255,170,0.2);color:rgba(61,255,170,0.5);}
+  100%{text-shadow:0 0 10px rgba(61,255,170,0.4);color:rgba(61,255,170,0.7);}
+}
+
+/* Title area */
+#rat-title{font-family:'Orbitron',monospace;font-size:clamp(11px,2.5vw,14px);color:var(--y);
+  letter-spacing:4px;text-align:center;margin-bottom:6px;text-shadow:0 0 10px var(--y);}
+#rat-subtitle{font-size:clamp(8px,1.8vw,10px);color:rgba(61,255,170,0.45);letter-spacing:2px;
+  text-align:center;margin-bottom:24px;line-height:1.6;}
+
+/* Divider */
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(61,255,170,0.2),transparent);
+  margin:20px 0;}
+
+/* Input section */
+#input-section{margin-bottom:20px;}
+#input-label{font-family:'Orbitron',monospace;font-size:9px;color:var(--g);
+  letter-spacing:3px;margin-bottom:8px;display:block;}
+#problem-input{width:100%;padding:14px 16px;background:rgba(61,255,170,0.03);
+  border:1px solid rgba(61,255,170,0.2);color:var(--g);
+  font-family:'Share Tech Mono',monospace;font-size:13px;resize:vertical;
+  min-height:80px;outline:none;transition:border-color 0.25s,box-shadow 0.25s;
+  line-height:1.6;}
+#problem-input:focus{border-color:rgba(61,255,170,0.5);
+  box-shadow:0 0 12px rgba(61,255,170,0.08) inset;}
+#problem-input::placeholder{color:rgba(61,255,170,0.18);}
+#input-hint{font-size:7px;color:rgba(61,255,170,0.25);letter-spacing:2px;margin-top:6px;}
+
+/* Submit button */
+#submit-btn{display:block;margin:16px auto 0;padding:12px 36px;background:transparent;
+  border:2px solid var(--y);color:var(--y);font-family:'Orbitron',monospace;
+  font-size:11px;letter-spacing:4px;cursor:pointer;transition:all 0.2s;
+  text-shadow:0 0 6px var(--y);}
+#submit-btn:hover{background:rgba(255,215,0,0.08);box-shadow:0 0 20px rgba(255,215,0,0.15);}
+#submit-btn:active{transform:scale(0.97);}
+#submit-btn:disabled{opacity:0.3;cursor:default;}
+
+/* Response section */
+#response-section{display:none;margin-top:24px;animation:fadeIn 0.4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+#response-section.active{display:block;}
+#resp-box{border:1px solid rgba(255,215,0,0.25);padding:20px;
+  background:rgba(255,215,0,0.02);position:relative;}
+#resp-header{font-family:'Orbitron',monospace;font-size:9px;color:var(--y);
+  letter-spacing:3px;margin-bottom:12px;text-shadow:0 0 8px var(--y);}
+#resp-text{font-size:12px;color:var(--g);line-height:2;white-space:pre-wrap;}
+
+/* Typing animation */
+#resp-text.typing::after{content:'▊';animation:blink 0.6s step-end infinite;color:var(--y);}
+@keyframes blink{50%{opacity:0;}}
+
+/* History section */
+#history-section{margin-top:28px;}
+#history-title{font-family:'Orbitron',monospace;font-size:8px;color:rgba(61,255,170,0.35);
+  letter-spacing:3px;margin-bottom:12px;}
+.hist-item{border:1px solid rgba(61,255,170,0.1);padding:14px;margin-bottom:10px;
+  background:rgba(61,255,170,0.015);transition:border-color 0.2s;}
+.hist-item:hover{border-color:rgba(61,255,170,0.25);}
+.hist-q{font-size:9px;color:rgba(61,255,170,0.35);letter-spacing:1px;margin-bottom:6px;}
+.hist-a{font-size:10px;color:rgba(61,255,170,0.55);line-height:1.7;white-space:pre-wrap;}
+
+/* Example prompts */
+#examples{margin-top:20px;}
+#examples-title{font-family:'Orbitron',monospace;font-size:8px;color:rgba(61,255,170,0.3);
+  letter-spacing:3px;margin-bottom:10px;}
+.example-btn{display:inline-block;padding:6px 14px;margin:0 6px 8px 0;
+  background:rgba(61,255,170,0.03);border:1px solid rgba(61,255,170,0.15);
+  color:rgba(61,255,170,0.5);font-family:'Share Tech Mono',monospace;font-size:9px;
+  cursor:pointer;transition:all 0.15s;letter-spacing:1px;}
+.example-btn:hover{border-color:rgba(61,255,170,0.4);color:var(--g);
+  background:rgba(61,255,170,0.06);}
+
+/* Footer */
+#footer{margin-top:40px;text-align:center;padding-top:16px;
+  border-top:1px solid rgba(61,255,170,0.1);}
+#footer p{font-size:7px;color:rgba(61,255,170,0.2);letter-spacing:3px;}
+
+/* Stats bar */
+#stats{display:flex;gap:16px;justify-content:center;margin:12px 0;flex-wrap:wrap;}
+.stat{font-family:'Orbitron',monospace;font-size:8px;color:rgba(61,255,170,0.4);letter-spacing:2px;}
+.stat span{color:var(--y);text-shadow:0 0 6px var(--y);}
+
+/* Responsive */
+@media(max-width:500px){
+  #app{padding:16px 12px 40px;}
+  #problem-input{font-size:11px;min-height:70px;padding:10px 12px;}
+  #submit-btn{padding:10px 24px;font-size:10px;}
+  #rat-ascii{font-size:9px;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <h1>🐀 RAT CEO</h1>
+    <div id="header-sub">CHIEF EXECUTIVE RAT</div>
+  </div>
+
+  <div id="rat-ascii">
+         __     __
+        /  \~~~/  \
+       (  o     o  )
+        \ ___^___ /
+         /       \
+        / |     | \
+       (_/|     |\_)
+          |     |
+          |_____|
+           U   U</div>
+
+  <div id="rat-title">🐀 RAT CEO ADVISEERT 🐀</div>
+  <div id="rat-subtitle">BESCHRIJF JE BEDRIJFSPROBLEEM — DE RAT LOST HET OP MET RATTENLOGICA</div>
+
+  <div id="stats">
+    <div class="stat">ADVIEZEN: <span id="advice-count">0</span></div>
+    <div class="stat">SESSIE: <span id="session-time">0:00</span></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="input-section">
+    <label id="input-label" for="problem-input">📋 JOUW BEDRIJFSPROBLEEM:</label>
+    <textarea id="problem-input" placeholder="Bijv: Onze klanten vertrekken naar de concurrent, ons team werkt niet goed samen, we maken geen winst..." rows="3"></textarea>
+    <div id="input-hint">DRUK OP ENTER OF KLIK OP DE KNOP OM ADVIES TE KRIJGEN</div>
+  </div>
+
+  <button id="submit-btn" onclick="askRatCeo()">🐀 VRAAG DE RAT</button>
+
+  <div id="examples">
+    <div id="examples-title">💡 VOORBEELDPROBLEMEN — KLIK OM TE PROBEREN:</div>
+    <span class="example-btn" onclick="fillExample(this)">Klanten vertrekken</span>
+    <span class="example-btn" onclick="fillExample(this)">Te weinig winst</span>
+    <span class="example-btn" onclick="fillExample(this)">Team werkt niet samen</span>
+    <span class="example-btn" onclick="fillExample(this)">Concurrenten zijn beter</span>
+    <span class="example-btn" onclick="fillExample(this)">Geen nieuwe ideeën</span>
+    <span class="example-btn" onclick="fillExample(this)">Te veel stress</span>
+    <span class="example-btn" onclick="fillExample(this)">Marketing werkt niet</span>
+    <span class="example-btn" onclick="fillExample(this)">Technische problemen</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="response-section">
+    <div id="resp-box">
+      <div id="resp-header">🐀 DE RAT CEO SPREEKT:</div>
+      <div id="resp-text"></div>
+    </div>
+  </div>
+
+  <div id="history-section" style="display:none;">
+    <div id="history-title">📜 EERDERE ADVIEZEN</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div id="footer">
+    <p>🐀 RAT CEO v1.0 — ALLE ADVIEZEN ZIJN 100% RATTENLOGICA — GEEN ECHTE RATTEN ZIJN GESCHAAD</p>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══ RAT CEO — STANDALONE APP ═══════════════════════════════════════
+
+var adviceCount = 0;
+var ratHistory = [];
+var sessionStart = Date.now();
+
+// Session timer
+setInterval(function(){
+  var elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  var m = Math.floor(elapsed / 60);
+  var s = elapsed % 60;
+  var el = document.getElementById('session-time');
+  if(el) el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+}, 1000);
+
+// ── Response database ──────────────────────────────────────────────
+
+var RAT_RESPONSES = [
+  {keywords:['klant','klanten','customer','customers','verlies','vertrek','churn','weglopen'],
+   response:'🐀 *knabbelt op een kabel*\n\nLuister, in de riool leren we één ding: als je kaas niet goed genoeg is, gaan de ratten naar een ander riool.\n\nOplossing: Verstop kleine stukjes "kaas" (verrassingen) in je product. Ratten komen ALTIJD terug voor onverwachte kaas. Voeg geheime bonussen toe die klanten pas na weken ontdekken. Niemand verlaat een riool vol verborgen schatten.\n\n— CEO Rat 🧀'},
+  {keywords:['geld','money','budget','kosten','duur','expensive','cash','winst','profit','omzet','revenue'],
+   response:'🐀 *telt korreltjes rijst*\n\nIn het rattenrijk verzamelen we ALLES. Elke kruimel telt.\n\nOplossing: Doe als een rat — hamster resources. Knabbel kleine stukjes van elke afdeling (2-3% per team). Niemand merkt een kruimel, maar samen heb je een heel brood. Investeer die kruimels in je snelste tunnel (beste product).\n\nRatten worden niet rijk door grote vangsten, maar door NIKS te verspillen.\n\n— CEO Rat 💰'},
+  {keywords:['team','personeel','medewerker','employee','werknemer','collega','samenwerk','conflict','hr'],
+   response:'🐀 *poetst snorharen*\n\nEen rattenkolonie werkt perfect samen. Weet je waarom? Iedereen heeft een ROL en iedereen krijgt KAAS.\n\nOplossing: Ratten delen altijd voedsel met de kolonie. Geef elk teamlid een duidelijke tunnel om te bewaken. Beloon samenwerking met "kaas" (bonussen). En onthoud: zelfs de kleinste rat kan de beste tunnels vinden.\n\nEen kolonie die deelt, overleeft. Altijd.\n\n— CEO Rat 🐀'},
+  {keywords:['concurrent','competitie','competition','markt','market','strijd','concurreren','beter'],
+   response:'🐀 *gluurt om de hoek*\n\nConcurrenten? Ha! Ratten zijn de ULTIEME overlevers. We vechten niet — we zijn SLIMMER.\n\nOplossing: Ga niet door de voordeur als de kat daar zit. Graaf een NIEUWE tunnel. Vind de niche waar niemand kijkt. Terwijl zij vechten om de grote kaas, steel jij alle kruimels die zij laten liggen. Kruimels worden bergen.\n\n— CEO Rat 🏆'},
+  {keywords:['groei','growth','schaal','scale','uitbreid','expand','groot','bigger'],
+   response:'🐀 *rent door een nieuwe tunnel*\n\nRatten hebben elk continent gekoloniseerd. Ons geheim? We groeien DOOR TUNNELS, niet door te wachten.\n\nOplossing: Maak eerst één perfecte tunnel (core product). Dan graaf je zijtunnels (features). Elke tunnel leidt naar nieuwe kaas. Maar BELANGRIJK: elke tunnel moet terug naar het nest leiden. Groei zonder basis = verdwaalde rat.\n\n— CEO Rat 📈'},
+  {keywords:['idee','idea','innovatie','innovation','nieuw','new','creati','bedenk'],
+   response:'🐀 *snuffelt aan alles*\n\nRatten zijn de beste uitvinders. Wist je dat wij liften, deuren en zelfs alarmsystemen hebben omzeild?\n\nOplossing: Snuffel aan ALLES. Elke mislukking is data. Test 10 kleine ideeën in plaats van 1 groot idee. Ratten proberen elke opening — de meeste zijn doodlopend, maar die ene die werkt? Daar zit de KAAS.\n\nFalen is snuffelen. Snuffelen is overleven.\n\n— CEO Rat 💡'},
+  {keywords:['stress','burnout','moe','druk','pressure','werkdruk','overwerk','balans'],
+   response:'🐀 *rolt zich op in nestje*\n\nZelfs ratten slapen 12 uur per dag. TWAALF UUR. En wij regeren de wereld.\n\nOplossing: Een vermoeide rat maakt fouten en wordt opgegeten. Rust is STRATEGIE. Werk in korte sprints (net als hoe ratten rennen — snel, dan pauze). Bouw "nestjes" in je werkdag: 25 min werk, 5 min niets. Een uitgeruste rat vangt meer kaas.\n\n— CEO Rat 😴'},
+  {keywords:['verkoop','sales','verkopen','sell','deal','leads','acquisitie'],
+   response:'🐀 *draagt een stuk pizza door de metro*\n\nHeb je ooit een rat pizza zien dragen? Dat ging VIRAL. Waarom? Ratten verkopen door LATEN ZIEN, niet door praten.\n\nOplossing: Stop met vertellen hoe goed je kaas is. LAAT het zien. Draag je "pizza" trots door de straat. Klanten willen wat ze ZIEN werken. Eén demonstratie is meer waard dan duizend woorden. Wees de pizza-rat.\n\n— CEO Rat 🍕'},
+  {keywords:['marketing','reclame','advertentie','brand','merk','bekendheid','social','media'],
+   response:'🐀 *knaagt door een billboard*\n\nRatten hebben geen marketing budget. Toch kent IEDEREEN ons. Ons geheim? We zijn OVERAL.\n\nOplossing: Wees als een rat — duik op waar niemand je verwacht. Guerrilla marketing. Verras mensen op onverwachte plekken. Eén rat in een restaurant maakt meer indruk dan 100 billboards. Wees memorabel, niet duur.\n\n— CEO Rat 📣'},
+  {keywords:['technologie','tech','software','app','website','digital','ai','systeem','system','code','bug'],
+   response:'🐀 *knaagt door een serverkabel*\n\nRatten hebben meer schade aangericht aan technologie dan alle hackers samen. Wij BEGRIJPEN systemen.\n\nOplossing: Elk systeem heeft zwakke kabels. Test alles. Laat je team "ratten" door je eigen systeem — zoek de zwakke punten VOORDAT de markt dat doet. Een rat die zijn eigen nest test, heeft het sterkste nest.\n\n— CEO Rat 💻'},
+  {keywords:['leider','leadership','manager','management','baas','boss','aanstur'],
+   response:'🐀 *staat op achterpoten*\n\nDe alfarat leidt niet door te bijten. De alfarat leidt door de BESTE tunnels te vinden en de kolonie erheen te brengen.\n\nOplossing: Wees de rat die voorop rent in de tunnel, niet de rat die achteraan schreeuwt. Vind de kaas EERST, deel het EERST. Je team volgt de rat die kaas brengt, niet de rat die commando\'s piept.\n\n— CEO Rat 👑'}
+];
+
+var RAT_DEFAULT_RESPONSES = [
+  '🐀 *knabbelt nadenkend*\n\nHmm, dit probleem ruikt naar beschimmelde kaas. Maar weet je wat ratten doen met schimmelkaas? We eten het TOCH op.\n\nOplossing: Soms moet je gewoon doorbijten — letterlijk. Verdeel het probleem in kleine stukjes (zoals een rat een groot stuk kaas verdeelt). Los elk stukje apart op. Voor je het weet, is het hele probleem opgegeten.\n\n— CEO Rat 🧀',
+  '🐀 *rent in cirkels*\n\nAls een rat vastzit, draait hij om en probeert een ANDERE tunnel. Simpel.\n\nOplossing: Je zit vast omdat je steeds dezelfde tunnel probeert. Draai 180 graden. Doe het TEGENOVERGESTELDE van wat je nu doet. Als iedereen links gaat, ga jij rechts. Daar ligt de onbewaakte kaas.\n\n— CEO Rat 🔄',
+  '🐀 *snuffelt aan het probleem*\n\nDit ruikt naar een val. En ratten weten ALLES over vallen.\n\nOplossing: De beste manier om een val te vermijden? Stuur eerst een kleinere rat (test). Doe een KLEINE test voordat je alles inzet. Ratten die eerst snuffelen voordat ze bijten, leven het langst.\n\n— CEO Rat 🪤',
+  '🐀 *verzamelt kruimels*\n\nElk groot probleem is eigenlijk een berg kruimels.\n\nOplossing: Pak de kruimels één voor één. Begin met de dichtstbijzijnde kruimel (het makkelijkste deelprobleem). Elke kruimel geeft je energie voor de volgende. Voor je het weet heb je het hele probleem verzameld en opgelost.\n\n— CEO Rat ✨'
+];
+
+// ── HTML escape for XSS prevention ─────────────────────────────────
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Core logic ─────────────────────────────────────────────────────
+
+function askRatCeo(){
+  var input = document.getElementById('problem-input').value.trim();
+  if(!input) return;
+
+  var lower = input.toLowerCase();
+  var bestMatch = null;
+  var bestScore = 0;
+
+  for(var i = 0; i < RAT_RESPONSES.length; i++){
+    var score = 0;
+    for(var j = 0; j < RAT_RESPONSES[i].keywords.length; j++){
+      if(lower.indexOf(RAT_RESPONSES[i].keywords[j]) !== -1) score++;
+    }
+    if(score > bestScore){ bestScore = score; bestMatch = RAT_RESPONSES[i]; }
+  }
+
+  var response;
+  if(bestMatch){
+    response = bestMatch.response;
+  } else {
+    response = RAT_DEFAULT_RESPONSES[Math.floor(Math.random() * RAT_DEFAULT_RESPONSES.length)];
+  }
+
+  // Show response with typing effect
+  var respSection = document.getElementById('response-section');
+  var respText = document.getElementById('resp-text');
+  respSection.classList.add('active');
+  respText.textContent = '';
+  respText.classList.add('typing');
+
+  var charIdx = 0;
+  var typingInterval = setInterval(function(){
+    if(charIdx < response.length){
+      respText.textContent += response[charIdx];
+      charIdx++;
+    } else {
+      clearInterval(typingInterval);
+      respText.classList.remove('typing');
+    }
+  }, 12);
+
+  // Update count
+  adviceCount++;
+  document.getElementById('advice-count').textContent = adviceCount;
+
+  // Add to history
+  ratHistory.unshift({q: input, a: response});
+  if(ratHistory.length > 20) ratHistory.pop();
+  renderHistory();
+
+  // Clear input
+  document.getElementById('problem-input').value = '';
+  document.getElementById('problem-input').focus();
+}
+
+function renderHistory(){
+  var section = document.getElementById('history-section');
+  var list = document.getElementById('history-list');
+
+  if(ratHistory.length <= 1){
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  var html = '';
+  for(var i = 1; i < ratHistory.length; i++){
+    html += '<div class="hist-item">'
+      + '<div class="hist-q">❓ ' + escHtml(ratHistory[i].q) + '</div>'
+      + '<div class="hist-a">' + escHtml(ratHistory[i].a) + '</div>'
+      + '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function fillExample(el){
+  document.getElementById('problem-input').value = el.textContent;
+  document.getElementById('problem-input').focus();
+}
+
+// Enter key support (Enter = submit, Shift+Enter = newline)
+document.getElementById('problem-input').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    askRatCeo();
+  }
+});
+
+// Expose for onclick handlers
+window.askRatCeo = askRatCeo;
+window.fillExample = fillExample;
+</script>
+</body>
+</html>
