@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>WASTELAND MEME GENERATOR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap');
+:root{--g:#3dffaa;--r:#ff4444;--y:#ffd700;--b:#44ccff;--bg:#0a1a0a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--g);
+  min-height:100vh;overflow-x:hidden;}
+
+/* CRT overlay */
+#crt{position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px);}
+#crt::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50%,transparent 50%,rgba(0,0,0,0.35) 100%);}
+
+/* Header */
+header{text-align:center;padding:24px 16px 12px;
+  border-bottom:1px solid rgba(61,255,170,0.15);
+  background:linear-gradient(to bottom,rgba(0,0,0,0.6),transparent);}
+header h1{font-family:'Orbitron',monospace;font-size:clamp(18px,4vw,32px);
+  color:var(--g);text-shadow:0 0 20px var(--g),0 0 40px rgba(61,255,170,0.3);
+  letter-spacing:6px;}
+header p{font-size:10px;color:rgba(61,255,170,0.5);letter-spacing:3px;margin-top:6px;}
+.back-link{position:absolute;top:16px;left:16px;color:var(--g);text-decoration:none;
+  font-size:10px;letter-spacing:2px;border:1px solid rgba(61,255,170,0.3);
+  padding:6px 12px;transition:all 0.2s;}
+.back-link:hover{background:rgba(61,255,170,0.1);border-color:var(--g);}
+
+/* Main container */
+.container{max-width:900px;margin:0 auto;padding:20px 16px 40px;}
+
+/* Upload area */
+#upload-zone{border:2px dashed rgba(61,255,170,0.3);padding:48px 24px;text-align:center;
+  margin:20px 0;cursor:pointer;transition:all 0.3s;position:relative;
+  background:rgba(61,255,170,0.02);}
+#upload-zone:hover,#upload-zone.dragover{border-color:var(--g);
+  background:rgba(61,255,170,0.06);box-shadow:0 0 30px rgba(61,255,170,0.1);}
+#upload-zone .icon{font-size:48px;margin-bottom:12px;display:block;}
+#upload-zone .main-text{font-family:'Orbitron',monospace;font-size:14px;
+  color:var(--g);letter-spacing:3px;text-shadow:0 0 10px var(--g);}
+#upload-zone .sub-text{font-size:9px;color:rgba(61,255,170,0.4);letter-spacing:2px;margin-top:8px;}
+#file-input{display:none;}
+
+/* Meme workspace */
+#workspace{display:none;margin-top:20px;}
+
+/* Canvas wrapper */
+#canvas-wrap{position:relative;text-align:center;margin-bottom:20px;
+  border:1px solid rgba(61,255,170,0.2);background:#000;padding:4px;}
+#meme-canvas{max-width:100%;max-height:70vh;display:block;margin:0 auto;}
+
+/* Controls */
+.controls{display:flex;flex-direction:column;gap:12px;}
+.control-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.control-group{flex:1;min-width:200px;}
+.control-group label{display:block;font-size:8px;letter-spacing:2px;
+  color:rgba(61,255,170,0.6);margin-bottom:4px;text-transform:uppercase;}
+.control-group input[type="text"],
+.control-group textarea{width:100%;padding:8px 12px;background:rgba(61,255,170,0.05);
+  border:1px solid rgba(61,255,170,0.25);color:var(--g);
+  font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;
+  transition:border-color 0.2s;}
+.control-group input[type="text"]:focus,
+.control-group textarea:focus{border-color:var(--g);box-shadow:0 0 10px rgba(61,255,170,0.15);}
+.control-group textarea{resize:vertical;min-height:40px;}
+.control-group select{width:100%;padding:8px 12px;background:rgba(0,10,5,0.9);
+  border:1px solid rgba(61,255,170,0.25);color:var(--g);
+  font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;cursor:pointer;}
+.control-group select option{background:#0a1a0a;color:var(--g);}
+
+/* Buttons */
+.btn{padding:10px 24px;background:transparent;border:1px solid rgba(61,255,170,0.4);
+  color:var(--g);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;
+  cursor:pointer;transition:all 0.2s;text-transform:uppercase;white-space:nowrap;}
+.btn:hover{background:rgba(61,255,170,0.12);border-color:var(--g);
+  text-shadow:0 0 8px var(--g);box-shadow:0 0 15px rgba(61,255,170,0.15);}
+.btn.primary{border-color:var(--y);color:var(--y);}
+.btn.primary:hover{background:rgba(255,215,0,0.1);text-shadow:0 0 8px var(--y);
+  box-shadow:0 0 15px rgba(255,215,0,0.15);}
+.btn.danger{border-color:var(--r);color:var(--r);}
+.btn.danger:hover{background:rgba(255,68,68,0.1);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px;}
+
+/* Generated text display */
+#ai-output{margin:16px 0;padding:16px;border:1px solid rgba(255,215,0,0.2);
+  background:rgba(255,215,0,0.03);display:none;}
+#ai-output .label{font-family:'Orbitron',monospace;font-size:9px;color:var(--y);
+  letter-spacing:3px;text-shadow:0 0 8px var(--y);margin-bottom:8px;}
+#ai-output .texts{font-size:12px;color:var(--g);line-height:1.8;}
+#ai-output .texts span{color:var(--y);}
+
+/* Loading animation */
+.loading{display:none;text-align:center;padding:20px;}
+.loading.active{display:block;}
+.loading .dots{font-family:'Orbitron',monospace;font-size:14px;color:var(--g);
+  letter-spacing:4px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.loading .sub{font-size:8px;color:rgba(61,255,170,0.4);letter-spacing:2px;margin-top:6px;}
+
+/* Style selector chips */
+.style-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{padding:6px 14px;border:1px solid rgba(61,255,170,0.25);font-size:9px;
+  letter-spacing:1px;cursor:pointer;transition:all 0.2s;color:rgba(61,255,170,0.6);}
+.chip:hover{border-color:rgba(61,255,170,0.5);color:var(--g);}
+.chip.active{border-color:var(--g);color:var(--g);background:rgba(61,255,170,0.1);
+  text-shadow:0 0 6px var(--g);}
+
+/* Font size slider */
+input[type="range"]{-webkit-appearance:none;width:100%;height:4px;
+  background:rgba(61,255,170,0.2);outline:none;border-radius:2px;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  background:var(--g);border-radius:50%;cursor:pointer;box-shadow:0 0 8px var(--g);}
+
+/* Toast notification */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);
+  padding:12px 28px;background:rgba(0,10,5,0.95);border:1px solid var(--g);
+  color:var(--g);font-size:10px;letter-spacing:2px;z-index:200;
+  transition:transform 0.3s ease;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Responsive */
+@media(max-width:600px){
+  .control-row{flex-direction:column;}
+  .btn-row{flex-direction:column;align-items:stretch;}
+  .btn{text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<div id="crt"></div>
+
+<header>
+  <a href="wasteland3d_v5.html" class="back-link">← TERUG</a>
+  <h1>⚡ MEME GENERATOR ⚡</h1>
+  <p>UPLOAD EEN FOTO · AI GENEREERT DE PERFECTE MEME</p>
+</header>
+
+<div class="container">
+
+  <!-- Upload Zone -->
+  <div id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <span class="icon">📸</span>
+    <div class="main-text">UPLOAD JE FOTO</div>
+    <div class="sub-text">Sleep een foto hierheen of klik om te selecteren</div>
+    <input type="file" id="file-input" accept="image/*">
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="dots">AI ANALYSEERT...</div>
+    <div class="sub">MEME-TEKSTEN WORDEN GEGENEREERD</div>
+  </div>
+
+  <!-- AI Output -->
+  <div id="ai-output">
+    <div class="label">🤖 AI GEGENEREERDE MEME-TEKSTEN</div>
+    <div class="texts" id="ai-texts"></div>
+  </div>
+
+  <!-- Workspace -->
+  <div id="workspace">
+    <div id="canvas-wrap">
+      <canvas id="meme-canvas"></canvas>
+    </div>
+
+    <div class="controls">
+      <!-- Text inputs -->
+      <div class="control-row">
+        <div class="control-group">
+          <label>Tekst boven</label>
+          <input type="text" id="top-text" placeholder="Bovenste tekst...">
+        </div>
+        <div class="control-group">
+          <label>Tekst onder</label>
+          <input type="text" id="bottom-text" placeholder="Onderste tekst...">
+        </div>
+      </div>
+
+      <!-- Style -->
+      <div class="control-row">
+        <div class="control-group">
+          <label>Meme stijl</label>
+          <div class="style-chips">
+            <div class="chip active" data-style="classic">CLASSIC</div>
+            <div class="chip" data-style="modern">MODERN</div>
+            <div class="chip" data-style="wasteland">WASTELAND</div>
+            <div class="chip" data-style="dark">DARK</div>
+            <div class="chip" data-style="neon">NEON</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Font size -->
+      <div class="control-row">
+        <div class="control-group">
+          <label>Tekst grootte: <span id="size-val">48</span>px</label>
+          <input type="range" id="font-size" min="16" max="96" value="48">
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-row">
+        <button class="btn primary" onclick="generateMemeTexts()">🤖 GENEREER NIEUWE TEKSTEN</button>
+        <button class="btn" onclick="renderMeme()">🔄 PREVIEW</button>
+        <button class="btn primary" onclick="downloadMeme()">💾 DOWNLOAD MEME</button>
+        <button class="btn danger" onclick="resetAll()">✕ RESET</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// WASTELAND MEME GENERATOR - AI Engine
+// ═══════════════════════════════════════
+
+const canvas = document.getElementById('meme-canvas');
+const ctx = canvas.getContext('2d');
+let uploadedImage = null;
+let currentStyle = 'classic';
+
+// ── AI Meme Text Database ──
+const memeTemplates = {
+  reactions: [
+    { top: "WANNEER DE LERAAR ZEGT 'DIT KOMT OP DE TOETS'", bottom: "EN JE HEBT NIET OPGELET" },
+    { top: "DIE ENE VRIEND", bottom: "DIE ALTIJD TE LAAT KOMT" },
+    { top: "WANNEER JE HUISWERK AF IS", bottom: "MAAR JE VERGEET HET THUIS" },
+    { top: "NOBODY:", bottom: "DEZE PERSOON OM 8 UUR 'S OCHTENDS" },
+    { top: "POV:", bottom: "JE WORDT GEKOZEN VOOR EEN SPREEKBEURT" },
+    { top: "WANNEER DE BEL GAAT", bottom: "EN DE LERAAR ZEG 'IK BEPAAL WANNEER HET UIT IS'" },
+    { top: "IK: IK GA VROEG SLAPEN", bottom: "OOK IK OM 3 UUR 'S NACHTS" },
+    { top: "LERAAR: DE TOETS IS MAKKELIJK", bottom: "DE TOETS:" },
+    { top: "WANNEER IEMAND ZEGT 'WEES JEZELF'", bottom: "EN DIT IS HET RESULTAAT" },
+    { top: "MAANDAG OCHTEND", bottom: "NIEMAND VROEG HIEROM" },
+    { top: "WANNEER JE DENKT DAT JE COOL BENT", bottom: "MAAR REALITY HITS DIFFERENT" },
+    { top: "MIJN GEZICHT WANNEER", bottom: "WIFI UITVALT TIJDENS ONLINE LES" },
+    { top: "5 MINUTEN VOOR DE DEADLINE", bottom: "PANIEK MODE ACTIVATED" },
+    { top: "DEZE PERSOON WANNEER", bottom: "ER GRATIS ETEN IS" },
+    { top: "NIEMAND:", bottom: "ABSOLUUT NIEMAND: DEZE LEGEND:" },
+  ],
+  school: [
+    { top: "GROEPSWERK:", bottom: "IK DIE AL HET WERK DOET" },
+    { top: "WANNEER JE EEN 10 HAALT", bottom: "EN NIEMAND GELOOFT JE" },
+    { top: "DE SLIMSTE VAN DE KLAS", bottom: "MAAR VERGEET ALTIJD ZIJN LUNCH" },
+    { top: "GYM LERAAR: 'HET IS MAAR 5 MINUTEN RENNEN'", bottom: "DE 5 MINUTEN:" },
+    { top: "WANNEER DE LERAAR JE NAAM ZEGT", bottom: "EN JE WAS AAN HET SLAPEN" },
+    { top: "IK IN DE KANTINE", bottom: "VS IK TIJDENS DE LES" },
+    { top: "WANNEER SCHOOL OM 8:30 BEGINT", bottom: "EN JE OM 8:29 OPSTAAT" },
+    { top: "PROJECT INLEVEREN VANDAAG", bottom: "IK DIE NET BEGINT" },
+    { top: "LERAAR: HEEFT IEMAND VRAGEN?", bottom: "IK DIE NIKS SNAPT MAAR STIL BLIJFT" },
+    { top: "EINDELIJK VAKANTIE", bottom: "OH WACHT, ER IS HUISWERK" },
+    { top: "EXAMENS ZIJN OVER", bottom: "WACHT... ER IS NOG EEN HERKANSING" },
+    { top: "WANNEER JE SPIEKT", bottom: "EN DE LERAAR LOOPT LANGS" },
+  ],
+  savage: [
+    { top: "ALS LOOKS COULD KILL", bottom: "ZOU DIT ILLEGAAL ZIJN" },
+    { top: "LEGEND ZEGT", bottom: "DAT DEZE PERSOON NOG STEEDS LEGENDARISCH IS" },
+    { top: "TOP 10 MENSEN", bottom: "DIE TE COOL ZIJN VOOR DEZE WERELD" },
+    { top: "WETENSCHAPPERS BEVESTIGEN:", bottom: "DIT IS PIEK PERFORMANCE" },
+    { top: "DEZE FOTO BEVAT", bottom: "100% ONGECONTROLEERDE CHAOS" },
+    { top: "BREAKING NEWS:", bottom: "LOKALE HELD DOET WEER HELD-DINGEN" },
+    { top: "SOMMIGE MENSEN ZIJN GEBOREN COOL", bottom: "EN DAN HEB JE DIT" },
+    { top: "GEZOCHT:", bottom: "VOOR HET STELEN VAN DE SHOW" },
+    { top: "ALS DIT GEEN MEME-MATERIAAL IS", bottom: "DAN WEET IK HET OOK NIET" },
+    { top: "DE PERSOON DIE JE NIET", bottom: "MAG GOOGLEN OM 3 UUR 'S NACHTS" },
+    { top: "NETFLIX: 'BEN JE ER NOG?'", bottom: "IEMAND'S KIND:" },
+    { top: "MOOD:", bottom: "PERMANENT" },
+  ],
+  random: [
+    { top: "WANNEER JE MAMA ZEGT 'WE HEBBEN ETEN THUIS'", bottom: "HET ETEN THUIS:" },
+    { top: "ME: IK BEN NIET GRAPPIG", bottom: "OOK ME:" },
+    { top: "HOW IT STARTED", bottom: "HOW IT'S GOING" },
+    { top: "EXPECTATIONS:", bottom: "REALITY:" },
+    { top: "IK VOOR DE TOETS", bottom: "IK NA DE TOETS" },
+    { top: "WANNEER IEMAND ZEGT", bottom: "'DAT KAN JE NIET MEMEN'" },
+    { top: "MIJN LAATSTE 2 HERSENCELLEN", bottom: "TIJDENS HET EXAMEN" },
+    { top: "IK: IK GA PRODUCTIEF ZIJN", bottom: "OOK IK 5 MINUTEN LATER:" },
+    { top: "DEZE FOTO IS BEWIJS", bottom: "DAT ALIENS BESTAAN" },
+    { top: "VOOR DE GROEPSCHAT", bottom: "NIET VOOR DE ZWAKKEN" },
+    { top: "HISTORICI OVER 100 JAAR:", bottom: "'WAT BETEKENDE DIT?'" },
+    { top: "CURSED IMAGE", bottom: "JE KAN HET NIET ONTZIEN" },
+  ]
+};
+
+// All templates flattened
+const allTemplates = [
+  ...memeTemplates.reactions,
+  ...memeTemplates.school,
+  ...memeTemplates.savage,
+  ...memeTemplates.random
+];
+
+// ── Meme text generation (AI-style) ──
+function generateMemeTexts() {
+  if (!uploadedImage) {
+    showToast('Upload eerst een foto!');
+    return;
+  }
+
+  const loading = document.getElementById('loading');
+  const aiOutput = document.getElementById('ai-output');
+  loading.classList.add('active');
+  aiOutput.style.display = 'none';
+
+  // Simulate AI processing delay
+  setTimeout(() => {
+    // Pick a random template
+    const template = allTemplates[Math.floor(Math.random() * allTemplates.length)];
+
+    // Apply the texts
+    document.getElementById('top-text').value = template.top;
+    document.getElementById('bottom-text').value = template.bottom;
+
+    // Show AI output
+    const aiTexts = document.getElementById('ai-texts');
+    aiTexts.innerHTML =
+      'BOVEN: <span>"' + escapeHtml(template.top) + '"</span><br>' +
+      'ONDER: <span>"' + escapeHtml(template.bottom) + '"</span>';
+
+    loading.classList.remove('active');
+    aiOutput.style.display = 'block';
+
+    renderMeme();
+    showToast('Nieuwe meme-teksten gegenereerd!');
+  }, 800 + Math.random() * 700);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ── Style definitions ──
+const styles = {
+  classic: {
+    font: 'Impact, Haettenschweiler, sans-serif',
+    fillColor: '#FFFFFF',
+    strokeColor: '#000000',
+    strokeWidth: 3,
+    shadow: false,
+    transform: 'uppercase'
+  },
+  modern: {
+    font: "'Segoe UI', Arial, sans-serif",
+    fillColor: '#FFFFFF',
+    strokeColor: 'rgba(0,0,0,0.8)',
+    strokeWidth: 2,
+    shadow: true,
+    shadowColor: 'rgba(0,0,0,0.6)',
+    shadowBlur: 8,
+    transform: 'none'
+  },
+  wasteland: {
+    font: "'Orbitron', 'Share Tech Mono', monospace",
+    fillColor: '#3dffaa',
+    strokeColor: '#000000',
+    strokeWidth: 3,
+    shadow: true,
+    shadowColor: 'rgba(61,255,170,0.6)',
+    shadowBlur: 15,
+    transform: 'uppercase'
+  },
+  dark: {
+    font: "Impact, Haettenschweiler, sans-serif",
+    fillColor: '#ff4444',
+    strokeColor: '#000000',
+    strokeWidth: 3,
+    shadow: true,
+    shadowColor: 'rgba(255,0,0,0.4)',
+    shadowBlur: 10,
+    transform: 'uppercase'
+  },
+  neon: {
+    font: "'Orbitron', monospace",
+    fillColor: '#ff00ff',
+    strokeColor: '#000033',
+    strokeWidth: 2,
+    shadow: true,
+    shadowColor: 'rgba(255,0,255,0.8)',
+    shadowBlur: 20,
+    transform: 'uppercase'
+  }
+};
+
+// ── Canvas rendering ──
+function renderMeme() {
+  if (!uploadedImage) return;
+
+  const img = uploadedImage;
+  const maxW = 800;
+  const scale = img.width > maxW ? maxW / img.width : 1;
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+
+  canvas.width = w;
+  canvas.height = h;
+
+  // Draw image
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const topText = document.getElementById('top-text').value;
+  const bottomText = document.getElementById('bottom-text').value;
+  const fontSize = parseInt(document.getElementById('font-size').value);
+  const style = styles[currentStyle];
+
+  // Scale font size relative to canvas
+  const scaledFontSize = Math.round(fontSize * (w / 800));
+
+  // Apply style
+  ctx.textAlign = 'center';
+  ctx.font = 'bold ' + scaledFontSize + 'px ' + style.font;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = style.strokeWidth * (w / 800);
+
+  if (style.shadow) {
+    ctx.shadowColor = style.shadowColor || 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = style.shadowBlur || 5;
+  } else {
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  }
+
+  // Draw top text
+  if (topText) {
+    const text = style.transform === 'uppercase' ? topText.toUpperCase() : topText;
+    drawWrappedText(text, w / 2, scaledFontSize + 10, w - 20, scaledFontSize, style, true);
+  }
+
+  // Draw bottom text
+  if (bottomText) {
+    const text = style.transform === 'uppercase' ? bottomText.toUpperCase() : bottomText;
+    drawWrappedText(text, w / 2, h - 15, w - 20, scaledFontSize, style, false);
+  }
+}
+
+function drawWrappedText(text, x, y, maxWidth, fontSize, style, fromTop) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? currentLine + ' ' + word : word;
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  lines.push(currentLine);
+
+  const lineHeight = fontSize * 1.15;
+
+  for (let i = 0; i < lines.length; i++) {
+    let ly;
+    if (fromTop) {
+      ly = y + i * lineHeight;
+    } else {
+      ly = y - (lines.length - 1 - i) * lineHeight;
+    }
+
+    // Stroke
+    ctx.strokeStyle = style.strokeColor;
+    ctx.strokeText(lines[i], x, ly);
+
+    // Fill
+    ctx.fillStyle = style.fillColor;
+    ctx.fillText(lines[i], x, ly);
+  }
+}
+
+// ── File handling ──
+const uploadZone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+
+fileInput.addEventListener('change', function(e) {
+  if (e.target.files && e.target.files[0]) {
+    loadImage(e.target.files[0]);
+  }
+});
+
+uploadZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', function() {
+  uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    loadImage(e.dataTransfer.files[0]);
+  }
+});
+
+function loadImage(file) {
+  if (!file.type.startsWith('image/')) {
+    showToast('Alleen afbeeldingen zijn toegestaan!');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      uploadedImage = img;
+      document.getElementById('upload-zone').style.display = 'none';
+      document.getElementById('workspace').style.display = 'block';
+      generateMemeTexts();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Download ──
+function downloadMeme() {
+  if (!uploadedImage) return;
+  renderMeme();
+  const link = document.createElement('a');
+  link.download = `wasteland-meme-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('Meme gedownload!');
+}
+
+// ── Reset ──
+function resetAll() {
+  uploadedImage = null;
+  document.getElementById('top-text').value = '';
+  document.getElementById('bottom-text').value = '';
+  document.getElementById('workspace').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'block';
+  document.getElementById('ai-output').style.display = 'none';
+  document.getElementById('loading').classList.remove('active');
+  fileInput.value = '';
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  showToast('Reset compleet!');
+}
+
+// ── Style chips ──
+document.querySelectorAll('.chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+    currentStyle = chip.dataset.style;
+    renderMeme();
+  });
+});
+
+// ── Live preview on input ──
+document.getElementById('top-text').addEventListener('input', renderMeme);
+document.getElementById('bottom-text').addEventListener('input', renderMeme);
+document.getElementById('font-size').addEventListener('input', function() {
+  document.getElementById('size-val').textContent = this.value;
+  renderMeme();
+});
+
+// ── Toast notification ──
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 2500);
+}
+</script>
+</body>
+</html>
