@@ -3508,6 +3508,7 @@ var RAT_DEFAULT_RESPONSES=[
 function openRatCeo(){
   if(!gameRunning)return;
   ratCeoOpen=true;document.exitPointerLock();
+  attachRatInputListener();
   document.getElementById('ratceo').classList.add('open');
   document.getElementById('rat-input').focus();
 }
@@ -3541,24 +3542,30 @@ function ratCeoAdvise(){
   renderRatHistory();
   document.getElementById('rat-input').value='';
 }
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function renderRatHistory(){
   var el=document.getElementById('rat-history');
   if(ratHistory.length<=1){el.innerHTML='';return;}
   var html='<div style="font-family:Orbitron,monospace;font-size:8px;color:rgba(61,255,170,0.4);letter-spacing:2px;margin-bottom:8px;">📜 EERDERE ADVIEZEN</div>';
   for(var i=1;i<ratHistory.length;i++){
-    html+='<div class="rat-hist-item"><div class="rat-hist-q">❓ '+ratHistory[i].q.replace(/</g,'&lt;')+'</div><div class="rat-hist-a">'+ratHistory[i].a.replace(/</g,'&lt;')+'</div></div>';
+    html+='<div class="rat-hist-item"><div class="rat-hist-q">❓ '+escHtml(ratHistory[i].q)+'</div><div class="rat-hist-a">'+escHtml(ratHistory[i].a)+'</div></div>';
   }
   el.innerHTML=html;
 }
 window.closeRatCeo=closeRatCeo;window.ratCeoAdvise=ratCeoAdvise;
 
-// Rat CEO Enter key support
-document.addEventListener('DOMContentLoaded',function(){
+// Rat CEO Enter key support — attach once
+var ratInputListenerAttached=false;
+function attachRatInputListener(){
+  if(ratInputListenerAttached)return;
   var ri=document.getElementById('rat-input');
-  if(ri) ri.addEventListener('keydown',function(e){
-    if(e.code==='Enter'&&!e.shiftKey){e.preventDefault();ratCeoAdvise();}
-  });
-});
+  if(ri){
+    ri.addEventListener('keydown',function(e){
+      if(e.code==='Enter'&&!e.shiftKey){e.preventDefault();ratCeoAdvise();}
+    });
+    ratInputListenerAttached=true;
+  }
+}
 
 // Pause key
 window.addEventListener('keydown',function(e){
