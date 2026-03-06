@@ -199,7 +199,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:100;
 // ═══ RAT CEO — STANDALONE APP ═══════════════════════════════════════
 
 var adviceCount = 0;
-var history = [];
+var ratHistory = [];
 var sessionStart = Date.now();
 
 // Session timer
@@ -300,8 +300,8 @@ function askRatCeo(){
   document.getElementById('advice-count').textContent = adviceCount;
 
   // Add to history
-  history.unshift({q: input, a: response});
-  if(history.length > 20) history.pop();
+  ratHistory.unshift({q: input, a: response});
+  if(ratHistory.length > 20) ratHistory.pop();
   renderHistory();
 
   // Clear input
@@ -313,17 +313,17 @@ function renderHistory(){
   var section = document.getElementById('history-section');
   var list = document.getElementById('history-list');
 
-  if(history.length <= 1){
+  if(ratHistory.length <= 1){
     section.style.display = 'none';
     return;
   }
 
   section.style.display = 'block';
   var html = '';
-  for(var i = 1; i < history.length; i++){
+  for(var i = 1; i < ratHistory.length; i++){
     html += '<div class="hist-item">'
-      + '<div class="hist-q">❓ ' + escHtml(history[i].q) + '</div>'
-      + '<div class="hist-a">' + escHtml(history[i].a) + '</div>'
+      + '<div class="hist-q">❓ ' + escHtml(ratHistory[i].q) + '</div>'
+      + '<div class="hist-a">' + escHtml(ratHistory[i].a) + '</div>'
       + '</div>';
   }
   list.innerHTML = html;
