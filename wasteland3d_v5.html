@@ -172,47 +172,6 @@ canvas#c{display:block;width:100vw;height:100vh;}
   font-size:9px;letter-spacing:3px;cursor:pointer;transition:all 0.15s;}
 #sh-close:hover{background:rgba(61,255,170,0.1);}
 
-/* ═══ RAT CEO ═══ */
-#ratceo{position:fixed;inset:0;z-index:70;background:rgba(0,8,3,0.96);display:none;overflow-y:auto;padding:16px;}
-#ratceo.open{display:block;}
-#ratceo-inner{max-width:640px;margin:0 auto;padding:20px 16px 40px;}
-#ratceo-header{display:flex;justify-content:space-between;align-items:center;
-  border-bottom:1px solid rgba(61,255,170,0.2);padding-bottom:10px;margin-bottom:12px;}
-#ratceo-header h2{font-family:'Orbitron',monospace;font-size:clamp(13px,3vw,20px);
-  color:var(--y);text-shadow:0 0 12px var(--y);letter-spacing:4px;}
-#ratceo-hint{font-size:7px;color:rgba(61,255,170,0.3);letter-spacing:2px;margin-bottom:14px;}
-#rat-ascii{font-size:10px;line-height:1.2;color:rgba(61,255,170,0.6);white-space:pre;
-  text-align:center;margin-bottom:14px;text-shadow:0 0 4px rgba(61,255,170,0.3);}
-#rat-title{font-family:'Orbitron',monospace;font-size:10px;color:var(--y);letter-spacing:3px;
-  text-align:center;margin-bottom:4px;text-shadow:0 0 8px var(--y);}
-#rat-subtitle{font-size:7px;color:rgba(61,255,170,0.45);letter-spacing:2px;text-align:center;margin-bottom:16px;}
-#rat-input-wrap{margin-bottom:14px;}
-#rat-input-label{font-family:'Orbitron',monospace;font-size:8px;color:var(--g);letter-spacing:2px;margin-bottom:6px;}
-#rat-input{width:100%;padding:10px 12px;background:rgba(61,255,170,0.04);border:1px solid rgba(61,255,170,0.25);
-  color:var(--g);font-family:'Share Tech Mono',monospace;font-size:11px;resize:vertical;min-height:60px;
-  outline:none;transition:border-color 0.2s;}
-#rat-input:focus{border-color:rgba(61,255,170,0.6);}
-#rat-input::placeholder{color:rgba(61,255,170,0.2);}
-#rat-submit{display:block;margin:0 auto 18px;padding:8px 28px;background:transparent;
-  border:1px solid var(--y);color:var(--y);font-family:'Orbitron',monospace;
-  font-size:9px;letter-spacing:3px;cursor:pointer;transition:all 0.15s;}
-#rat-submit:hover{background:rgba(255,215,0,0.1);}
-#rat-response{border:1px solid rgba(255,215,0,0.2);padding:16px;background:rgba(255,215,0,0.03);
-  min-height:80px;display:none;}
-#rat-response.active{display:block;}
-#rat-resp-header{font-family:'Orbitron',monospace;font-size:8px;color:var(--y);letter-spacing:2px;
-  margin-bottom:8px;text-shadow:0 0 6px var(--y);}
-#rat-resp-text{font-size:10px;color:var(--g);line-height:1.8;white-space:pre-wrap;}
-#rat-history{margin-top:16px;}
-.rat-hist-item{border:1px solid rgba(61,255,170,0.1);padding:10px;margin-bottom:8px;
-  background:rgba(61,255,170,0.02);}
-.rat-hist-q{font-size:8px;color:rgba(61,255,170,0.4);letter-spacing:1px;margin-bottom:4px;}
-.rat-hist-a{font-size:9px;color:rgba(61,255,170,0.6);line-height:1.6;white-space:pre-wrap;}
-#rat-close{display:block;margin:20px auto 0;padding:10px 28px;background:transparent;
-  border:1px solid var(--g);color:var(--g);font-family:'Orbitron',monospace;
-  font-size:9px;letter-spacing:3px;cursor:pointer;transition:all 0.15s;}
-#rat-close:hover{background:rgba(61,255,170,0.1);}
-
 /* ── ZOMBIE RADAR ── */
 #radar{position:fixed;bottom:120px;right:14px;width:90px;height:90px;
   border:2px solid rgba(61,255,170,0.4);border-radius:50%;
@@ -428,7 +387,6 @@ canvas#c{display:block;width:100vw;height:100vh;}
       <div class="ctrl-row"><span class="ctrl-act">Zipline</span><span class="ctrl-key">Walk onto pad</span></div>
       <div class="ctrl-row"><span class="ctrl-act">EMP Blast</span><span class="ctrl-key">C</span></div>
       <div class="ctrl-row"><span class="ctrl-act">Airstrike</span><span class="ctrl-key">U</span></div>
-      <div class="ctrl-row"><span class="ctrl-act">Rat CEO</span><span class="ctrl-key">O</span></div>
     </div>
     <div class="p-divider"></div>
     <div class="p-section-title">⚙ FEATURE TOGGLES — ALL ENABLED BY DEFAULT</div>
@@ -463,7 +421,7 @@ canvas#c{display:block;width:100vw;height:100vh;}
     Space — Jump/Vault &nbsp;·&nbsp; F — Jetpack &nbsp;·&nbsp; R — Reload &nbsp;·&nbsp; Click — Shoot<br>
     G — Grenade &nbsp;·&nbsp; Q — Mine &nbsp;·&nbsp; X — Shield &nbsp;·&nbsp; V — Bullet Time<br>
     Z — Decoy Flare &nbsp;·&nbsp; H — Freeze Bomb &nbsp;·&nbsp; T — Ground Stomp<br>
-    B / Tab — Shop &nbsp;·&nbsp; 1-6 — Weapon &nbsp;·&nbsp; O — 🐀 Rat CEO
+    B / Tab — Shop &nbsp;·&nbsp; 1-6 — Weapon
   </div>
   <button id="play-btn">▶ BEGIN SURVIVAL</button>
   <div class="wrn">☢ MULTIPLE HOSTILE ENTITIES DETECTED</div>
@@ -528,39 +486,6 @@ canvas#c{display:block;width:100vw;height:100vh;}
   <div id="sh-consumables" class="sh-content"><div id="c-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div></div>
   <div id="sh-tactical" class="sh-content"><div id="t-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div></div>
   <button id="sh-close" onclick="closeShop()">▶ BACK TO BATTLE</button>
-</div>
-
-<!-- ═══ RAT CEO ═══ -->
-<div id="ratceo">
-  <div id="ratceo-inner">
-    <div id="ratceo-header"><h2>🐀 RAT CEO</h2><div style="font-family:'Orbitron',monospace;font-size:9px;color:var(--y);letter-spacing:2px;">CHIEF EXECUTIVE RAT</div></div>
-    <div id="ratceo-hint">[ O / ESC = close ]</div>
-    <div id="rat-ascii">
-   __     __
-  /  \~~~/  \
- (  o     o  )
-  \ ___^___ /
-   /       \
-  / |     | \
- (_/|     |\_)
-    |     |
-    |_____|
-     U   U
-    </div>
-    <div id="rat-title">🐀 RAT CEO ADVISEERT 🐀</div>
-    <div id="rat-subtitle">BESCHRIJF JE BEDRIJFSPROBLEEM — DE RAT LOST HET OP MET RATTENLOGICA</div>
-    <div id="rat-input-wrap">
-      <div id="rat-input-label">📋 JOUW PROBLEEM:</div>
-      <textarea id="rat-input" placeholder="Bijv: Onze klanten vertrekken naar de concurrent..." rows="3"></textarea>
-    </div>
-    <button id="rat-submit" onclick="ratCeoAdvise()">🐀 VRAAG DE RAT</button>
-    <div id="rat-response">
-      <div id="rat-resp-header">🐀 DE RAT CEO SPREEKT:</div>
-      <div id="rat-resp-text"></div>
-    </div>
-    <div id="rat-history"></div>
-    <button id="rat-close" onclick="closeRatCeo()">▶ TERUG NAAR GEVECHT</button>
-  </div>
 </div>
 
 <div id="dead">
@@ -3469,123 +3394,16 @@ function doRespawn(){
 }
 window.closePause=closePause;window.doRespawn=doRespawn;
 
-// ══  RAT CEO SYSTEM  ═══════════════════════════════════════════════
-var ratCeoOpen=false;
-var ratHistory=[];
-
-var RAT_RESPONSES=[
-  {keywords:['klant','klanten','customer','customers','verlies','vertrek','churn'],
-   response:'🐀 *knabbelt op een kabel*\n\nLuister, in de riool leren we één ding: als je kaas niet goed genoeg is, gaan de ratten naar een ander riool.\n\nOplossing: Verstop kleine stukjes "kaas" (verrassingen) in je product. Ratten komen ALTIJD terug voor onverwachte kaas. Voeg geheime bonussen toe die klanten pas na weken ontdekken. Niemand verlaat een riool vol verborgen schatten.\n\n— CEO Rat 🧀'},
-  {keywords:['geld','money','budget','kosten','duur','expensive','cash','winst','profit','omzet','revenue'],
-   response:'🐀 *telt korreltjes rijst*\n\nIn het rattenrijk verzamelen we ALLES. Elke kruimel telt.\n\nOplossing: Doe als een rat — hamster resources. Knabbel kleine stukjes van elke afdeling (2-3% per team). Niemand merkt een kruimel, maar samen heb je een heel brood. Investeer die kruimels in je snelste tunnel (beste product).\n\nRatten worden niet rijk door grote vangsten, maar door NIKS te verspillen.\n\n— CEO Rat 💰'},
-  {keywords:['team','personeel','medewerker','employee','werknemer','collega','samenwerk','conflict','hr'],
-   response:'🐀 *poetst snorharen*\n\nEen rattenkolonie werkt perfect samen. Weet je waarom? Iedereen heeft een ROL en iedereen krijgt KAAS.\n\nOplossing: Ratten delen altijd voedsel met de kolonie. Geef elk teamlid een duidelijke tunnel om te bewaken. Beloon samenwerking met "kaas" (bonussen). En onthoud: zelfs de kleinste rat kan de beste tunnels vinden.\n\nEen kolonie die deelt, overleeft. Altijd.\n\n— CEO Rat 🐀'},
-  {keywords:['concurrent','competitie','competition','markt','market','strijd','concurreren'],
-   response:'🐀 *gluurt om de hoek*\n\nConcurrenten? Ha! Ratten zijn de ULTIEME overlevers. We vechten niet — we zijn SLIMMER.\n\nOplossing: Ga niet door de voordeur als de kat daar zit. Graaf een NIEUWE tunnel. Vind de niche waar niemand kijkt. Terwijl zij vechten om de grote kaas, steel jij alle kruimels die zij laten liggen. Kruimels worden bergen.\n\n— CEO Rat 🏆'},
-  {keywords:['groei','growth','schaal','scale','uitbreid','expand','groot','bigger'],
-   response:'🐀 *rent door een nieuwe tunnel*\n\nRatten hebben elk continent gekoloniseerd. Ons geheim? We groeien DOOR TUNNELS, niet door te wachten.\n\nOplossing: Maak eerst één perfecte tunnel (core product). Dan graaf je zijtunnels (features). Elke tunnel leidt naar nieuwe kaas. Maar BELANGRIJK: elke tunnel moet terug naar het nest leiden. Groei zonder basis = verdwaalde rat.\n\n— CEO Rat 📈'},
-  {keywords:['idee','idea','innovatie','innovation','nieuw','new','creati','bedenk'],
-   response:'🐀 *snuffelt aan alles*\n\nRatten zijn de beste uitvinders. Wist je dat wij liften, deuren en zelfs alarmsystemen hebben omzeild?\n\nOplossing: Snuffel aan ALLES. Elke mislukking is data. Test 10 kleine ideeën in plaats van 1 groot idee. Ratten proberen elke opening — de meeste zijn doodlopend, maar die ene die werkt? Daar zit de KAAS.\n\nFalen is snuffelen. Snuffelen is overleven.\n\n— CEO Rat 💡'},
-  {keywords:['stress','burnout','moe','druk','pressure','werkdruk','overwerk','balans'],
-   response:'🐀 *rolt zich op in nestje*\n\nZelfs ratten slapen 12 uur per dag. TWAALF UUR. En wij regeren de wereld.\n\nOplossing: Een vermoeide rat maakt fouten en wordt opgegeten. Rust is STRATEGIE. Werk in korte sprints (net als hoe ratten rennen — snel, dan pauze). Bouw "nestjes" in je werkdag: 25 min werk, 5 min niets. Een uitgeruste rat vangt meer kaas.\n\n— CEO Rat 😴'},
-  {keywords:['verkoop','sales','verkopen','sell','deal','leads','acquisitie'],
-   response:'🐀 *draagt een stuk pizza door de metro*\n\nHeb je ooit een rat pizza zien dragen? Dat ging VIRAL. Waarom? Ratten verkopen door LATEN ZIEN, niet door praten.\n\nOplossing: Stop met vertellen hoe goed je kaas is. LAAT het zien. Draag je "pizza" trots door de straat. Klanten willen wat ze ZIEN werken. Eén demonstratie is meer waard dan duizend woorden. Wees de pizza-rat.\n\n— CEO Rat 🍕'},
-  {keywords:['marketing','reclame','advertentie','brand','merk','bekendheid','social','media'],
-   response:'🐀 *knaagt door een billboard*\n\nRatten hebben geen marketing budget. Toch kent IEDEREEN ons. Ons geheim? We zijn OVERAL.\n\nOplossing: Wees als een rat — duik op waar niemand je verwacht. Guerrilla marketing. Verras mensen op onverwachte plekken. Eén rat in een restaurant maakt meer indruk dan 100 billboards. Wees memorabel, niet duur.\n\n— CEO Rat 📣'},
-  {keywords:['technologie','tech','software','app','website','digital','ai','systeem','system','code','bug'],
-   response:'🐀 *knaagt door een serverkabel*\n\nRatten hebben meer schade aangericht aan technologie dan alle hackers samen. Wij BEGRIJPEN systemen.\n\nOplossing: Elk systeem heeft zwakke kabels. Test alles. Laat je team "ratten" door je eigen systeem — zoek de zwakke punten VOORDAT de markt dat doet. Een rat die zijn eigen nest test, heeft het sterkste nest.\n\n— CEO Rat 💻'},
-  {keywords:['leider','leadership','manager','management','baas','boss','aanstur'],
-   response:'🐀 *staat op achterpoten*\n\nDe alfarat leidt niet door te bijten. De alfarat leidt door de BESTE tunnels te vinden en de kolonie erheen te brengen.\n\nOplossing: Wees de rat die voorop rent in de tunnel, niet de rat die achteraan schreeuwt. Vind de kaas EERST, deel het EERST. Je team volgt de rat die kaas brengt, niet de rat die commando\'s piept.\n\n— CEO Rat 👑'}
-];
-
-var RAT_DEFAULT_RESPONSES=[
-  '🐀 *knabbelt nadenkend*\n\nHmm, dit probleem ruikt naar beschimmelde kaas. Maar weet je wat ratten doen met schimmelkaas? We eten het TOCH op.\n\nOplossing: Soms moet je gewoon doorbijten — letterlijk. Verdeel het probleem in kleine stukjes (zoals een rat een groot stuk kaas verdeelt). Los elk stukje apart op. Voor je het weet, is het hele probleem opgegeten.\n\n— CEO Rat 🧀',
-  '🐀 *rent in cirkels*\n\nAls een rat vastzit, draait hij om en probeert een ANDERE tunnel. Simpel.\n\nOplossing: Je zit vast omdat je steeds dezelfde tunnel probeert. Draai 180 graden. Doe het TEGENOVERGESTELDE van wat je nu doet. Als iedereen links gaat, ga jij rechts. Daar ligt de onbewaakte kaas.\n\n— CEO Rat 🔄',
-  '🐀 *snuffelt aan het probleem*\n\nDit ruikt naar een val. En ratten weten ALLES over vallen.\n\nOplossing: De beste manier om een val te vermijden? Stuur eerst een kleinere rat (test). Doe een KLEINE test voordat je alles inzet. Ratten die eerst snuffelen voordat ze bijten, leven het langst.\n\n— CEO Rat 🪤',
-  '🐀 *verzamelt kruimels*\n\nElk groot probleem is eigenlijk een berg kruimels.\n\nOplossing: Pak de kruimels één voor één. Begin met de dichtstbijzijnde kruimel (het makkelijkste deelprobleem). Elke kruimel geeft je energie voor de volgende. Voor je het weet heb je het hele probleem verzameld en opgelost.\n\n— CEO Rat ✨'
-];
-
-function openRatCeo(){
-  if(!gameRunning)return;
-  ratCeoOpen=true;document.exitPointerLock();
-  attachRatInputListener();
-  document.getElementById('ratceo').classList.add('open');
-  document.getElementById('rat-input').focus();
-}
-function closeRatCeo(){
-  ratCeoOpen=false;
-  document.getElementById('ratceo').classList.remove('open');
-  if(gameRunning) document.getElementById('c').requestPointerLock();
-}
-function ratCeoAdvise(){
-  var input=document.getElementById('rat-input').value.trim();
-  if(!input)return;
-  var lower=input.toLowerCase();
-  var bestMatch=null;var bestScore=0;
-  for(var i=0;i<RAT_RESPONSES.length;i++){
-    var score=0;
-    for(var j=0;j<RAT_RESPONSES[i].keywords.length;j++){
-      if(lower.indexOf(RAT_RESPONSES[i].keywords[j])!==-1) score++;
-    }
-    if(score>bestScore){bestScore=score;bestMatch=RAT_RESPONSES[i];}
-  }
-  var response;
-  if(bestMatch){
-    response=bestMatch.response;
-  }else{
-    response=RAT_DEFAULT_RESPONSES[Math.floor(Math.random()*RAT_DEFAULT_RESPONSES.length)];
-  }
-  document.getElementById('rat-resp-text').textContent=response;
-  document.getElementById('rat-response').classList.add('active');
-  ratHistory.unshift({q:input,a:response});
-  if(ratHistory.length>10)ratHistory.pop();
-  renderRatHistory();
-  document.getElementById('rat-input').value='';
-}
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function renderRatHistory(){
-  var el=document.getElementById('rat-history');
-  if(ratHistory.length<=1){el.innerHTML='';return;}
-  var html='<div style="font-family:Orbitron,monospace;font-size:8px;color:rgba(61,255,170,0.4);letter-spacing:2px;margin-bottom:8px;">📜 EERDERE ADVIEZEN</div>';
-  for(var i=1;i<ratHistory.length;i++){
-    html+='<div class="rat-hist-item"><div class="rat-hist-q">❓ '+escHtml(ratHistory[i].q)+'</div><div class="rat-hist-a">'+escHtml(ratHistory[i].a)+'</div></div>';
-  }
-  el.innerHTML=html;
-}
-window.closeRatCeo=closeRatCeo;window.ratCeoAdvise=ratCeoAdvise;
-
-// Rat CEO Enter key support — attach once
-var ratInputListenerAttached=false;
-function attachRatInputListener(){
-  if(ratInputListenerAttached)return;
-  var ri=document.getElementById('rat-input');
-  if(ri){
-    ri.addEventListener('keydown',function(e){
-      if(e.code==='Enter'&&!e.shiftKey){e.preventDefault();ratCeoAdvise();}
-    });
-    ratInputListenerAttached=true;
-  }
-}
-
 // Pause key
 window.addEventListener('keydown',function(e){
   if(!gameRunning)return;
-  if(e.code==='KeyP'||(e.code==='Escape'&&!shopOpen&&!ratCeoOpen)){
+  if(e.code==='KeyP'||(e.code==='Escape'&&!shopOpen)){
     e.preventDefault();
     if(pauseOpen) closePause();
-    else if(!shopOpen&&!ratCeoOpen) openPause();
-  }
-  // Rat CEO toggle
-  if(e.code==='KeyO'&&!pauseOpen&&!shopOpen){
-    e.preventDefault();
-    if(ratCeoOpen) closeRatCeo();
-    else openRatCeo();
-  }
-  if(e.code==='Escape'&&ratCeoOpen){
-    e.preventDefault();closeRatCeo();
+    else if(!shopOpen) openPause();
   }
   // New feature keys (only when game running and not paused/shopped)
-  if(!pauseOpen&&!shopOpen&&!ratCeoOpen&&player.alive){
+  if(!pauseOpen&&!shopOpen&&player.alive){
     if(e.code==='KeyN'&&FEATS.nightVision) toggleNightVision();
     if(e.code==='KeyC'&&FEATS.emp) triggerEMP();
     if(e.code==='KeyU'&&FEATS.airstrike) callAirstrike();
