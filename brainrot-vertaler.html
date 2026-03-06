@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BRAINROT VERTALER</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap');
+:root{--g:#3dffaa;--r:#ff4444;--y:#ffd700;--b:#44ccff;--bg:#0a1a0a;--p:#c77dff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--g);
+  min-height:100vh;overflow-x:hidden;}
+
+/* CRT overlay */
+#crt{position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px);}
+#crt::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50%,transparent 50%,rgba(0,0,0,0.35) 100%);}
+
+/* Header */
+header{text-align:center;padding:24px 16px 12px;
+  border-bottom:1px solid rgba(61,255,170,0.15);
+  background:linear-gradient(to bottom,rgba(0,0,0,0.6),transparent);position:relative;}
+header h1{font-family:'Orbitron',monospace;font-size:clamp(16px,3.5vw,28px);
+  color:var(--g);text-shadow:0 0 20px var(--g),0 0 40px rgba(61,255,170,0.3);
+  letter-spacing:6px;}
+header p{font-size:10px;color:rgba(61,255,170,0.5);letter-spacing:3px;margin-top:6px;}
+.back-link{position:absolute;top:16px;left:16px;color:var(--g);text-decoration:none;
+  font-size:10px;letter-spacing:2px;border:1px solid rgba(61,255,170,0.3);
+  padding:6px 12px;transition:all 0.2s;}
+.back-link:hover{background:rgba(61,255,170,0.1);border-color:var(--g);}
+
+/* Container */
+.container{max-width:1000px;margin:0 auto;padding:20px 16px 40px;}
+
+/* Mode selector */
+.mode-selector{display:flex;gap:8px;justify-content:center;margin:20px 0;flex-wrap:wrap;}
+.mode-btn{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;
+  background:transparent;color:var(--g);border:1px solid rgba(61,255,170,0.3);
+  padding:10px 20px;cursor:pointer;transition:all 0.3s;text-transform:uppercase;}
+.mode-btn:hover{background:rgba(61,255,170,0.08);border-color:var(--g);
+  box-shadow:0 0 15px rgba(61,255,170,0.15);}
+.mode-btn.active{background:rgba(61,255,170,0.15);border-color:var(--g);
+  box-shadow:0 0 20px rgba(61,255,170,0.2);text-shadow:0 0 10px var(--g);}
+
+/* Direction indicator */
+.direction{text-align:center;margin:16px 0;font-size:12px;letter-spacing:3px;
+  color:var(--y);text-shadow:0 0 10px var(--y);}
+.direction .arrow{font-size:18px;margin:0 8px;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
+
+/* Translation area */
+.translate-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+@media(max-width:700px){.translate-grid{grid-template-columns:1fr;}}
+
+.text-panel{position:relative;}
+.text-panel label{display:block;font-family:'Orbitron',monospace;font-size:10px;
+  letter-spacing:3px;color:rgba(61,255,170,0.6);margin-bottom:8px;text-transform:uppercase;}
+.text-panel label.brainrot-label{color:var(--p);}
+.text-panel textarea{width:100%;height:220px;background:rgba(0,0,0,0.4);
+  border:1px solid rgba(61,255,170,0.2);color:var(--g);font-family:'Share Tech Mono',monospace;
+  font-size:13px;padding:14px;resize:vertical;line-height:1.6;
+  transition:border-color 0.3s;}
+.text-panel textarea:focus{outline:none;border-color:var(--g);
+  box-shadow:0 0 20px rgba(61,255,170,0.1);}
+.text-panel textarea.brainrot{color:var(--p);border-color:rgba(199,125,255,0.2);}
+.text-panel textarea.brainrot:focus{border-color:var(--p);
+  box-shadow:0 0 20px rgba(199,125,255,0.1);}
+
+/* Action buttons */
+.actions{display:flex;gap:8px;justify-content:center;margin:20px 0;flex-wrap:wrap;}
+.action-btn{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;
+  background:transparent;border:1px solid rgba(61,255,170,0.3);color:var(--g);
+  padding:12px 24px;cursor:pointer;transition:all 0.3s;text-transform:uppercase;
+  position:relative;overflow:hidden;}
+.action-btn:hover{background:rgba(61,255,170,0.1);border-color:var(--g);
+  box-shadow:0 0 20px rgba(61,255,170,0.2);text-shadow:0 0 10px var(--g);}
+.action-btn.translate-btn{border-color:var(--y);color:var(--y);}
+.action-btn.translate-btn:hover{background:rgba(255,215,0,0.1);
+  box-shadow:0 0 20px rgba(255,215,0,0.2);text-shadow:0 0 10px var(--y);}
+.action-btn.copy-btn{border-color:var(--b);color:var(--b);}
+.action-btn.copy-btn:hover{background:rgba(68,204,255,0.1);
+  box-shadow:0 0 20px rgba(68,204,255,0.2);}
+.action-btn.swap-btn{border-color:var(--p);color:var(--p);}
+.action-btn.swap-btn:hover{background:rgba(199,125,255,0.1);
+  box-shadow:0 0 20px rgba(199,125,255,0.2);}
+
+/* Examples */
+.examples{margin:24px 0;border:1px solid rgba(61,255,170,0.1);padding:16px;
+  background:rgba(0,0,0,0.3);}
+.examples h3{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;
+  color:var(--y);margin-bottom:12px;text-shadow:0 0 10px rgba(255,215,0,0.3);}
+.example-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.example-btn{font-family:'Share Tech Mono',monospace;font-size:10px;
+  background:rgba(61,255,170,0.05);border:1px solid rgba(61,255,170,0.15);
+  color:rgba(61,255,170,0.7);padding:8px 14px;cursor:pointer;transition:all 0.3s;}
+.example-btn:hover{background:rgba(61,255,170,0.1);border-color:var(--g);color:var(--g);}
+
+/* Stats bar */
+.stats{display:flex;gap:20px;justify-content:center;margin:16px 0;flex-wrap:wrap;}
+.stat{font-size:9px;letter-spacing:2px;color:rgba(61,255,170,0.4);}
+.stat span{color:var(--y);font-family:'Orbitron',monospace;}
+
+/* Toast notification */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:rgba(0,0,0,0.9);border:1px solid var(--g);color:var(--g);
+  padding:12px 24px;font-size:11px;letter-spacing:2px;z-index:200;
+  transition:transform 0.3s ease;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Brainrot level meter */
+.level-meter{margin:16px 0;text-align:center;}
+.level-meter label{font-size:9px;letter-spacing:2px;color:rgba(61,255,170,0.5);}
+.meter-bar{width:100%;max-width:400px;height:8px;background:rgba(0,0,0,0.5);
+  border:1px solid rgba(61,255,170,0.15);margin:8px auto;position:relative;overflow:hidden;}
+.meter-fill{height:100%;transition:width 0.5s ease,background 0.5s ease;width:0%;}
+.meter-text{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;
+  margin-top:4px;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.3);}
+::-webkit-scrollbar-thumb{background:rgba(61,255,170,0.3);}
+::-webkit-scrollbar-thumb:hover{background:var(--g);}
+</style>
+</head>
+<body>
+<div id="crt"></div>
+
+<header>
+  <h1>🧠 BRAINROT VERTALER</h1>
+  <p>// ZAKELIJK ↔ GEN-Z BRAINROT TRANSLATOR //</p>
+</header>
+
+<div class="container">
+  <!-- Mode selector -->
+  <div class="mode-selector">
+    <button class="mode-btn active" onclick="setMode('zakelijk')" id="mode-zakelijk">📧 ZAKELIJK → BRAINROT</button>
+    <button class="mode-btn" onclick="setMode('brainrot')" id="mode-brainrot">🧠 BRAINROT → ZAKELIJK</button>
+  </div>
+
+  <div class="direction" id="direction-text">
+    ZAKELIJK <span class="arrow">▶▶▶</span> BRAINROT
+  </div>
+
+  <!-- Translate area -->
+  <div class="translate-grid">
+    <div class="text-panel">
+      <label id="input-label">📧 INVOER — ZAKELIJKE TEKST</label>
+      <textarea id="input-text" placeholder="Typ hier je zakelijke email..."></textarea>
+    </div>
+    <div class="text-panel">
+      <label id="output-label" class="brainrot-label">🧠 UITVOER — BRAINROT</label>
+      <textarea id="output-text" class="brainrot" placeholder="De vertaling verschijnt hier..." readonly></textarea>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="actions">
+    <button class="action-btn translate-btn" onclick="vertaal()">⚡ VERTALEN</button>
+    <button class="action-btn swap-btn" onclick="swapTexts()">🔄 WISSEL</button>
+    <button class="action-btn copy-btn" onclick="kopieer()">📋 KOPIËREN</button>
+    <button class="action-btn" onclick="clearAll()">🗑️ WISSEN</button>
+  </div>
+
+  <!-- Brainrot level meter -->
+  <div class="level-meter">
+    <label>// BRAINROT LEVEL //</label>
+    <div class="meter-bar"><div class="meter-fill" id="meter-fill"></div></div>
+    <div class="meter-text" id="meter-text" style="color:rgba(61,255,170,0.4);">—</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">WOORDEN: <span id="stat-words">0</span></div>
+    <div class="stat">VERVANGINGEN: <span id="stat-replacements">0</span></div>
+    <div class="stat">BRAINROT LVL: <span id="stat-level">0</span>%</div>
+  </div>
+
+  <!-- Examples -->
+  <div class="examples">
+    <h3>📝 VOORBEELDEN</h3>
+    <div class="example-btns">
+      <button class="example-btn" onclick="loadExample('email')">Zakelijke Email</button>
+      <button class="example-btn" onclick="loadExample('sollicitatie')">Sollicitatie</button>
+      <button class="example-btn" onclick="loadExample('klacht')">Klachtenbrief</button>
+      <button class="example-btn" onclick="loadExample('vergadering')">Vergaderverzoek</button>
+      <button class="example-btn" onclick="loadExample('brainrot1')">Brainrot Chat</button>
+      <button class="example-btn" onclick="loadExample('brainrot2')">Brainrot Excuus</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentMode = 'zakelijk'; // 'zakelijk' = formal->brainrot, 'brainrot' = brainrot->formal
+
+/* ── Replacement dictionaries ── */
+const zakelijkNaarBrainrot = [
+  // Aanhef & afsluiting
+  ['Geachte heer/mevrouw', 'Yo bestie'],
+  ['Geachte heer', 'Yooo king'],
+  ['Geachte mevrouw', 'Yooo queen'],
+  ['Geachte', 'Yo'],
+  ['Beste collega\'s', 'Ayo squad'],
+  ['Beste', 'Hey'],
+  ['Met vriendelijke groet', 'Aight peace out bestie'],
+  ['Met vriendelijke groeten', 'Aight peace out fam'],
+  ['Hoogachtend', 'Stay sigma, peace'],
+  ['Hartelijke groeten', 'Sending rizz your way'],
+  ['Groeten', 'Later skater'],
+  ['Mvg', 'Peace'],
+
+  // Zinnen & uitdrukkingen
+  ['Naar aanleiding van ons gesprek', 'Oke dus na die hele yap sessie'],
+  ['Naar aanleiding van', 'Oke dus na'],
+  ['Ik schrijf u met betrekking tot', 'Ik slide in je DMs over'],
+  ['Met betrekking tot', 'Over die hele'],
+  ['Bij voorbaat dank', 'Je bent echt een sigma als je dit doet'],
+  ['Alvast bedankt', 'Gigachad als je dit fixt'],
+  ['Dank u wel', 'Echt goated fr fr'],
+  ['Dank u bij voorbaat', 'Moge je rizz oneindig zijn'],
+  ['Hartelijk dank', 'Massive W bedankt'],
+  ['Bedankt voor uw reactie', 'Thanks voor de reply no cap'],
+  ['Bedankt voor uw bericht', 'Thanks voor je berichtje bestie'],
+  ['Bedankt', 'Thanks slay'],
+  ['Ik wil u informeren', 'Even een vibe check'],
+  ['Hierbij informeer ik u', 'Ayo heads up'],
+  ['Ik wil u graag informeren dat', 'Yo even een vibe check want'],
+  ['Ik zou u willen verzoeken', 'Bro kun je misschien'],
+  ['Zou u zo vriendelijk willen zijn', 'Bro wees even sigma en'],
+  ['Ik verzoek u vriendelijk', 'Bestie pls'],
+  ['Gelieve', 'Pls'],
+  ['Ik kijk ernaar uit', 'Lowkey hyped'],
+  ['Ik kijk uit naar uw reactie', 'Lmk wat je ervan vindt no cap'],
+  ['In afwachting van uw antwoord', 'Wacht op je reply bestie'],
+  ['Wij stellen voor', 'Ons idee is deadass'],
+  ['Gaarne ontvang ik', 'Stuur ff'],
+  ['Ik hoop dat dit e-mail u goed bereikt', 'Hope je vibes goed zijn rn'],
+  ['Ik hoop dat alles goed met u gaat', 'Hope je geen Ls pakt lately'],
+  ['Ik neem contact met u op', 'Ik slide in je DMs'],
+  ['Neem gerust contact op', 'Slide gerust in mn DMs'],
+  ['Aarzel niet om contact op te nemen', 'DM me gewoon yolo'],
+  ['Mocht u vragen hebben', 'Als je vragen hebt just hit me up'],
+  ['Voor meer informatie', 'Voor de full lore'],
+  ['Ter uwer informatie', 'Just so you know bestie'],
+  ['Zoals besproken', 'Zoals we al aan het yappen waren'],
+  ['Conform afspraak', 'Zoals we hadden geclaimed'],
+  ['Ingevolge', 'Vanwege die hele'],
+  ['Desalniettemin', 'Maar lowkey tho'],
+  ['Echter', 'Maar fr'],
+  ['Derhalve', 'Dus basically'],
+  ['Dientengevolge', 'En dan dus'],
+  ['Ten gevolge van', 'Door die hele'],
+  ['Ten aanzien van', 'Qua die'],
+  ['Met het oog op', 'Omdat we sigma willen zijn met'],
+  ['In verband met', 'Vanwege'],
+  ['Per omgaande', 'ASAP no cap'],
+  ['Zo spoedig mogelijk', 'Speed run dit even'],
+  ['Op korte termijn', 'Binnenkort fr'],
+  ['Op de hoogte stellen', 'een update geven'],
+  ['Op de hoogte', 'in the loop'],
+  ['Wij betreuren', 'Sorry maar echt'],
+  ['Onze excuses', 'My bad echt'],
+  ['Mijn excuses', 'Sorry bestie echt mijn L'],
+  ['Het spijt mij', 'Ik voel me echt een NPC'],
+  ['Het spijt ons', 'We voelen ons echt NPCs'],
+
+  // Woorden
+  ['vergadering', 'yap sessie'],
+  ['bijeenkomst', 'meetup'],
+  ['presentatie', 'slideshow arc'],
+  ['deadline', 'final boss moment'],
+  ['sollicitatie', 'main character application'],
+  ['curriculum vitae', 'character sheet'],
+  ['cv', 'character sheet'],
+  ['werkervaring', 'side quests'],
+  ['medewerker', 'NPC van het bedrijf'],
+  ['medewerkers', 'NPCs van het bedrijf'],
+  ['collega', 'work bestie'],
+  ['collega\'s', 'work besties'],
+  ['leidinggevende', 'sigma boss'],
+  ['manager', 'sigma boss'],
+  ['directeur', 'final boss'],
+  ['bedrijf', 'company arc'],
+  ['organisatie', 'company arc'],
+  ['afdeling', 'guild'],
+  ['team', 'squad'],
+  ['project', 'quest'],
+  ['projecten', 'quests'],
+  ['kantoor', 'grind spot'],
+  ['werkplek', 'grind spot'],
+  ['salaris', 'loot'],
+  ['bonus', 'extra loot drop'],
+  ['contract', 'alliance scroll'],
+  ['overeenkomst', 'deal'],
+  ['voorwaarden', 'de rules'],
+  ['beleid', 'de meta'],
+  ['strategie', 'game plan'],
+  ['doelstelling', 'main quest objective'],
+  ['resultaten', 'stats'],
+  ['resultaat', 'W of L'],
+  ['probleem', 'bruh moment'],
+  ['problemen', 'bruh moments'],
+  ['oplossing', 'clutch'],
+  ['uitdaging', 'boss fight'],
+  ['mogelijkheid', 'side quest optie'],
+  ['kwaliteit', 'vibe'],
+  ['ervaring', 'XP'],
+  ['kennis', 'lore'],
+  ['vaardigheden', 'skills unlocked'],
+  ['competenties', 'skill tree'],
+  ['functioneringsgesprek', 'performance review arc'],
+  ['beoordeling', 'rating'],
+  ['feedback', 'roast sessie'],
+  ['evaluatie', 'vibe check'],
+  ['planning', 'strat'],
+  ['budget', 'gold reserves'],
+  ['investering', 'gamble'],
+  ['winst', 'W'],
+  ['verlies', 'L'],
+  ['omzet', 'revenue grind'],
+  ['klant', 'main character'],
+  ['klanten', 'main characters'],
+  ['leverancier', 'loot dealer'],
+  ['factuur', 'loot request'],
+  ['betaling', 'gold transfer'],
+  ['rapport', 'lore dump'],
+  ['document', 'scroll'],
+  ['documenten', 'scrolls'],
+  ['e-mail', 'DM'],
+  ['email', 'DM'],
+  ['telefoon', 'facetime'],
+  ['telefonisch', 'via facetime'],
+  ['gesprek', 'yap'],
+  ['overleg', 'squad meeting'],
+  ['bespreking', 'yap sessie'],
+  ['afspraak', 'plan'],
+  ['uitnodiging', 'invite'],
+  ['bevestiging', 'confirmed fr'],
+  ['goedkeuring', 'green light'],
+  ['toestemming', 'permission granted'],
+  ['voorstel', 'pitch'],
+  ['aanbod', 'offer drop'],
+  ['verzoek', 'request'],
+  ['belangrijk', 'lowkey crucial'],
+  ['urgent', 'CODE RED'],
+  ['dringend', 'MEGA URGENT FR'],
+  ['noodzakelijk', 'een must have'],
+  ['professioneel', 'sigma'],
+  ['uitstekend', 'goated'],
+  ['excellent', 'goated af'],
+  ['succesvol', 'een W'],
+  ['effectief', 'OP'],
+  ['efficiënt', 'speedrun-worthy'],
+  ['constructief', 'een W move'],
+  ['respectvol', 'wholesome'],
+  ['verantwoordelijkheid', 'main character energy'],
+  ['verantwoordelijk', 'in je main character era'],
+  ['beschikbaar', 'free'],
+  ['onmiddellijk', 'RIGHT NOW no cap'],
+  ['procedure', 'walkthrough'],
+  ['protocol', 'de rules'],
+  ['richtlijnen', 'de strats'],
+  ['vereisten', 'requirements arc'],
+  ['bijlage', 'attachment drop'],
+  ['bijgevoegd', 'erbij gedropt'],
+  ['u', 'je'],
+  ['uw', 'je'],
+  ['gaarne', 'graag ff'],
+  ['tevens', 'ook'],
+  ['voorts', 'en dan ook nog'],
+  ['reeds', 'al'],
+  ['thans', 'nu'],
+  ['alsook', 'en ook'],
+  ['teneinde', 'zodat'],
+  ['aangaande', 'over'],
+  ['betreffende', 'over die'],
+  ['inzake', 'over'],
+  ['wellicht', 'misschien'],
+  ['eventueel', 'maybe'],
+  ['helaas', 'sad but'],
+  ['uiteraard', 'obviously'],
+  ['vanzelfsprekend', 'duh'],
+  ['inderdaad', 'fr fr'],
+  ['absoluut', 'on god'],
+  ['zeker', 'fr'],
+  ['uitdrukkelijk', 'deadass'],
+  ['volledig', 'full send'],
+  ['samenwerking', 'collab'],
+  ['samenwerken', 'een collab doen'],
+  ['communicatie', 'comms'],
+  ['communiceren', 'yappen'],
+  ['analyseren', 'deep-diven'],
+  ['implementeren', 'shippen'],
+  ['optimaliseren', 'buffen'],
+  ['faciliteren', 'regelen'],
+  ['realiseren', 'real maken'],
+  ['coördineren', 'managen'],
+  ['ondersteuning', 'backup'],
+  ['ondersteunen', 'supporten'],
+  ['functioneren', 'performen'],
+  ['uitvoeren', 'grinden'],
+  ['voltooien', 'finishen'],
+  ['bespreken', 'yappen over'],
+  ['bevestigen', 'confirmen'],
+  ['verzenden', 'sturen'],
+  ['ontvangen', 'gekregen'],
+  ['verwerken', 'processen'],
+  ['beoordelen', 'judgen'],
+  ['motivatie', 'drive'],
+  ['ambitie', 'grindset'],
+  ['succes', 'W'],
+  ['falen', 'L pakken'],
+  ['uitstekende', 'goated'],
+  ['geweldig', 'fire'],
+  ['fantastisch', 'bussin'],
+  ['goed', 'valid'],
+  ['slecht', 'mid'],
+  ['onacceptabel', 'sus af'],
+  ['ontevreden', 'salty'],
+  ['tevreden', 'happy fr'],
+  ['enthousiast', 'hyped'],
+  ['gemotiveerd', 'locked in'],
+  ['toegewijd', 'devoted fr'],
+  ['betrouwbaar', 'reliable no cap'],
+];
+
+const brainrotNaarZakelijk = [
+  // Aanhef & afsluiting
+  ['yo bestie', 'Geachte heer/mevrouw'],
+  ['yooo king', 'Geachte heer'],
+  ['yooo queen', 'Geachte mevrouw'],
+  ['ayo squad', 'Beste collega\'s'],
+  ['aight peace out bestie', 'Met vriendelijke groet'],
+  ['aight peace out fam', 'Met vriendelijke groeten'],
+  ['stay sigma, peace', 'Hoogachtend'],
+  ['sending rizz your way', 'Hartelijke groeten'],
+  ['later skater', 'Groeten'],
+
+  // Zinnen & uitdrukkingen
+  ['na die hele yap sessie', 'naar aanleiding van ons gesprek'],
+  ['slide in je dms over', 'schrijf u met betrekking tot'],
+  ['over die hele', 'met betrekking tot'],
+  ['je bent echt een sigma als je dit doet', 'bij voorbaat dank'],
+  ['gigachad als je dit fixt', 'alvast bedankt'],
+  ['echt goated fr fr', 'dank u wel'],
+  ['massive w bedankt', 'hartelijk dank'],
+  ['thanks voor de reply no cap', 'bedankt voor uw reactie'],
+  ['thanks voor je berichtje bestie', 'bedankt voor uw bericht'],
+  ['thanks slay', 'bedankt'],
+  ['even een vibe check', 'ik wil u informeren'],
+  ['ayo heads up', 'hierbij informeer ik u'],
+  ['bro wees even sigma en', 'zou u zo vriendelijk willen zijn'],
+  ['bestie pls', 'ik verzoek u vriendelijk'],
+  ['lowkey hyped', 'ik kijk ernaar uit'],
+  ['lmk wat je ervan vindt no cap', 'ik kijk uit naar uw reactie'],
+  ['wacht op je reply bestie', 'in afwachting van uw antwoord'],
+  ['hope je vibes goed zijn rn', 'ik hoop dat dit e-mail u goed bereikt'],
+  ['hope je geen ls pakt lately', 'ik hoop dat alles goed met u gaat'],
+  ['slide gerust in mn dms', 'neem gerust contact op'],
+  ['dm me gewoon yolo', 'aarzel niet om contact op te nemen'],
+  ['just hit me up', 'neem gerust contact op'],
+  ['voor de full lore', 'voor meer informatie'],
+  ['just so you know bestie', 'ter uwer informatie'],
+  ['zoals we al aan het yappen waren', 'zoals besproken'],
+  ['zoals we hadden geclaimed', 'conform afspraak'],
+  ['maar lowkey tho', 'desalniettemin'],
+  ['maar fr', 'echter'],
+  ['dus basically', 'derhalve'],
+  ['asap no cap', 'per omgaande'],
+  ['speed run dit even', 'zo spoedig mogelijk'],
+  ['sorry bestie echt mijn l', 'mijn excuses'],
+  ['my bad echt', 'onze excuses'],
+  ['ik voel me echt een npc', 'het spijt mij'],
+  ['we voelen ons echt npcs', 'het spijt ons'],
+
+  // Woorden
+  ['yap sessie', 'vergadering'],
+  ['slideshow arc', 'presentatie'],
+  ['final boss moment', 'deadline'],
+  ['main character application', 'sollicitatie'],
+  ['character sheet', 'curriculum vitae'],
+  ['side quests', 'werkervaring'],
+  ['npcs van het bedrijf', 'medewerkers'],
+  ['npc van het bedrijf', 'medewerker'],
+  ['work besties', 'collega\'s'],
+  ['work bestie', 'collega'],
+  ['sigma boss', 'leidinggevende'],
+  ['final boss', 'directeur'],
+  ['company arc', 'organisatie'],
+  ['grind spot', 'kantoor'],
+  ['extra loot drop', 'bonus'],
+  ['alliance scroll', 'contract'],
+  ['main quest objective', 'doelstelling'],
+  ['bruh moments', 'problemen'],
+  ['bruh moment', 'probleem'],
+  ['boss fight', 'uitdaging'],
+  ['side quest optie', 'mogelijkheid'],
+  ['skills unlocked', 'vaardigheden'],
+  ['skill tree', 'competenties'],
+  ['performance review arc', 'functioneringsgesprek'],
+  ['roast sessie', 'feedback'],
+  ['vibe check', 'evaluatie'],
+  ['gold reserves', 'budget'],
+  ['revenue grind', 'omzet'],
+  ['main characters', 'klanten'],
+  ['main character energy', 'verantwoordelijkheid'],
+  ['main character', 'klant'],
+  ['loot dealer', 'leverancier'],
+  ['loot request', 'factuur'],
+  ['gold transfer', 'betaling'],
+  ['lore dump', 'rapport'],
+  ['squad meeting', 'overleg'],
+  ['attachment drop', 'bijlage'],
+  ['erbij gedropt', 'bijgevoegd'],
+  ['code red', 'urgent'],
+  ['mega urgent fr', 'dringend'],
+  ['right now no cap', 'onmiddellijk'],
+  ['lowkey crucial', 'belangrijk'],
+  ['een must have', 'noodzakelijk'],
+  ['goated af', 'excellent'],
+  ['goated', 'uitstekend'],
+  ['speedrun-worthy', 'efficiënt'],
+  ['een w move', 'constructief'],
+  ['confirmed fr', 'bevestiging'],
+  ['permission granted', 'toestemming'],
+  ['green light', 'goedkeuring'],
+  ['offer drop', 'aanbod'],
+  ['reliable no cap', 'betrouwbaar'],
+  ['devoted fr', 'toegewijd'],
+  ['happy fr', 'tevreden'],
+  ['sus af', 'onacceptabel'],
+  ['locked in', 'gemotiveerd'],
+  ['binnenkort fr', 'op korte termijn'],
+  ['in the loop', 'op de hoogte'],
+  ['on god', 'absoluut'],
+  ['deadass', 'uitdrukkelijk'],
+  ['full send', 'volledig'],
+  ['no cap', 'echt waar'],
+  ['fr fr', 'inderdaad'],
+  ['fr', 'zeker'],
+  ['ngl', 'eerlijk gezegd'],
+  ['tbh', 'om eerlijk te zijn'],
+  ['imo', 'naar mijn mening'],
+  ['lowkey', 'enigszins'],
+  ['highkey', 'zeer'],
+  ['bussin', 'fantastisch'],
+  ['fire', 'geweldig'],
+  ['valid', 'goed'],
+  ['mid', 'matig'],
+  ['salty', 'ontevreden'],
+  ['hyped', 'enthousiast'],
+  ['vibe', 'sfeer'],
+  ['vibes', 'omstandigheden'],
+  ['sigma', 'professioneel'],
+  ['rizz', 'charisma'],
+  ['npc', 'medewerker'],
+  ['loot', 'salaris'],
+  ['quest', 'project'],
+  ['quests', 'projecten'],
+  ['squad', 'team'],
+  ['guild', 'afdeling'],
+  ['collab', 'samenwerking'],
+  ['comms', 'communicatie'],
+  ['strat', 'planning'],
+  ['scrolls', 'documenten'],
+  ['scroll', 'document'],
+  ['grinden', 'uitvoeren'],
+  ['yappen', 'communiceren'],
+  ['shippen', 'implementeren'],
+  ['buffen', 'optimaliseren'],
+  ['supporten', 'ondersteunen'],
+  ['performen', 'functioneren'],
+  ['confirmen', 'bevestigen'],
+  ['deep-diven', 'analyseren'],
+  ['grindset', 'ambitie'],
+  ['drive', 'motivatie'],
+  ['dm', 'e-mail'],
+  ['dms', 'e-mails'],
+  ['facetime', 'telefoon'],
+  ['yap', 'gesprek'],
+  ['pls', 'alstublieft'],
+  ['walkthrough', 'procedure'],
+  ['meta', 'beleid'],
+  ['strats', 'richtlijnen'],
+  ['game plan', 'strategie'],
+  ['xp', 'ervaring'],
+  ['lore', 'kennis'],
+  ['w', 'succes'],
+  ['l', 'tegenslag'],
+  ['slay', 'uitstekend'],
+  ['bestie', 'collega'],
+  ['fam', 'collega\'s'],
+  ['bro', 'geachte'],
+  ['king', 'heer'],
+  ['queen', 'mevrouw'],
+  ['yo', 'geachte'],
+];
+
+/* ── Example texts ── */
+const examples = {
+  email: `Geachte heer/mevrouw,
+
+Naar aanleiding van ons gesprek van afgelopen dinsdag, schrijf ik u met betrekking tot de voortgang van het project. Ik wil u graag informeren dat de deadline voor de presentatie is verschoven naar volgende week.
+
+Zou u zo vriendelijk willen zijn om de documenten voor de vergadering bij te werken? De leidinggevende heeft aangegeven dat de resultaten uitstekend zijn en dat de samenwerking met het team fantastisch verloopt.
+
+Bij voorbaat dank voor uw medewerking.
+
+Met vriendelijke groet,
+Jan de Vries`,
+
+  sollicitatie: `Geachte heer/mevrouw,
+
+Met veel enthousiasme schrijf ik u met betrekking tot de sollicitatie voor de functie van projectmanager. Mijn werkervaring en vaardigheden sluiten uitstekend aan bij de vereisten.
+
+Ik beschik over ruime ervaring in het coördineren van projecten en het aansturen van teams. Mijn ambitie en motivatie maken mij een waardevolle aanwinst voor uw organisatie.
+
+Ik kijk uit naar uw reactie. Bijgevoegd vindt u mijn curriculum vitae.
+
+Hoogachtend,
+Lisa Jansen`,
+
+  klacht: `Geachte heer/mevrouw,
+
+Helaas moet ik u informeren dat ik ontevreden ben over de kwaliteit van de geleverde diensten. Het resultaat is onacceptabel en voldoet niet aan de voorwaarden van onze overeenkomst.
+
+Ik verzoek u vriendelijk om dit probleem zo spoedig mogelijk op te lossen. Mocht u vragen hebben, aarzel niet om contact op te nemen.
+
+In afwachting van uw antwoord.
+
+Met vriendelijke groet,
+Pieter Bakker`,
+
+  vergadering: `Beste collega's,
+
+Hierbij informeer ik u dat er aanstaande woensdag een vergadering gepland staat om de strategie voor het komende kwartaal te bespreken. De bijeenkomst vindt plaats op kantoor.
+
+Ik verzoek u vriendelijk om de bijlage met de planning door te nemen en eventueel feedback voor te bereiden. Het is belangrijk dat iedereen beschikbaar is.
+
+Gaarne ontvang ik een bevestiging van uw aanwezigheid.
+
+Hartelijke groeten,
+Sophie van den Berg`,
+
+  brainrot1: `Yooo king,
+
+Oke dus na die hele yap sessie van dinsdag, ik slide in je DMs over die quest progress. Yo even een vibe check want die final boss moment voor die slideshow arc is naar volgende week geshift.
+
+Bro wees even sigma en update die scrolls voor de yap sessie? Die sigma boss zegt dat de stats goated zijn en de collab met het squad is bussin.
+
+Je bent echt een sigma als je dit doet.
+
+Aight peace out bestie,
+Jan`,
+
+  brainrot2: `Yo bestie,
+
+Sorry bestie echt mijn L maar ik ben echt salty over de vibe van die geleverde stuff. Het W of L is sus af en matcht niet met de rules van onze deal.
+
+Bestie pls fix dit bruh moment, speed run dit even. Als je vragen hebt just hit me up.
+
+Wacht op je reply bestie.
+
+Aight peace out bestie,
+Pieter`
+};
+
+/* ── Translation logic ── */
+function vertaal() {
+  const input = document.getElementById('input-text').value.trim();
+  if (!input) {
+    showToast('⚠️ Typ eerst een tekst!');
+    return;
+  }
+
+  let result;
+  let replacementCount = 0;
+  const dict = currentMode === 'zakelijk' ? zakelijkNaarBrainrot : brainrotNaarZakelijk;
+
+  result = input;
+  for (const [from, to] of dict) {
+    const regex = new RegExp(escapeRegex(from), 'gi');
+    const matches = result.match(regex);
+    if (matches) {
+      replacementCount += matches.length;
+      result = result.replace(regex, (match) => matchCase(match, to));
+    }
+  }
+
+  // Add brainrot flair if translating to brainrot
+  if (currentMode === 'zakelijk') {
+    result = addBrainrotFlair(result);
+  } else {
+    result = addFormalFlair(result);
+  }
+
+  document.getElementById('output-text').value = result;
+  updateStats(input, result, replacementCount);
+  showToast('✅ Vertaald! ' + (currentMode === 'zakelijk' ? '🧠' : '📧'));
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function matchCase(original, replacement) {
+  if (original === original.toUpperCase() && original.length > 1) {
+    return replacement.toUpperCase();
+  }
+  if (original[0] === original[0].toUpperCase()) {
+    return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+  }
+  return replacement;
+}
+
+function addBrainrotFlair(text) {
+  // Add some random brainrot endings to sentences
+  const flairs = [' 💀', ' 😭', ' fr', ' no cap', ' 🔥', ' ong', ' 💯'];
+  const lines = text.split('\n');
+  return lines.map(line => {
+    if (line.trim().length > 30 && !line.trim().endsWith(',') && Math.random() > 0.6) {
+      const flair = flairs[Math.floor(Math.random() * flairs.length)];
+      // Remove trailing period/dot before adding flair
+      if (line.trim().endsWith('.')) {
+        line = line.trimEnd().slice(0, -1) + flair;
+      }
+    }
+    return line;
+  }).join('\n');
+}
+
+function addFormalFlair(text) {
+  // Clean up informal punctuation
+  let result = text;
+  result = result.replace(/\s*💀/g, '.');
+  result = result.replace(/\s*😭/g, '.');
+  result = result.replace(/\s*🔥/g, '.');
+  result = result.replace(/\s*💯/g, '.');
+  result = result.replace(/\s*ong\b/gi, '.');
+  result = result.replace(/!{2,}/g, '!');
+  result = result.replace(/\?{2,}/g, '?');
+  return result;
+}
+
+function updateStats(input, output, replacements) {
+  const words = input.split(/\s+/).filter(w => w.length > 0).length;
+  const brainrotLevel = Math.min(100, Math.round((replacements / Math.max(words, 1)) * 150));
+
+  document.getElementById('stat-words').textContent = words;
+  document.getElementById('stat-replacements').textContent = replacements;
+  document.getElementById('stat-level').textContent = brainrotLevel;
+
+  const meter = document.getElementById('meter-fill');
+  const meterText = document.getElementById('meter-text');
+  meter.style.width = brainrotLevel + '%';
+
+  if (brainrotLevel < 20) {
+    meter.style.background = 'var(--g)';
+    meterText.style.color = 'var(--g)';
+    meterText.textContent = 'NORMAAL 🤓';
+  } else if (brainrotLevel < 40) {
+    meter.style.background = 'var(--b)';
+    meterText.style.color = 'var(--b)';
+    meterText.textContent = 'LICHT AANGETAST 😏';
+  } else if (brainrotLevel < 60) {
+    meter.style.background = 'var(--y)';
+    meterText.style.color = 'var(--y)';
+    meterText.textContent = 'BEHOORLIJK BRAINROT 🧠';
+  } else if (brainrotLevel < 80) {
+    meter.style.background = 'var(--r)';
+    meterText.style.color = 'var(--r)';
+    meterText.textContent = 'ERNSTIGE BRAINROT 💀';
+  } else {
+    meter.style.background = 'var(--p)';
+    meterText.style.color = 'var(--p)';
+    meterText.textContent = 'TERMINALE BRAINROT ☠️';
+  }
+}
+
+/* ── Mode switching ── */
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode-' + mode).classList.add('active');
+
+  const dir = document.getElementById('direction-text');
+  const inputLabel = document.getElementById('input-label');
+  const outputLabel = document.getElementById('output-label');
+  const inputArea = document.getElementById('input-text');
+  const outputArea = document.getElementById('output-text');
+
+  if (mode === 'zakelijk') {
+    dir.innerHTML = 'ZAKELIJK <span class="arrow">▶▶▶</span> BRAINROT';
+    inputLabel.textContent = '📧 INVOER — ZAKELIJKE TEKST';
+    inputLabel.classList.remove('brainrot-label');
+    outputLabel.textContent = '🧠 UITVOER — BRAINROT';
+    outputLabel.classList.add('brainrot-label');
+    inputArea.classList.remove('brainrot');
+    outputArea.classList.add('brainrot');
+    inputArea.placeholder = 'Typ hier je zakelijke email...';
+    outputArea.placeholder = 'De brainrot vertaling verschijnt hier...';
+  } else {
+    dir.innerHTML = 'BRAINROT <span class="arrow">▶▶▶</span> ZAKELIJK';
+    inputLabel.textContent = '🧠 INVOER — BRAINROT TEKST';
+    inputLabel.classList.add('brainrot-label');
+    outputLabel.textContent = '📧 UITVOER — ZAKELIJKE TEKST';
+    outputLabel.classList.remove('brainrot-label');
+    inputArea.classList.add('brainrot');
+    outputArea.classList.remove('brainrot');
+    inputArea.placeholder = 'Typ hier je brainrot tekst...';
+    outputArea.placeholder = 'De zakelijke vertaling verschijnt hier...';
+  }
+}
+
+/* ── Utility functions ── */
+function swapTexts() {
+  const input = document.getElementById('input-text');
+  const output = document.getElementById('output-text');
+  const temp = output.value;
+  input.value = temp;
+  output.value = '';
+
+  // Switch mode
+  setMode(currentMode === 'zakelijk' ? 'brainrot' : 'zakelijk');
+  showToast('🔄 Gewisseld!');
+}
+
+function kopieer() {
+  const output = document.getElementById('output-text').value;
+  if (!output) {
+    showToast('⚠️ Niets om te kopiëren!');
+    return;
+  }
+  navigator.clipboard.writeText(output).then(() => {
+    showToast('📋 Gekopieerd naar klembord!');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = output;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Gekopieerd!');
+  });
+}
+
+function clearAll() {
+  document.getElementById('input-text').value = '';
+  document.getElementById('output-text').value = '';
+  document.getElementById('stat-words').textContent = '0';
+  document.getElementById('stat-replacements').textContent = '0';
+  document.getElementById('stat-level').textContent = '0';
+  document.getElementById('meter-fill').style.width = '0%';
+  document.getElementById('meter-text').textContent = '—';
+  document.getElementById('meter-text').style.color = 'rgba(61,255,170,0.4)';
+  showToast('🗑️ Gewist!');
+}
+
+function loadExample(key) {
+  const text = examples[key];
+  if (!text) return;
+
+  // Auto-detect mode based on example
+  if (key.startsWith('brainrot')) {
+    setMode('brainrot');
+  } else {
+    setMode('zakelijk');
+  }
+
+  document.getElementById('input-text').value = text;
+  document.getElementById('output-text').value = '';
+  showToast('📝 Voorbeeld geladen!');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+/* ── Auto-translate on typing (with debounce) ── */
+let debounceTimer;
+document.getElementById('input-text').addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    if (document.getElementById('input-text').value.trim().length > 0) {
+      vertaal();
+    }
+  }, 500);
+});
+</script>
+</body>
+</html>

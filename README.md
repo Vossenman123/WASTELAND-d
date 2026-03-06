@@ -13,3 +13,13 @@ Open `meme-generator.html` to use the AI Meme Generator!
 - Kies uit 5 stijlen: Classic, Modern, Wasteland, Dark, Neon
 - Pas teksten en grootte aan
 - Download je meme als PNG
+
+### 🧠 Brainrot Vertaler
+Open `brainrot-vertaler.html` om de Brainrot Vertaler te gebruiken!
+- Zet nette zakelijke emails om naar volledige Gen-Z brainrot
+- Vertaal brainrot tekst terug naar zakelijk Nederlands
+- 200+ woord- en zinsvervanging in beide richtingen
+- Brainrot Level meter die laat zien hoe erg het is
+- Voorbeeldteksten om direct te testen
+- Live vertaling terwijl je typt
+- Kopieer resultaat naar klembord
