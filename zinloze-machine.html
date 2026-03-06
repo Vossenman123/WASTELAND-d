@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🕳️ Zinloze Machine — Heel Druk, Totaal Nutteloos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes barFill{0%{width:0}80%{width:100%}85%{width:100%}100%{width:0}}
+@keyframes slideUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-18px)}}
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-2px,2px)}40%{transform:translate(2px,-1px)}60%{transform:translate(-1px,1px)}80%{transform:translate(1px,-2px)}100%{transform:translate(0)}}
+@keyframes scanline{0%{top:-4px}100%{top:100%}}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+body{
+  background:#0a0a0f;
+  color:#00ff88;
+  font-family:'Courier New',monospace;
+  overflow:hidden;
+  height:100vh;
+  position:relative;
+}
+body::after{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.03) 2px,rgba(0,255,136,.03) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+#scanline{
+  position:fixed;left:0;width:100%;height:4px;
+  background:rgba(0,255,136,.1);
+  animation:scanline 3s linear infinite;
+  pointer-events:none;z-index:9998;
+}
+
+header{
+  text-align:center;padding:12px 0 6px;
+  border-bottom:1px solid #00ff8833;
+  background:linear-gradient(90deg,#0a0a0f,#0d1a14,#0a0a0f);
+}
+header h1{
+  font-size:1.1em;letter-spacing:4px;text-transform:uppercase;
+  color:#00ff88;text-shadow:0 0 10px #00ff8866;
+  animation:pulse 2s ease-in-out infinite;
+}
+header .subtitle{font-size:.65em;color:#00ff8888;margin-top:2px;letter-spacing:2px}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:auto 1fr auto;
+  gap:6px;padding:6px;
+  height:calc(100vh - 70px);
+}
+
+.panel{
+  background:#0d0d15;border:1px solid #00ff8833;
+  border-radius:4px;padding:8px;overflow:hidden;position:relative;
+  animation:fadeInScale .4s ease-out;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,#00ff8866,transparent);
+}
+.panel-title{
+  font-size:.6em;text-transform:uppercase;letter-spacing:3px;
+  color:#00ff8899;margin-bottom:6px;display:flex;align-items:center;gap:6px;
+}
+.panel-title .dot{
+  width:5px;height:5px;border-radius:50%;background:#00ff88;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+
+/* Metrics cards */
+.metrics{display:flex;gap:6px;flex-wrap:wrap}
+.metric{
+  flex:1;min-width:80px;background:#0a0a12;border:1px solid #00ff8822;
+  border-radius:3px;padding:6px;text-align:center;
+}
+.metric .label{font-size:.5em;color:#00ff8877;text-transform:uppercase;letter-spacing:1px}
+.metric .value{font-size:1.1em;color:#00ff88;margin-top:2px;font-weight:bold}
+.metric .unit{font-size:.5em;color:#00ff8855}
+.metric .change{font-size:.45em;margin-top:1px}
+.metric .change.up{color:#00ff88}
+.metric .change.down{color:#ff4444}
+
+/* Progress bars */
+.progress-row{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:.55em}
+.progress-row .name{width:90px;color:#00ff8899;text-align:right;flex-shrink:0}
+.progress-bar{flex:1;height:6px;background:#0a0a12;border-radius:3px;overflow:hidden;border:1px solid #00ff8811}
+.progress-bar .fill{height:100%;border-radius:3px;transition:width .5s ease}
+.progress-row .pct{width:35px;text-align:right;color:#00ff8899}
+
+/* Console log */
+#console{
+  font-size:.52em;line-height:1.5;overflow:hidden;
+  height:100%;color:#00ff88cc;position:relative;
+}
+#console .line{white-space:nowrap;overflow:hidden}
+#console .line .time{color:#00ff8855}
+#console .line .level-info{color:#00aaff}
+#console .line .level-warn{color:#ffaa00}
+#console .line .level-ok{color:#00ff88}
+#console .line .level-debug{color:#8855ff}
+#console .line .level-error{color:#ff4455}
+
+/* Spinning elements */
+.spinner-container{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.spinner{
+  width:30px;height:30px;border:2px solid #00ff8822;
+  border-top-color:#00ff88;border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+.spinner.s2{animation-duration:.7s;border-top-color:#00aaff;width:24px;height:24px}
+.spinner.s3{animation-duration:1.3s;border-top-color:#ffaa00;width:20px;height:20px}
+.spinner.s4{animation-duration:.5s;border-top-color:#ff44aa;width:16px;height:16px}
+
+/* Network graph */
+#network-graph{height:60px;position:relative;overflow:hidden}
+#network-canvas{width:100%;height:100%}
+
+/* Task queue */
+.task{
+  display:flex;align-items:center;gap:6px;font-size:.52em;
+  padding:2px 4px;border-bottom:1px solid #00ff8811;
+}
+.task .status{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.task .status.running{background:#00ff88;animation:pulse .8s ease infinite}
+.task .status.queued{background:#ffaa00}
+.task .status.done{background:#00ff8844}
+.task .tid{color:#00ff8855;width:45px;flex-shrink:0}
+.task .tname{color:#00ff88cc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task .tprog{color:#00ff8877;width:35px;text-align:right;flex-shrink:0}
+
+/* Matrix rain canvas */
+#matrix-canvas{position:fixed;top:0;left:0;width:100%;height:100%;opacity:.04;pointer-events:none;z-index:-1}
+
+/* Status bar */
+.status-bar{
+  grid-column:1/-1;display:flex;align-items:center;gap:10px;
+  font-size:.5em;padding:2px 8px;
+  background:#080810;border:1px solid #00ff8822;border-radius:3px;
+}
+.status-bar .sbi{display:flex;align-items:center;gap:4px}
+.status-bar .sbi .dot{width:4px;height:4px;border-radius:50%}
+.status-bar .blink{animation:blink 1s step-end infinite}
+.status-bar .spacer{flex:1}
+
+/* Hex dump */
+.hex-dump{font-size:.48em;line-height:1.4;color:#00ff8866;overflow:hidden;height:100%}
+.hex-dump .addr{color:#00ff8844}
+.hex-dump .byte.active{color:#00ff88}
+
+/* Pie / donut charts via conic gradient */
+.chart-row{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.donut{
+  width:50px;height:50px;border-radius:50%;position:relative;
+}
+.donut::after{
+  content:'';position:absolute;top:10px;left:10px;right:10px;bottom:10px;
+  background:#0d0d15;border-radius:50%;
+}
+.donut .donut-label{
+  position:absolute;z-index:1;width:100%;text-align:center;
+  top:50%;transform:translateY(-50%);font-size:.5em;color:#00ff88;
+}
+
+/* Particles canvas */
+#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;opacity:.15}
+
+/* Responsive */
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="scanline"></div>
+<canvas id="matrix-canvas"></canvas>
+<canvas id="particles-canvas"></canvas>
+
+<header>
+  <h1>🕳️ Zinloze Machine v3.7.2</h1>
+  <div class="subtitle">Kwantum-Entropie Processor • Resultaat: Niets • Uptime: <span id="uptime">00:00:00</span></div>
+</header>
+
+<div class="grid">
+  <!-- Row 1: System metrics -->
+  <div class="panel" style="grid-column:1/-1">
+    <div class="panel-title"><span class="dot"></span> Systeem Statistieken — Real-time Monitoring</div>
+    <div class="metrics" id="metrics"></div>
+  </div>
+
+  <!-- Col 1: Progress bars + tasks -->
+  <div class="panel">
+    <div class="panel-title"><span class="dot"></span> Verwerkingspijplijn</div>
+    <div id="progress-bars"></div>
+  </div>
+
+  <!-- Col 2: Console output -->
+  <div class="panel">
+    <div class="panel-title"><span class="dot"></span> Systeem Console</div>
+    <div id="console"></div>
+  </div>
+
+  <!-- Col 3: Hex dump + spinners -->
+  <div class="panel">
+    <div class="panel-title"><span class="dot"></span> Geheugen Analyse</div>
+    <div class="spinner-container" style="margin-bottom:6px">
+      <div class="spinner"></div>
+      <div class="spinner s2"></div>
+      <div class="spinner s3"></div>
+      <div class="spinner s4"></div>
+      <div class="spinner s3"></div>
+      <div class="spinner s2"></div>
+    </div>
+    <div class="hex-dump" id="hex-dump"></div>
+  </div>
+
+  <!-- Row 3: Network + Charts + Tasks -->
+  <div class="panel">
+    <div class="panel-title"><span class="dot"></span> Netwerk Doorvoer</div>
+    <canvas id="network-canvas"></canvas>
+    <div id="net-stats" style="font-size:.5em;text-align:center;margin-top:4px;color:#00ff8877"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="dot"></span> Resource Allocatie</div>
+    <div class="chart-row" id="charts"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="dot"></span> Taakwachtrij</div>
+    <div id="task-queue"></div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar" id="status-bar">
+    <div class="sbi"><span class="dot" style="background:#00ff88;width:4px;height:4px;border-radius:50%;display:inline-block"></span> ACTIEF</div>
+    <div class="sbi">PID: <span id="sb-pid">--</span></div>
+    <div class="sbi">Threads: <span id="sb-threads">--</span></div>
+    <div class="sbi">Cyclus: <span id="sb-cycle">--</span></div>
+    <div class="sbi blink" style="color:#ffaa00">⚡ VERWERKING</div>
+    <div class="spacer"></div>
+    <div class="sbi">Resultaat: <span style="color:#ff4455">GEEN</span></div>
+    <div class="sbi">Nut: <span style="color:#ff4455">0.00%</span></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 🕳️ ZINLOZE MACHINE — Does absolutely nothing, very busily
+// ============================================================
+
+// --- Utility helpers ---
+const rand = (a, b) => Math.random() * (b - a) + a;
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const pick = arr => arr[randInt(0, arr.length - 1)];
+const hex = () => randInt(0, 255).toString(16).padStart(2, '0');
+const pct = () => (rand(0, 100)).toFixed(1) + '%';
+
+// --- Fake metric definitions ---
+const metricDefs = [
+  { id: 'cpu', label: 'CPU Belasting', unit: '%', min: 23, max: 99 },
+  { id: 'ram', label: 'Geheugen', unit: 'GB', min: 4.2, max: 15.8, dec: 1 },
+  { id: 'disk', label: 'Schijf I/O', unit: 'MB/s', min: 12, max: 890 },
+  { id: 'net', label: 'Netwerk', unit: 'Mbps', min: 0.3, max: 420, dec: 1 },
+  { id: 'entropy', label: 'Entropie', unit: 'bits', min: 1024, max: 65536 },
+  { id: 'threads', label: 'Threads', unit: '', min: 47, max: 2048 },
+  { id: 'queue', label: 'Wachtrij', unit: 'taken', min: 0, max: 999 },
+  { id: 'temp', label: 'Temperatuur', unit: '°C', min: 38, max: 94 },
+  { id: 'voltage', label: 'Spanning', unit: 'V', min: 1.05, max: 1.42, dec: 2 },
+  { id: 'cycles', label: 'Klok Cycli', unit: 'GHz', min: 2.1, max: 5.4, dec: 1 },
+];
+
+// --- Build metrics UI ---
+const metricsEl = document.getElementById('metrics');
+const metricValues = {};
+metricDefs.forEach(m => {
+  const el = document.createElement('div');
+  el.className = 'metric';
+  el.innerHTML = `<div class="label">${m.label}</div><div class="value" id="mv-${m.id}">--</div><div class="unit">${m.unit}</div><div class="change" id="mc-${m.id}"></div>`;
+  metricsEl.appendChild(el);
+  metricValues[m.id] = { el: document.getElementById('mv-' + m.id), chEl: document.getElementById('mc-' + m.id), prev: 0 };
+});
+
+function updateMetrics() {
+  metricDefs.forEach(m => {
+    const v = rand(m.min, m.max);
+    const dec = m.dec !== undefined ? m.dec : 0;
+    const formatted = v.toFixed(dec);
+    const mv = metricValues[m.id];
+    const diff = v - mv.prev;
+    mv.el.textContent = formatted;
+    const arrow = diff >= 0 ? '▲' : '▼';
+    const cls = diff >= 0 ? 'up' : 'down';
+    mv.chEl.className = 'change ' + cls;
+    mv.chEl.textContent = arrow + ' ' + Math.abs(diff).toFixed(dec);
+    mv.prev = v;
+  });
+}
+
+// --- Progress bars ---
+const progressNames = [
+  'Kwantum Sync', 'Data Defrag', 'Entropie Calc', 'Buffer Flush',
+  'Hash Verificatie', 'Node Balans', 'Cache Opbouw', 'Packet Decode',
+  'Kernel Compile', 'Matrix Inversie', 'Tensor Reductie', 'Flux Calibratie'
+];
+const progressEl = document.getElementById('progress-bars');
+const bars = [];
+const barColors = ['#00ff88', '#00aaff', '#ffaa00', '#ff44aa', '#8855ff', '#ff4455'];
+progressNames.forEach((name, i) => {
+  const row = document.createElement('div');
+  row.className = 'progress-row';
+  const color = barColors[i % barColors.length];
+  row.innerHTML = `<span class="name">${name}</span><div class="progress-bar"><div class="fill" id="pf-${i}" style="background:${color};width:0%"></div></div><span class="pct" id="pp-${i}">0%</span>`;
+  progressEl.appendChild(row);
+  bars.push({ fill: document.getElementById('pf-' + i), pctEl: document.getElementById('pp-' + i), progress: rand(0, 100), speed: rand(0.3, 2.5), color });
+});
+
+function updateBars() {
+  bars.forEach(b => {
+    b.progress += b.speed;
+    if (b.progress > 100) {
+      b.progress = 0;
+      b.speed = rand(0.3, 2.5);
+    }
+    b.fill.style.width = b.progress + '%';
+    b.pctEl.textContent = b.progress.toFixed(0) + '%';
+  });
+}
+
+// --- Console log ---
+const consoleEl = document.getElementById('console');
+const maxLines = 50;
+const levels = ['INFO', 'WARN', 'OK', 'DEBUG', 'ERROR'];
+const levelCls = { INFO: 'level-info', WARN: 'level-warn', OK: 'level-ok', DEBUG: 'level-debug', ERROR: 'level-error' };
+
+const logMessages = [
+  'Kwantumverstrengeling gesynchroniseerd op node ${N}',
+  'Entropiepool aangevuld: ${V} bits beschikbaar',
+  'Virtueel geheugenblok ${HEX} gedefragmenteerd',
+  'Neurale netwerk laag ${N} opnieuw gekalibreerd',
+  'Blockchain hash verificatie voltooid: 0x${HEX}${HEX}',
+  'Pakketbuffer leeggemaakt: ${V} frames verwerkt',
+  'Matrixinversie berekend in ${V}ms (${N}x${N})',
+  'Thermische throttle vermeden bij ${V}°C',
+  'Garbage collector: ${V} objecten vrijgemaakt',
+  'Socket ${N} opnieuw verbonden met upstream relay',
+  'DNS cache vernieuwd: ${V} records bijgewerkt',
+  'Tensordecompositie rang-${N} afgerond',
+  'Fourier-transformatie afgerond: ${V} samples',
+  'Kernelmodule hercompileerd: hash=0x${HEX}${HEX}${HEX}',
+  'Flux condensator geladen tot ${V}%',
+  'Heisenberg buffer overflow voorkomen op 0x${HEX}',
+  'Multiverse branch ${N} gesynchroniseerd',
+  'Tachyon emitter herstart op frequentie ${V}Hz',
+  'Zwart gat entropie berekend: ${V} nat',
+  'Dimensionale poort ${N} gestabiliseerd',
+  'Nulpuntenergie oogst: ${V} microjoule verzameld',
+  'Schrodingers proces is zowel actief als inactief',
+  'Tijdlijn ${N} succesvol gesplitst en samengevoegd',
+  'Wormhole routing tabel bijgewerkt: ${V} paden',
+  'Antimaterie containment op ${V}% capaciteit',
+  'Holografisch geheugenblok ${HEX} geoptimaliseerd',
+  'Plasmaregulator gestabiliseerd op ${V} kelvin',
+  'Graviton detector kalibratie voltooid: nauwkeurigheid ${V}%',
+  'Kosmische straling filter bijgewerkt: ${V} events/s',
+  'Biosferische data sync: ${V} organismen getraceerd',
+];
+
+function formatMsg(template) {
+  return template
+    .replace(/\$\{N\}/g, () => randInt(1, 9999))
+    .replace(/\$\{V\}/g, () => rand(0.1, 99999).toFixed(randInt(0, 2)))
+    .replace(/\$\{HEX\}/g, () => hex() + hex());
+}
+
+function addLog() {
+  const now = new Date();
+  const ts = now.toTimeString().slice(0, 8) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+  const level = pick(levels);
+  const msg = formatMsg(pick(logMessages));
+  const line = document.createElement('div');
+  line.className = 'line';
+  line.innerHTML = `<span class="time">[${ts}]</span> <span class="${levelCls[level]}">${level.padEnd(5)}</span> ${msg}`;
+  consoleEl.appendChild(line);
+  while (consoleEl.children.length > maxLines) consoleEl.removeChild(consoleEl.firstChild);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+// --- Hex dump ---
+const hexEl = document.getElementById('hex-dump');
+const hexRows = 18;
+function updateHex() {
+  let html = '';
+  for (let r = 0; r < hexRows; r++) {
+    const addr = (randInt(0, 0xFFFF) * 16).toString(16).padStart(8, '0');
+    let bytes = '';
+    let ascii = '';
+    for (let c = 0; c < 16; c++) {
+      const v = randInt(0, 255);
+      const active = Math.random() > 0.7 ? ' active' : '';
+      bytes += `<span class="byte${active}">${v.toString(16).padStart(2, '0')}</span> `;
+      ascii += (v >= 32 && v < 127) ? String.fromCharCode(v) : '.';
+    }
+    html += `<div><span class="addr">${addr}</span>  ${bytes} |${ascii}|</div>`;
+  }
+  hexEl.innerHTML = html;
+}
+
+// --- Network graph ---
+const netCanvas = document.getElementById('network-canvas');
+const netCtx = netCanvas.getContext('2d');
+const netData = { in: [], out: [] };
+const netMaxPts = 80;
+for (let i = 0; i < netMaxPts; i++) { netData.in.push(0); netData.out.push(0); }
+const netStatsEl = document.getElementById('net-stats');
+
+function updateNetwork() {
+  netCanvas.width = netCanvas.clientWidth;
+  netCanvas.height = netCanvas.clientHeight;
+  const w = netCanvas.width, h = netCanvas.height;
+
+  netData.in.push(rand(5, 95));
+  netData.out.push(rand(5, 80));
+  if (netData.in.length > netMaxPts) { netData.in.shift(); netData.out.shift(); }
+
+  netCtx.clearRect(0, 0, w, h);
+
+  // Grid
+  netCtx.strokeStyle = '#00ff8811';
+  netCtx.lineWidth = 0.5;
+  for (let y = 0; y < h; y += h / 5) {
+    netCtx.beginPath(); netCtx.moveTo(0, y); netCtx.lineTo(w, y); netCtx.stroke();
+  }
+
+  function drawLine(data, color, alpha) {
+    netCtx.beginPath();
+    netCtx.strokeStyle = color;
+    netCtx.lineWidth = 1.5;
+    const step = w / (netMaxPts - 1);
+    data.forEach((v, i) => {
+      const x = i * step;
+      const y = h - (v / 100) * h;
+      i === 0 ? netCtx.moveTo(x, y) : netCtx.lineTo(x, y);
+    });
+    netCtx.stroke();
+    // Fill
+    netCtx.lineTo(w, h);
+    netCtx.lineTo(0, h);
+    netCtx.closePath();
+    netCtx.fillStyle = color.replace(')', ',' + alpha + ')').replace('rgb', 'rgba');
+    netCtx.fill();
+  }
+
+  drawLine(netData.in, 'rgb(0,255,136)', 0.1);
+  drawLine(netData.out, 'rgb(0,170,255)', 0.08);
+
+  const lastIn = netData.in[netData.in.length - 1].toFixed(1);
+  const lastOut = netData.out[netData.out.length - 1].toFixed(1);
+  netStatsEl.textContent = `▼ ${lastIn} Mbps  ▲ ${lastOut} Mbps  |  Pakketten: ${randInt(10000, 99999)}  Verloren: ${rand(0, 0.5).toFixed(2)}%`;
+}
+
+// --- Donut charts ---
+const chartsEl = document.getElementById('charts');
+const chartDefs = [
+  { label: 'CPU', colors: ['#00ff88', '#00aaff', '#ffaa00', '#0d0d15'] },
+  { label: 'RAM', colors: ['#ff44aa', '#00ff88', '#8855ff', '#0d0d15'] },
+  { label: 'GPU', colors: ['#00aaff', '#ffaa00', '#ff4455', '#0d0d15'] },
+];
+const donuts = [];
+chartDefs.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'donut';
+  el.innerHTML = `<div class="donut-label">${c.label}<br><span id="dl-${c.label}">--%</span></div>`;
+  el.id = 'donut-' + c.label;
+  chartsEl.appendChild(el);
+  donuts.push({ el, def: c });
+});
+
+function updateCharts() {
+  donuts.forEach(d => {
+    const slices = [];
+    let remaining = 100;
+    for (let i = 0; i < d.def.colors.length - 1; i++) {
+      const v = rand(5, remaining - (d.def.colors.length - 1 - i) * 5);
+      slices.push(v);
+      remaining -= v;
+    }
+    slices.push(remaining);
+    let gradient = 'conic-gradient(';
+    let cumulative = 0;
+    slices.forEach((s, i) => {
+      const start = cumulative;
+      cumulative += s;
+      gradient += `${d.def.colors[i]} ${start}% ${cumulative}%`;
+      if (i < slices.length - 1) gradient += ', ';
+    });
+    gradient += ')';
+    d.el.style.background = gradient;
+    const usage = (100 - slices[slices.length - 1]).toFixed(0);
+    document.getElementById('dl-' + d.def.label).textContent = usage + '%';
+  });
+}
+
+// --- Task queue ---
+const taskQueueEl = document.getElementById('task-queue');
+const taskNames = [
+  'Kwantum decoherentie meting', 'Entropie herverdeling', 'Buffer pool rotatie',
+  'Neural gewicht update', 'Packet header reconstructie', 'Cryptografische hash cyclus',
+  'Matrixtranspositie verificatie', 'Vortex stabilisatie scan', 'Magnetische flux kalibratie',
+  'Dimensionaal poort onderhoud', 'Tachyon puls synchronisatie', 'Antimaterie balans check',
+  'Holografische data compressie', 'Graviton veld analyse', 'Plasma inductie test',
+  'Biosferische sensor scan', 'Kosmische ruis filtering', 'Wormhole pad optimalisatie',
+];
+let taskId = 1000;
+const maxTasks = 12;
+
+function updateTasks() {
+  const tasks = [];
+  for (let i = 0; i < maxTasks; i++) {
+    const status = i < 2 ? 'running' : (i < 5 ? 'queued' : 'done');
+    const prog = status === 'running' ? randInt(1, 99) + '%' : (status === 'done' ? '100%' : '—');
+    tasks.push({ id: taskId++, name: pick(taskNames), status, prog });
+  }
+  taskQueueEl.innerHTML = tasks.map(t =>
+    `<div class="task"><span class="status ${t.status}"></span><span class="tid">#${t.id}</span><span class="tname">${t.name}</span><span class="tprog">${t.prog}</span></div>`
+  ).join('');
+}
+
+// --- Matrix rain background ---
+const mCanvas = document.getElementById('matrix-canvas');
+const mCtx = mCanvas.getContext('2d');
+let mCols, mDrops;
+function initMatrix() {
+  mCanvas.width = window.innerWidth;
+  mCanvas.height = window.innerHeight;
+  mCols = Math.floor(mCanvas.width / 14);
+  mDrops = Array(mCols).fill(1);
+}
+initMatrix();
+window.addEventListener('resize', initMatrix);
+
+function drawMatrix() {
+  mCtx.fillStyle = 'rgba(10,10,15,0.05)';
+  mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+  mCtx.fillStyle = '#00ff88';
+  mCtx.font = '12px monospace';
+  for (let i = 0; i < mCols; i++) {
+    const ch = String.fromCharCode(randInt(0x30A0, 0x30FF));
+    mCtx.fillText(ch, i * 14, mDrops[i] * 14);
+    if (mDrops[i] * 14 > mCanvas.height && Math.random() > 0.975) mDrops[i] = 0;
+    mDrops[i]++;
+  }
+}
+
+// --- Particle background ---
+const pCanvas = document.getElementById('particles-canvas');
+const pCtx = pCanvas.getContext('2d');
+let particles = [];
+function initParticles() {
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+  particles = [];
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: rand(0, pCanvas.width), y: rand(0, pCanvas.height),
+      vx: rand(-0.3, 0.3), vy: rand(-0.3, 0.3),
+      r: rand(1, 2.5)
+    });
+  }
+}
+initParticles();
+window.addEventListener('resize', initParticles);
+
+function drawParticles() {
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = pCanvas.width;
+    if (p.x > pCanvas.width) p.x = 0;
+    if (p.y < 0) p.y = pCanvas.height;
+    if (p.y > pCanvas.height) p.y = 0;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    pCtx.fillStyle = '#00ff88';
+    pCtx.fill();
+  });
+  // Lines between nearby particles
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120) {
+        pCtx.beginPath();
+        pCtx.moveTo(particles[i].x, particles[i].y);
+        pCtx.lineTo(particles[j].x, particles[j].y);
+        pCtx.strokeStyle = `rgba(0,255,136,${0.2 * (1 - dist / 120)})`;
+        pCtx.lineWidth = 0.5;
+        pCtx.stroke();
+      }
+    }
+  }
+}
+
+// --- Uptime ---
+const startTime = Date.now();
+const uptimeEl = document.getElementById('uptime');
+function updateUptime() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+  const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
+  uptimeEl.textContent = h + ':' + m + ':' + s;
+}
+
+// --- Status bar ---
+let cycleCount = 0;
+function updateStatusBar() {
+  cycleCount++;
+  document.getElementById('sb-pid').textContent = randInt(10000, 99999);
+  document.getElementById('sb-threads').textContent = randInt(47, 2048);
+  document.getElementById('sb-cycle').textContent = cycleCount.toLocaleString();
+}
+
+// --- Main loops ---
+function fastLoop() {
+  drawMatrix();
+  drawParticles();
+  requestAnimationFrame(fastLoop);
+}
+requestAnimationFrame(fastLoop);
+
+// Data updates at different rates for realism
+setInterval(updateMetrics, 1500);
+setInterval(updateBars, 100);
+setInterval(addLog, 400);
+setInterval(updateHex, 2000);
+setInterval(updateNetwork, 500);
+setInterval(updateCharts, 3000);
+setInterval(updateTasks, 2500);
+setInterval(updateUptime, 1000);
+setInterval(updateStatusBar, 1000);
+
+// Initial fills
+updateMetrics(); updateBars(); updateHex(); updateNetwork();
+updateCharts(); updateTasks(); updateUptime(); updateStatusBar();
+for (let i = 0; i < 20; i++) addLog();
+
+// --- Easter egg: click anywhere to show a message ---
+document.body.addEventListener('click', () => {
+  const msgs = [
+    'Bezig met niets doen...',
+    'Geduld, de nutteloosheid wordt geladen.',
+    'Maximale inefficiëntie bereikt!',
+    'Alle systemen draaien op nul resultaat.',
+    'Deze klik is succesvol genegeerd.',
+    'Zinloosheid intensiveert...',
+    'Nutteloze berekening #' + randInt(1, 9999999) + ' voltooid.',
+    'ERROR: Te veel productiviteit gedetecteerd. Bezig met corrigeren...',
+  ];
+  addLog(); // Add an extra log line for effect
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#00ff8822;border:1px solid #00ff8866;color:#00ff88;padding:8px 20px;border-radius:4px;font-size:12px;z-index:10000;pointer-events:none;animation:slideUp 2s ease-out forwards;font-family:Courier New,monospace';
+  toast.textContent = pick(msgs);
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+});
+
+console.log('%c🕳️ Zinloze Machine', 'color:#00ff88;font-size:20px;font-weight:bold');
+console.log('%cDeze applicatie doet helemaal niets. Maar wel heel druk.', 'color:#00ff8888;font-size:12px');
+</script>
+</body>
+</html>
