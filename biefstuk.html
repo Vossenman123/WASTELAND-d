@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🥩 Biefstuk Meter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap');
+:root{--g:#3dffaa;--r:#ff4444;--y:#ffd700;--bg:#0a0f0a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{min-height:100vh;background:var(--bg);font-family:'Share Tech Mono',monospace;color:#ccc;
+  display:flex;flex-direction:column;align-items:center;overflow-y:auto;
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(61,255,170,0.04) 0%,transparent 60%);}
+
+header{text-align:center;padding:40px 20px 10px;width:100%;max-width:600px;}
+header h1{font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,42px);color:var(--y);
+  text-shadow:0 0 30px rgba(255,215,0,0.4);letter-spacing:4px;}
+header p{font-size:11px;color:rgba(61,255,170,0.6);letter-spacing:3px;margin-top:8px;}
+
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(61,255,170,0.15);
+  border-radius:12px;padding:28px 24px;margin:20px;width:calc(100% - 40px);max-width:560px;}
+
+/* ── PRIJS INPUT ── */
+.input-group{display:flex;gap:12px;align-items:center;margin-bottom:8px;}
+.input-group label{font-size:10px;letter-spacing:2px;color:var(--g);white-space:nowrap;min-width:60px;}
+.input-group input{flex:1;background:rgba(0,0,0,0.5);border:1px solid rgba(61,255,170,0.3);
+  border-radius:6px;padding:12px 16px;font-family:'Share Tech Mono',monospace;font-size:18px;
+  color:#fff;outline:none;transition:border-color 0.2s;}
+.input-group input:focus{border-color:var(--g);box-shadow:0 0 12px rgba(61,255,170,0.15);}
+.input-group input::placeholder{color:rgba(255,255,255,0.2);}
+.euro-sign{font-size:22px;color:var(--g);font-weight:bold;}
+
+/* ── BIEFSTUK PRIJS INSTELLING ── */
+.steak-price-row{display:flex;gap:12px;align-items:center;margin-top:12px;}
+.steak-price-row label{font-size:9px;letter-spacing:2px;color:rgba(61,255,170,0.5);white-space:nowrap;min-width:60px;}
+.steak-price-row input{width:90px;background:rgba(0,0,0,0.4);border:1px solid rgba(61,255,170,0.15);
+  border-radius:6px;padding:8px 12px;font-family:'Share Tech Mono',monospace;font-size:14px;
+  color:var(--y);outline:none;text-align:center;}
+.steak-price-row input:focus{border-color:var(--y);}
+.steak-price-row span{font-size:9px;color:rgba(255,255,255,0.3);}
+
+/* ── RESULT ── */
+.result{text-align:center;padding:30px 10px;min-height:200px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;}
+.steak-icon{font-size:clamp(60px,12vw,100px);filter:drop-shadow(0 0 20px rgba(255,100,0,0.4));
+  animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.steak-count{font-family:'Orbitron',monospace;font-size:clamp(28px,7vw,56px);color:var(--y);
+  text-shadow:0 0 30px rgba(255,215,0,0.4);letter-spacing:3px;margin:12px 0 6px;}
+.steak-label{font-size:12px;color:rgba(61,255,170,0.7);letter-spacing:3px;text-transform:uppercase;}
+.steak-question{font-family:'Orbitron',monospace;font-size:clamp(11px,2.5vw,16px);color:var(--r);
+  text-shadow:0 0 14px rgba(255,68,68,0.3);letter-spacing:2px;margin-top:18px;
+  opacity:0;transition:opacity 0.4s;}
+.steak-question.show{opacity:1;}
+
+/* ── STEAKS VISUEEL ── */
+.steak-visual{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:16px auto 0;
+  max-width:400px;min-height:30px;}
+.steak-visual .mini-steak{font-size:clamp(18px,3vw,28px);animation:pop 0.3s ease-out backwards;
+  filter:drop-shadow(0 0 4px rgba(255,100,0,0.3));}
+@keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* ── VERDICT BAR ── */
+.verdict{margin-top:20px;text-align:center;min-height:40px;}
+.verdict-bar{height:8px;border-radius:4px;background:rgba(255,255,255,0.05);overflow:hidden;
+  margin:8px auto 0;max-width:300px;}
+.verdict-fill{height:100%;border-radius:4px;transition:width 0.6s ease,background 0.6s ease;width:0%;}
+.verdict-text{font-size:9px;letter-spacing:2px;margin-top:6px;}
+
+/* ── HISTORY ── */
+.history{margin-top:12px;}
+.history h3{font-family:'Orbitron',monospace;font-size:11px;color:var(--g);letter-spacing:3px;
+  margin-bottom:10px;opacity:0.7;}
+.history-list{list-style:none;max-height:180px;overflow-y:auto;}
+.history-list li{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;border-bottom:1px solid rgba(61,255,170,0.06);font-size:11px;}
+.history-list li:hover{background:rgba(61,255,170,0.03);}
+.h-price{color:var(--g);}
+.h-steaks{color:var(--y);}
+.h-clear{display:inline-block;margin-top:8px;font-size:9px;color:rgba(255,68,68,0.5);
+  cursor:pointer;letter-spacing:2px;border:none;background:none;font-family:inherit;}
+.h-clear:hover{color:var(--r);}
+
+/* ── FOOTER ── */
+footer{text-align:center;padding:20px;font-size:8px;color:rgba(255,255,255,0.15);letter-spacing:2px;}
+footer a{color:rgba(61,255,170,0.3);text-decoration:none;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(61,255,170,0.2);border-radius:2px;}
+
+/* ── EMPTY STATE ── */
+.empty-state{color:rgba(255,255,255,0.15);font-size:11px;letter-spacing:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🥩 BIEFSTUK METER</h1>
+  <p>HOEVEEL BIEFSTUKKEN IS HET WAARD?</p>
+</header>
+
+<div class="card">
+  <div class="input-group">
+    <span class="euro-sign">€</span>
+    <input type="number" id="price-input" placeholder="Voer een bedrag in..." min="0" step="0.01" autofocus>
+  </div>
+  <div class="steak-price-row">
+    <label>🥩 PRIJS</label>
+    <input type="number" id="steak-price" value="14.99" min="0.01" step="0.01">
+    <span>per biefstuk</span>
+  </div>
+</div>
+
+<div class="card result" id="result">
+  <div class="empty-state">Voer een bedrag in hierboven...</div>
+</div>
+
+<div class="card verdict" id="verdict-card" style="display:none;">
+  <div class="verdict-text" id="verdict-text"></div>
+  <div class="verdict-bar"><div class="verdict-fill" id="verdict-fill"></div></div>
+</div>
+
+<div class="card history" id="history-card" style="display:none;">
+  <h3>📋 GESCHIEDENIS</h3>
+  <ul class="history-list" id="history-list"></ul>
+  <button class="h-clear" id="clear-history">✕ WIS GESCHIEDENIS</button>
+</div>
+
+<footer>
+  BIEFSTUK METER · WASTELAND-D · <a href="wasteland3d_v5.html">TERUG NAAR GAME</a>
+</footer>
+
+<script>
+'use strict';
+
+var priceInput = document.getElementById('price-input');
+var steakPriceInput = document.getElementById('steak-price');
+var resultDiv = document.getElementById('result');
+var verdictCard = document.getElementById('verdict-card');
+var verdictText = document.getElementById('verdict-text');
+var verdictFill = document.getElementById('verdict-fill');
+var historyCard = document.getElementById('history-card');
+var historyList = document.getElementById('history-list');
+var clearBtn = document.getElementById('clear-history');
+
+var bfHistory = [];
+try { bfHistory = JSON.parse(localStorage.getItem('biefstuk-history') || '[]'); } catch(e) { bfHistory = []; }
+
+function getSteakPrice() {
+  var v = parseFloat(steakPriceInput.value);
+  return (v > 0) ? v : 14.99;
+}
+
+function calculate() {
+  var price = parseFloat(priceInput.value);
+  var steakPrice = getSteakPrice();
+
+  if (isNaN(price) || price <= 0) {
+    resultDiv.innerHTML = '<div class="empty-state">Voer een bedrag in hierboven...</div>';
+    verdictCard.style.display = 'none';
+    return;
+  }
+
+  var steaks = price / steakPrice;
+  var rounded = Math.round(steaks * 10) / 10;
+  var whole = Math.floor(steaks);
+  var label = rounded === 1 ? 'biefstuk' : 'biefstukken';
+
+  // Build steak visual (max 50 icons)
+  var visualCount = Math.min(Math.ceil(steaks), 50);
+  var visualHTML = '';
+  for (var i = 0; i < visualCount; i++) {
+    visualHTML += '<span class="mini-steak" style="animation-delay:' + (i * 0.05) + 's">🥩</span>';
+  }
+  if (steaks > 50) {
+    visualHTML += '<span class="mini-steak" style="animation-delay:' + (50 * 0.05) + 's">...</span>';
+  }
+
+  var questionClass = steaks >= 3 ? 'show' : '';
+
+  resultDiv.innerHTML =
+    '<div class="steak-icon">🥩</div>' +
+    '<div class="steak-count">' + rounded + '</div>' +
+    '<div class="steak-label">' + label + '</div>' +
+    '<div class="steak-visual">' + visualHTML + '</div>' +
+    '<div class="steak-question ' + questionClass + '">' + getQuestion(steaks) + '</div>';
+
+  // Verdict bar
+  verdictCard.style.display = '';
+  var verdictInfo = getVerdict(steaks);
+  verdictText.textContent = verdictInfo.text;
+  verdictText.style.color = verdictInfo.color;
+  verdictFill.style.width = Math.min(steaks / 20 * 100, 100) + '%';
+  verdictFill.style.background = verdictInfo.color;
+
+  // Add to history
+  addHistory(price, rounded, steakPrice);
+}
+
+function getQuestion(steaks) {
+  if (steaks < 1) return '🤏 Nog geen hele biefstuk...';
+  if (steaks < 3) return '🤔 Mmm, best redelijk.';
+  if (steaks < 5) return '😬 Dit is ' + Math.round(steaks) + ' biefstukken. Wil je dit echt?';
+  if (steaks < 10) return '😰 ' + Math.round(steaks) + ' biefstukken?! Denk goed na...';
+  if (steaks < 20) return '🚨 ' + Math.round(steaks) + ' BIEFSTUKKEN. Weet je het zeker?!';
+  if (steaks < 50) return '💀 ' + Math.round(steaks) + ' BIEFSTUKKEN! Dit is waanzin!';
+  return '☠️ ' + Math.round(steaks) + ' BIEFSTUKKEN. Je bent gek geworden.';
+}
+
+function getVerdict(steaks) {
+  if (steaks < 1) return { text: '✅ GOEDKOOP — MINDER DAN ÉÉN BIEFSTUK', color: '#3dffaa' };
+  if (steaks < 3) return { text: '👍 REDELIJK — EEN PAAR BIEFSTUKKEN', color: '#88ff88' };
+  if (steaks < 5) return { text: '⚠️ MATIG — WORDT DUUR...', color: '#ffd700' };
+  if (steaks < 10) return { text: '🔥 DUUR — DAT ZIJN VEEL BIEFSTUKKEN', color: '#ff8800' };
+  if (steaks < 20) return { text: '💸 HEEL DUUR — EEN BERG BIEFSTUKKEN', color: '#ff4444' };
+  return { text: '☠️ ABSURD — EEN HELE KUDDE RUNDEREN', color: '#ff0044' };
+}
+
+function addHistory(price, steaks, steakPrice) {
+  bfHistory.unshift({ price: price, steaks: steaks, steakPrice: steakPrice, time: Date.now() });
+  if (bfHistory.length > 20) bfHistory.pop();
+  try { localStorage.setItem('biefstuk-history', JSON.stringify(bfHistory)); } catch(e) {}
+  renderHistory();
+}
+
+function renderHistory() {
+  if (bfHistory.length === 0) {
+    historyCard.style.display = 'none';
+    return;
+  }
+  historyCard.style.display = '';
+  historyList.innerHTML = '';
+  bfHistory.forEach(function(h) {
+    var li = document.createElement('li');
+    var lbl = h.steaks === 1 ? 'biefstuk' : 'biefstukken';
+    li.innerHTML = '<span class="h-price">€' + h.price.toFixed(2) + '</span>' +
+      '<span class="h-steaks">🥩 ' + h.steaks + ' ' + lbl + '</span>';
+    historyList.appendChild(li);
+  });
+}
+
+clearBtn.addEventListener('click', function() {
+  bfHistory = [];
+  try { localStorage.removeItem('biefstuk-history'); } catch(e) {}
+  renderHistory();
+});
+
+priceInput.addEventListener('input', calculate);
+steakPriceInput.addEventListener('input', calculate);
+
+// Keyboard: Enter to focus back to input
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') priceInput.focus();
+});
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>
