@@ -725,8 +725,9 @@ function addBrainrotFlair(text) {
       const flair = flairs[Math.floor(Math.random() * flairs.length)];
       // Remove trailing period/dot before adding flair
       if (line.trim().endsWith('.')) {
-        line = line.trimEnd().slice(0, -1) + flair;
+        line = line.trimEnd().slice(0, -1);
       }
+      line = line.trimEnd() + flair;
     }
     return line;
   }).join('\n');
