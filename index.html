@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>WASTELAND 3D</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="crt"></div>
+<div id="hl"></div>
+<div id="dmg"></div>
+<div id="lowhp"></div>
+<div id="jflame"></div>
+<div id="vaultfx"></div>
+
+<!-- New feature overlays -->
+<div id="slowmo-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:rgba(0,100,255,0.15);border:3px solid rgba(68,204,255,0.6);opacity:0;transition:opacity 0.2s;"></div>
+<div id="shieldring" style="position:fixed;inset:0;pointer-events:none;z-index:6;
+  background:radial-gradient(ellipse at 50%,transparent 50%,rgba(68,204,255,0.3) 100%);
+  border:4px solid rgba(68,204,255,0.8);opacity:0;transition:opacity 0.3s;"></div>
+<div id="dash-fx"></div>
+<div id="dash-tilt"></div>
+<div id="poison-overlay"></div>
+<div id="adrenaline-overlay"></div>
+
+<!-- Zombie Radar -->
+<div id="radar">
+  <div id="radar-sweep"></div>
+  <canvas id="radar-canvas" width="90" height="90"></canvas>
+  <div id="radar-center"></div>
+  <div id="radar-label">RADAR</div>
+</div>
+
+<!-- New HUD bottom bar -->
+<div id="new-hud" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:14px;pointer-events:none;z-index:11;flex-wrap:wrap;justify-content:center;">
+  <div id="grenade-hud" style="font-family:'Orbitron',monospace;font-size:10px;color:#00ff88;text-shadow:0 0 8px #00ff88;">💣x3</div>
+  <div id="mine-hud" style="font-family:'Orbitron',monospace;font-size:10px;color:#ff6600;text-shadow:0 0 8px #ff6600;">💥x3</div>
+  <div id="shield-hud" style="font-family:'Orbitron',monospace;font-size:10px;color:#44ccff;text-shadow:0 0 8px #44ccff;">🛡RDY</div>
+  <div id="flare-hud" style="font-family:'Orbitron',monospace;font-size:10px;color:#ff8800;text-shadow:0 0 8px #ff8800;">🔥x2</div>
+  <div id="freeze-hud" style="font-family:'Orbitron',monospace;font-size:10px;color:#88ddff;text-shadow:0 0 8px #88ddff;">❄x2</div>
+  <div id="rage-hud" style="font-family:'Orbitron',monospace;font-size:10px;color:#ff4400;text-shadow:0 0 8px #ff4400;display:none;">💢RAGE</div>
+</div>
+<div id="crit-vfx" style="position:fixed;inset:0;pointer-events:none;z-index:13;opacity:0;
+  border:4px solid gold;box-shadow:inset 0 0 40px rgba(255,215,0,0.3);transition:opacity 0.05s;"></div>
+
+<!-- ═══ PAUSE MENU ═══ -->
+<div id="pause">
+  <div id="pause-inner">
+    <h1>⏸ PAUSED</h1>
+    <div class="psub">ESC OR P TO RESUME</div>
+    <div class="p-divider"></div>
+    <div class="p-section-title">🎮 CONTROLS</div>
+    <div id="ctrl-grid">
+      <div class="ctrl-row"><span class="ctrl-act">Move</span><span class="ctrl-key">WASD</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Look</span><span class="ctrl-key">Mouse</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Sprint (hold)</span><span class="ctrl-key">Shift</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Dash (double-tap)</span><span class="ctrl-key">Shift×2</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Jump / Vault</span><span class="ctrl-key">Space / E</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Jetpack</span><span class="ctrl-key">F</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Shoot</span><span class="ctrl-key">Click</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Reload</span><span class="ctrl-key">R</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Grenade</span><span class="ctrl-key">G</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Mine</span><span class="ctrl-key">Q</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Shield</span><span class="ctrl-key">X</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Bullet Time</span><span class="ctrl-key">V</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Decoy Flare</span><span class="ctrl-key">Z</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Freeze Bomb</span><span class="ctrl-key">H</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Ground Stomp</span><span class="ctrl-key">T</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Night Vision</span><span class="ctrl-key">N</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Weapon 1–6</span><span class="ctrl-key">1-6</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Shop</span><span class="ctrl-key">B / Tab</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Pause</span><span class="ctrl-key">P / Esc</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Zipline</span><span class="ctrl-key">Walk onto pad</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">EMP Blast</span><span class="ctrl-key">C</span></div>
+      <div class="ctrl-row"><span class="ctrl-act">Airstrike</span><span class="ctrl-key">U</span></div>
+    </div>
+    <div class="p-divider"></div>
+    <div class="p-section-title">⚙ FEATURE TOGGLES — ALL ENABLED BY DEFAULT</div>
+    <div id="feat-grid"></div>
+    <div id="pause-btns">
+      <button id="pause-allon" onclick="featureAllOn()">ENABLE ALL</button>
+      <button id="pause-alloff" onclick="featureAllOff()">DISABLE ALL</button>
+      <button id="pause-respawn" onclick="doRespawn()">⚠ RESPAWN AT SPAWN</button>
+      <button id="pause-resume" onclick="closePause()">▶ RESUME</button>
+    </div>
+  </div>
+</div>
+
+<!-- New HUD elements -->
+<div id="xp-bar"><div id="xp-fill" style="width:0%"></div></div>
+<div id="level-txt">LVL 1</div>
+<div id="kill-score">KILLS: 0</div>
+<div id="streak-display"></div>
+<div id="objective-hud"><div id="obj-title">OBJECTIVE</div><div id="obj-text">SURVIVE THE WAVE</div></div>
+<div id="speed-lines"></div>
+<div id="nightvision-overlay"></div>
+<div id="weather-overlay"></div>
+<div id="emp-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:14;opacity:0;
+  background:rgba(200,220,255,0.85);transition:opacity 0.05s;"></div>
+
+<div id="start">
+  <div class="logo">WASTELAND 3D</div>
+  <div class="sub">6 WORLDS · WAVE SURVIVAL</div>
+  <div class="dvd"></div>
+  <div class="ctrl">
+    WASD — Move &nbsp;·&nbsp; Shift HOLD — Sprint &nbsp;·&nbsp; Double-tap Shift — DASH<br>
+    Space — Jump/Vault &nbsp;·&nbsp; F — Jetpack &nbsp;·&nbsp; R — Reload &nbsp;·&nbsp; Click — Shoot<br>
+    G — Grenade &nbsp;·&nbsp; Q — Mine &nbsp;·&nbsp; X — Shield &nbsp;·&nbsp; V — Bullet Time<br>
+    Z — Decoy Flare &nbsp;·&nbsp; H — Freeze Bomb &nbsp;·&nbsp; T — Ground Stomp<br>
+    B / Tab — Shop &nbsp;·&nbsp; 1-6 — Weapon
+  </div>
+  <button id="play-btn">▶ BEGIN SURVIVAL</button>
+  <div class="wrn">☢ MULTIPLE HOSTILE ENTITIES DETECTED</div>
+</div>
+
+<div id="hud">
+  <div id="topbar">
+    <div id="loc-txt">CITY RUINS · WORLD 1</div>
+    <div id="wave-txt">WAVE 1</div>
+    <div id="coin-txt">⚙ 0</div>
+  </div>
+  <div id="enemy-txt"></div>
+  <div id="compass"><div id="cmp"></div><div id="cmpt"></div></div>
+  <div id="nfy"></div>
+  <div id="kfeed"></div>
+  <div id="bossbar">
+    <div id="bossname">BOSS: BRUTE ALPHA</div>
+    <div id="bbg"><div id="bbf" style="width:100%"></div></div>
+  </div>
+  <div id="xhair">
+    <div class="xl h"></div><div class="xl v"></div><div class="xl c"></div>
+  </div>
+  <div id="hpanel">
+    <div id="hplbl">HEALTH</div>
+    <div id="hpn">100</div>
+    <div id="hpbar"><div id="hpf"></div><div id="hpt">100/100</div></div>
+  </div>
+  <div id="jpanel">
+    <div id="jlbl">✈ JETPACK</div>
+    <div id="jpbar"><div id="jpf"></div></div>
+    <div id="jst">READY</div>
+  </div>
+  <div id="apanel">
+    <div id="wnm">PISTOL</div>
+    <div id="amn">24</div>
+    <div id="amr">/ 120</div>
+    <div id="rlt"></div>
+  </div>
+</div>
+
+<div id="wann"><h2 id="wann-t">WAVE 1</h2><p id="wann-s">PREPARE FOR COMBAT</p></div>
+
+<div id="wtrans">
+  <div id="wt-name">ENTERING NEW WORLD</div>
+  <div id="wt-sub">LOADING...</div>
+</div>
+
+<!-- SHOP -->
+<div id="shop">
+  <div id="shdr"><h2>⚙ WASTELAND SHOP</h2><div id="sh-coins">⚙ 0 COINS</div></div>
+  <div id="sh-hint">[ B / TAB / ESC = close ]</div>
+  <div id="sh-tabs">
+    <button class="shtab active" onclick="setShopTab('weapons',this)">🔫 WEAPONS</button>
+    <button class="shtab" onclick="setShopTab('upgrades',this)">⚡ UPGRADES</button>
+    <button class="shtab" onclick="setShopTab('perks',this)">🌟 PERKS</button>
+    <button class="shtab" onclick="setShopTab('consumables',this)">🧪 ITEMS</button>
+    <button class="shtab" onclick="setShopTab('tactical',this)">🤖 TACTICAL</button>
+  </div>
+  <div id="sh-weapons" class="sh-content active"><div id="w-grid"></div></div>
+  <div id="sh-upgrades" class="sh-content"><div id="u-grid"></div></div>
+  <div id="sh-perks" class="sh-content"><div id="p-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div></div>
+  <div id="sh-consumables" class="sh-content"><div id="c-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div></div>
+  <div id="sh-tactical" class="sh-content"><div id="t-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;"></div></div>
+  <button id="sh-close" onclick="closeShop()">▶ BACK TO BATTLE</button>
+</div>
+
+<div id="dead">
+  <h1>YOU DIED</h1>
+  <p id="dead-s">WAVE 1 · 0 KILLS</p>
+  <button onclick="location.reload()">▶ RETRY</button>
+</div>
+
+<div id="tui">
+  <div id="lz"></div>
+  <div id="sa"><div id="sb"></div><div id="sn"></div></div>
+  <div class="tb" id="tb-f">FIRE</div>
+  <div class="tb" id="tb-j">↑</div>
+  <div class="tb" id="tb-jt">JET</div>
+  <div class="tb" id="tb-sh">SHOP</div>
+  <div class="tb" id="tb-r">RLD</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
