@@ -36,12 +36,37 @@ const API_CONFIG = {
   /** Base URL of your Laravel API, e.g. 'https://gym.example.com/api' */
   baseUrl: '',
   /**
-   * Bearer token for authentication (Laravel Sanctum / Passport).
-   * Populate after user logs in, e.g.:
-   *   API_CONFIG.token = localStorage.getItem('api_token');
+   * Bearer token for authentication (Laravel Sanctum).
+   * Populated automatically after login/register, persisted in localStorage.
    */
   token: null,
 };
+
+/* ── Token persistence ─────────────────────────────────────────────── */
+const TOKEN_KEY = 'gymlog_api_token';
+const AUTH_USER_KEY = 'gymlog_auth_user';
+
+function _loadToken() {
+  API_CONFIG.token = localStorage.getItem(TOKEN_KEY) || null;
+}
+function _saveToken(token, user) {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    API_CONFIG.token = token;
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+    API_CONFIG.token = null;
+  }
+  if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  else localStorage.removeItem(AUTH_USER_KEY);
+}
+function _getAuthUser() {
+  try { return JSON.parse(localStorage.getItem(AUTH_USER_KEY)) || null; }
+  catch (_) { return null; }
+}
+
+// Initialise token from storage on page load
+_loadToken();
 
 /* ── Internal localStorage helpers ─────────────────────────────────── */
 const STORE_KEY_API = 'gymlog_v1';
@@ -235,47 +260,86 @@ const GymApi = {
   /* ── AUTH (backend only) ────────────────────────────────────────── */
 
   /**
+   * Register a new account.
+   * POST /api/register  { name, email, password, password_confirmation, unit }
+   * → { user, token }
+   */
+  async register(name, email, password, unit = 'kg') {
+    if (!API_CONFIG.useBackend) return null;
+    const res = await _http('POST', '/register', {
+      name,
+      email,
+      password,
+      password_confirmation: password,
+      unit,
+    });
+    if (res?.token) _saveToken(res.token, res.user);
+    return res;
+  },
+
+  /**
    * Login via Laravel Sanctum.
-   * POST /api/login  { email, password }  → { token }
+   * POST /api/login  { email, password }  → { user, token }
    */
   async login(email, password) {
     if (!API_CONFIG.useBackend) return null;
     const res = await _http('POST', '/login', { email, password });
-    if (res?.token) { API_CONFIG.token = res.token; }
+    if (res?.token) _saveToken(res.token, res.user);
     return res;
   },
 
   async logout() {
     if (!API_CONFIG.useBackend) return;
-    await _http('POST', '/logout');
-    API_CONFIG.token = null;
+    try { await _http('POST', '/logout'); } catch (_) {}
+    _saveToken(null, null);
+    API_CONFIG.useBackend = false;
+  },
+
+  /** GET /api/me – verify the stored token is still valid. */
+  async me() {
+    if (!API_CONFIG.useBackend || !API_CONFIG.token) return null;
+    return _http('GET', '/me');
+  },
+
+  /** Returns the cached auth user (no network call). */
+  getAuthUser() {
+    return _getAuthUser();
+  },
+
+  /** Returns true when a token is stored (user is "logged in"). */
+  isAuthenticated() {
+    return !!API_CONFIG.token;
   },
 };
 
 /*
  * ╔══════════════════════════════════════════════════════════════════╗
- * ║  LARAVEL ROUTE MAP                                              ║
- * ║  Add this to your routes/api.php:                              ║
+ * ║  LARAVEL ROUTE MAP  (see backend/routes/api.php)               ║
  * ╠══════════════════════════════════════════════════════════════════╣
- * ║  use App\Http\Controllers\{                                     ║
- * ║    AuthController, ExerciseController, WorkoutController,      ║
- * ║    TemplateController, PrController, SettingsController,       ║
- * ║    FriendController                                             ║
- * ║  };                                                             ║
+ * ║  POST   /api/register    – register (name, email, password, …) ║
+ * ║  POST   /api/login       – login → { user, token }             ║
+ * ║  POST   /api/logout      – revoke token  [auth:sanctum]        ║
+ * ║  GET    /api/me          – current user  [auth:sanctum]        ║
  * ║                                                                  ║
- * ║  Route::post('/login',  [AuthController::class, 'login']);      ║
- * ║  Route::post('/logout', [AuthController::class, 'logout'])      ║
- * ║      ->middleware('auth:sanctum');                              ║
+ * ║  All routes below require auth:sanctum middleware               ║
  * ║                                                                  ║
- * ║  Route::middleware('auth:sanctum')->group(function () {         ║
- * ║    Route::apiResource('exercises', ExerciseController::class);  ║
- * ║    Route::apiResource('workouts',  WorkoutController::class);   ║
- * ║    Route::apiResource('templates', TemplateController::class);  ║
- * ║    Route::apiResource('friends',   FriendController::class);    ║
- * ║    Route::get ('prs',      [PrController::class, 'index']);     ║
- * ║    Route::put ('prs',      [PrController::class, 'update']);    ║
- * ║    Route::get ('settings', [SettingsController::class,'show']); ║
- * ║    Route::put ('settings', [SettingsController::class,'update']);║
- * ║  });                                                             ║
+ * ║  GET    /api/exercises          – index                         ║
+ * ║  POST   /api/exercises          – store                         ║
+ * ║  PUT    /api/exercises/{id}     – update                        ║
+ * ║  DELETE /api/exercises/{id}     – destroy                       ║
+ * ║  GET    /api/workouts           – index                         ║
+ * ║  POST   /api/workouts           – store                         ║
+ * ║  GET    /api/workouts/{id}      – show                          ║
+ * ║  DELETE /api/workouts/{id}      – destroy                       ║
+ * ║  GET    /api/templates          – index                         ║
+ * ║  POST   /api/templates          – store                         ║
+ * ║  PUT    /api/templates/{id}     – update                        ║
+ * ║  DELETE /api/templates/{id}     – destroy                       ║
+ * ║  GET    /api/prs                – computed PRs                  ║
+ * ║  GET    /api/settings           – show                          ║
+ * ║  PUT    /api/settings           – update                        ║
+ * ║  GET    /api/friends            – index                         ║
+ * ║  POST   /api/friends            – store { user_id }            ║
+ * ║  DELETE /api/friends/{id}       – destroy                       ║
  * ╚══════════════════════════════════════════════════════════════════╝
  */

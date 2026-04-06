@@ -1070,6 +1070,19 @@ function renderSettings() {
   document.getElementById('settings-privacy-select').value = DB.settings.privacy;
   document.getElementById('offline-status').textContent = navigator.onLine ? '🟢 Online' : '🔴 Offline';
   renderSharedExercises();
+
+  // Account section – only visible when using the backend
+  const authUser = GymApi.getAuthUser();
+  const accountSection = document.getElementById('settings-account-section');
+  const accountRow = document.getElementById('settings-account-row');
+  if (authUser && API_CONFIG.useBackend) {
+    accountSection.style.display = '';
+    accountRow.style.display = '';
+    document.getElementById('settings-email').textContent = authUser.email || authUser.name;
+  } else {
+    accountSection.style.display = 'none';
+    accountRow.style.display = 'none';
+  }
 }
 
 document.getElementById('settings-unit-select').addEventListener('change', e => {
@@ -1189,7 +1202,148 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
+/* ── AUTH SCREENS ───────────────────────────────────────────────────── */
+
+function showAuthScreen(id) {
+  document.querySelectorAll('.screen, .auth-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  document.getElementById('bottom-nav')?.style && (document.getElementById('bottom-nav').style.display = 'none');
+}
+
+function showAuthError(containerId, msg) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// Password visibility toggles
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById(btn.dataset.target);
+    if (!inp) return;
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+  });
+});
+
+// Login form
+document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showAuthError('auth-error', '');
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  try {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const res = await GymApi.login(email, password);
+    if (res?.token) {
+      DB.settings.username = res.user?.name || email;
+      DB.settings.userId   = String(res.user?.id || '');
+      saveDB();
+      startApp();
+    }
+  } catch (err) {
+    showAuthError('auth-error', err.message || 'Login failed. Check your email and password.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+  }
+});
+
+// Register form
+let _regUnit = 'kg';
+document.getElementById('reg-unit-kg')?.addEventListener('click', () => {
+  _regUnit = 'kg';
+  document.getElementById('reg-unit-kg').classList.add('active');
+  document.getElementById('reg-unit-lb').classList.remove('active');
+});
+document.getElementById('reg-unit-lb')?.addEventListener('click', () => {
+  _regUnit = 'lb';
+  document.getElementById('reg-unit-lb').classList.add('active');
+  document.getElementById('reg-unit-kg').classList.remove('active');
+});
+
+document.getElementById('register-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showAuthError('register-error', '');
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pw    = document.getElementById('reg-password').value;
+  const pw2   = document.getElementById('reg-password-confirm').value;
+
+  if (pw !== pw2) { showAuthError('register-error', 'Passwords do not match.'); return; }
+  if (pw.length < 8) { showAuthError('register-error', 'Password must be at least 8 characters.'); return; }
+
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true;
+  btn.textContent = 'Creating account…';
+  try {
+    const res = await GymApi.register(name, email, pw, _regUnit);
+    if (res?.token) {
+      DB.settings.username = res.user?.name || name;
+      DB.settings.unit     = _regUnit;
+      DB.settings.userId   = String(res.user?.id || '');
+      saveDB();
+      startApp();
+    }
+  } catch (err) {
+    showAuthError('register-error', err.message || 'Registration failed. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create account';
+  }
+});
+
+// Nav between auth screens
+document.getElementById('btn-goto-register')?.addEventListener('click', () => showAuthScreen('screen-register'));
+document.getElementById('btn-goto-login')?.addEventListener('click',    () => showAuthScreen('screen-login'));
+
+// Offline mode (skip auth)
+document.getElementById('btn-offline-mode')?.addEventListener('click', () => {
+  API_CONFIG.useBackend = false;
+  startApp();
+});
+
+// Logout (in settings)
+document.getElementById('btn-logout')?.addEventListener('click', async () => {
+  if (!confirm('Sign out?')) return;
+  await GymApi.logout();
+  // Reload to show login screen
+  location.reload();
+});
+
+/** Called once auth is confirmed (token found or offline chosen). Shows the app. */
+function startApp() {
+  document.getElementById('bottom-nav').style.display = '';
+  initOnboarding(); // this will show home or onboarding
+}
+
 /* ── BOOT ───────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  initOnboarding();
+  // If a backend URL is configured and we have a stored token, go straight to the app.
+  // Otherwise show the login screen (if backend configured) or go directly offline.
+  if (API_CONFIG.useBackend && API_CONFIG.token) {
+    // Validate the token silently, then start
+    GymApi.me().then(user => {
+      if (user) {
+        startApp();
+      } else {
+        // Token expired – clear it and show login
+        GymApi.logout();
+        showAuthScreen('screen-login');
+      }
+    }).catch(() => {
+      // Network down but token present – start in degraded offline mode
+      startApp();
+    });
+  } else if (API_CONFIG.useBackend && !API_CONFIG.token) {
+    // Backend configured but not logged in
+    showAuthScreen('screen-login');
+  } else {
+    // Fully offline mode
+    startApp();
+  }
 });

@@ -39,15 +39,77 @@ html, body {
 }
 
 /* ===== SCREENS ===== */
-.screen {
-  display: none;
-  flex-direction: column;
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: calc(var(--nav-h) + 8px);
-}
+.screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: calc(var(--nav-h) + 8px); }
 .screen.active { display: flex; }
 .screen-onboarding { padding-bottom: 0; }
+
+/* ── Auth screens ─────────────────────────────────────────────────── */
+.auth-screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 0; }
+.auth-screen.active { display: flex; }
+
+.auth-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 400px;
+  width: 100%;
+  margin: auto;
+  padding: 32px 20px 40px;
+}
+.auth-logo { text-align: center; padding: 12px 0 4px; }
+.auth-logo .logo-icon { font-size: 48px; margin-bottom: 6px; }
+.auth-logo h2 { font-size: 22px; font-weight: 700; }
+.auth-tagline { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+
+.auth-error {
+  background: rgba(255,59,48,.12);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 13px;
+  padding: 10px 14px;
+  display: none;
+}
+
+.auth-divider {
+  text-align: center;
+  position: relative;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 2px 0;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--border);
+}
+.auth-divider::before { left: 0; }
+.auth-divider::after  { right: 0; }
+
+.auth-offline-btn { color: var(--muted) !important; font-size: 13px !important; }
+
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 42px; }
+.pw-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  color: var(--muted);
+}
+
+.hint { font-size: 11px; color: var(--muted); font-weight: 400; }
 
 /* Top bar */
 .topbar {

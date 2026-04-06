@@ -14,6 +14,91 @@
 <div id="app">
 
   <!-- ══════════════════════════════════════════════════════════
+       SCREEN: LOGIN
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen auth-screen" id="screen-login">
+    <div class="auth-wrap">
+      <div class="auth-logo">
+        <div class="logo-icon">🏋️</div>
+        <h2>Gym Progress Log</h2>
+        <p class="auth-tagline">Track your progress. Own your data.</p>
+      </div>
+
+      <div id="auth-error" class="auth-error" style="display:none"></div>
+
+      <form id="login-form" class="auth-form" novalidate>
+        <div class="input-group">
+          <label for="login-email">Email address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="input-group">
+          <label for="login-password">Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" data-target="login-password">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-login">Sign in</button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <button class="btn btn-ghost btn-full" id="btn-goto-register">Create a free account →</button>
+      <button class="btn btn-ghost btn-full auth-offline-btn" id="btn-offline-mode">Continue offline (no sync)</button>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN: REGISTER
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen auth-screen" id="screen-register">
+    <div class="auth-wrap">
+      <div class="auth-logo">
+        <div class="logo-icon">🏋️</div>
+        <h2>Create account</h2>
+      </div>
+
+      <div id="register-error" class="auth-error" style="display:none"></div>
+
+      <form id="register-form" class="auth-form" novalidate>
+        <div class="input-group">
+          <label for="reg-name">Your name</label>
+          <input type="text" id="reg-name" placeholder="e.g. Alex" maxlength="64" autocomplete="name" required>
+        </div>
+        <div class="input-group">
+          <label for="reg-email">Email address</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="input-group">
+          <label for="reg-password">Password <span class="hint">(min. 8 characters)</span></label>
+          <div class="pw-wrap">
+            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" minlength="8" required>
+            <button type="button" class="pw-toggle" data-target="reg-password">👁</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="reg-password-confirm">Confirm password</label>
+          <div class="pw-wrap">
+            <input type="password" id="reg-password-confirm" placeholder="••••••••" autocomplete="new-password" required>
+            <button type="button" class="pw-toggle" data-target="reg-password-confirm">👁</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Weight unit</label>
+          <div class="unit-toggle">
+            <button type="button" id="reg-unit-kg" class="active">kg</button>
+            <button type="button" id="reg-unit-lb">lb</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-register">Create account</button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+      <button class="btn btn-ghost btn-full" id="btn-goto-login">← Already have an account?</button>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
        SCREEN 1: ONBOARDING
        ══════════════════════════════════════════════════════════ -->
   <section class="screen screen-onboarding" id="screen-onboarding">
@@ -326,6 +411,17 @@
         <span class="sr-icon">📊</span>
         <div class="sr-info"><div class="sr-label">Export CSV</div><div class="sr-sub">Workouts spreadsheet</div></div>
         <button class="btn btn-secondary btn-sm" id="btn-export-csv">Export</button>
+      </div>
+
+      <!-- Account / auth -->
+      <div class="settings-section-title" id="settings-account-section" style="display:none">Account</div>
+      <div class="settings-row" id="settings-account-row" style="display:none">
+        <span class="sr-icon">✉️</span>
+        <div class="sr-info">
+          <div class="sr-label" id="settings-email">—</div>
+          <div class="sr-sub">Signed-in account</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-logout">Sign out</button>
       </div>
 
       <div class="settings-section-title">Danger zone</div>
