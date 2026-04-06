@@ -7,27 +7,72 @@
 /* ── CONSTANTS ─────────────────────────────────────────────────────── */
 const STORE_KEY  = 'gymlog_v1';
 const EPLEY     = (w, r) => r === 1 ? w : w * (1 + r / 30);   // e1RM formula
+/*
+ * type: 'weight' = uses weight (kg/lb) + reps  (default)
+ *       'time'   = uses duration in seconds, no weight/reps
+ * desc: short coaching cue shown in the exercise picker
+ */
 const BUILT_IN_EXERCISES = [
-  { id:'ex_bench',      name:'Bench Press',       cat:'Chest' },
-  { id:'ex_incline',    name:'Incline Bench',      cat:'Chest' },
-  { id:'ex_ohp',        name:'Overhead Press',     cat:'Shoulders' },
-  { id:'ex_laterals',   name:'Lateral Raise',      cat:'Shoulders' },
-  { id:'ex_squat',      name:'Squat',              cat:'Legs' },
-  { id:'ex_deadlift',   name:'Deadlift',           cat:'Back' },
-  { id:'ex_rdl',        name:'Romanian Deadlift',  cat:'Legs' },
-  { id:'ex_legpress',   name:'Leg Press',          cat:'Legs' },
-  { id:'ex_pullup',     name:'Pull-up',            cat:'Back' },
-  { id:'ex_row',        name:'Barbell Row',        cat:'Back' },
-  { id:'ex_cable_row',  name:'Cable Row',          cat:'Back' },
-  { id:'ex_curl',       name:'Barbell Curl',       cat:'Biceps' },
-  { id:'ex_hammer',     name:'Hammer Curl',        cat:'Biceps' },
-  { id:'ex_tricep',     name:'Tricep Pushdown',    cat:'Triceps' },
-  { id:'ex_dips',       name:'Dips',               cat:'Triceps' },
-  { id:'ex_legcurl',    name:'Leg Curl',           cat:'Legs' },
-  { id:'ex_legext',     name:'Leg Extension',      cat:'Legs' },
-  { id:'ex_calf',       name:'Calf Raise',         cat:'Legs' },
-  { id:'ex_plank',      name:'Plank',              cat:'Core' },
-  { id:'ex_run',        name:'Running',            cat:'Cardio' },
+  // ── Chest ──────────────────────────────────────────────────────────
+  { id:'ex_bench',       name:'Bench Press',              cat:'Chest',     type:'weight', desc:'Lie on bench, lower bar to chest, press up. Keep shoulder blades retracted.' },
+  { id:'ex_incline',     name:'Incline Bench Press',      cat:'Chest',     type:'weight', desc:'Bench at 30-45°. Targets upper chest. Keep feet flat on floor.' },
+  { id:'ex_decline',     name:'Decline Bench Press',      cat:'Chest',     type:'weight', desc:'Bench declined. Targets lower chest. Secure legs on the bench pad.' },
+  { id:'ex_dbfly',       name:'Dumbbell Fly',             cat:'Chest',     type:'weight', desc:'Arms wide, slight elbow bend. Bring dumbbells together over chest in an arc.' },
+  { id:'ex_pushup',      name:'Push-up',                  cat:'Chest',     type:'weight', desc:'Hands shoulder-width apart. Lower chest to floor, push back up. Keep body straight.' },
+  { id:'ex_cable_fly',   name:'Cable Fly',                cat:'Chest',     type:'weight', desc:'Stand between cable towers, press handles together in front. Stretch chest fully.' },
+  // ── Shoulders ──────────────────────────────────────────────────────
+  { id:'ex_ohp',         name:'Overhead Press',           cat:'Shoulders', type:'weight', desc:'Press barbell from shoulder height overhead. Keep core tight, no excessive back arch.' },
+  { id:'ex_dbohp',       name:'Dumbbell Shoulder Press',  cat:'Shoulders', type:'weight', desc:'Press dumbbells from shoulder height overhead. Allows natural wrist rotation.' },
+  { id:'ex_laterals',    name:'Lateral Raise',            cat:'Shoulders', type:'weight', desc:'Raise dumbbells to the side to shoulder height. Slight elbow bend. Slow eccentric.' },
+  { id:'ex_frontraise',  name:'Front Raise',              cat:'Shoulders', type:'weight', desc:'Raise dumbbells to front. Keep arms nearly straight. Targets anterior deltoid.' },
+  { id:'ex_facepull',    name:'Face Pull',                cat:'Shoulders', type:'weight', desc:'Pull rope to forehead, elbows high. Great for rear delts and rotator cuff health.' },
+  // ── Back ───────────────────────────────────────────────────────────
+  { id:'ex_deadlift',    name:'Deadlift',                 cat:'Back',      type:'weight', desc:'Hip-hinge to lift barbell from floor. Keep back neutral, drive hips forward at the top.' },
+  { id:'ex_rdl',         name:'Romanian Deadlift',        cat:'Back',      type:'weight', desc:'Hinge at hip, lower bar along legs. Feel hamstring stretch. Keep back flat.' },
+  { id:'ex_pullup',      name:'Pull-up',                  cat:'Back',      type:'weight', desc:'Hang from bar, pull chest to bar. Full range of motion. Use band for assistance.' },
+  { id:'ex_chinup',      name:'Chin-up',                  cat:'Back',      type:'weight', desc:'Underhand grip pull-up. More bicep activation. Pull chest to bar.' },
+  { id:'ex_row',         name:'Barbell Row',              cat:'Back',      type:'weight', desc:'Bend over, pull barbell to lower chest. Squeeze shoulder blades at the top.' },
+  { id:'ex_cable_row',   name:'Cable Row',                cat:'Back',      type:'weight', desc:'Sit at cable station, pull handle to abdomen. Keep torso upright.' },
+  { id:'ex_dbrow',       name:'Dumbbell Row',             cat:'Back',      type:'weight', desc:'One knee on bench, row dumbbell to hip. Keep elbow close to body.' },
+  { id:'ex_latpull',     name:'Lat Pulldown',             cat:'Back',      type:'weight', desc:'Pull bar to upper chest, lean slightly back. Keep elbows pointing down.' },
+  // ── Legs ───────────────────────────────────────────────────────────
+  { id:'ex_squat',       name:'Squat',                    cat:'Legs',      type:'weight', desc:'Barbell on upper back, squat until thighs are parallel. Knees track over toes.' },
+  { id:'ex_legpress',    name:'Leg Press',                cat:'Legs',      type:'weight', desc:'Push platform away. Do not lock knees at top. Adjust foot position for different areas.' },
+  { id:'ex_legcurl',     name:'Leg Curl',                 cat:'Legs',      type:'weight', desc:'Curl weight toward glutes. Targets hamstrings. Control the eccentric phase.' },
+  { id:'ex_legext',      name:'Leg Extension',            cat:'Legs',      type:'weight', desc:'Extend knee to straight. Targets quadriceps. Keep back flat against pad.' },
+  { id:'ex_calf',        name:'Calf Raise',               cat:'Legs',      type:'weight', desc:'Rise onto toes, pause, lower fully. Full range of motion is key for development.' },
+  { id:'ex_lunge',       name:'Lunge',                    cat:'Legs',      type:'weight', desc:'Step forward, lower rear knee toward floor. Keep front shin vertical.' },
+  { id:'ex_bulgariansq', name:'Bulgarian Split Squat',    cat:'Legs',      type:'weight', desc:'Rear foot elevated on bench. Lower front leg until thigh is parallel. Great for glutes.' },
+  { id:'ex_hipthrust',   name:'Hip Thrust',               cat:'Legs',      type:'weight', desc:'Upper back on bench, barbell on hips. Drive hips to full extension. Excellent glute builder.' },
+  { id:'ex_walksit',     name:'Wall Sit',                 cat:'Legs',      type:'time',   desc:'Back against wall, thighs parallel to floor. Isometric quad hold. Record time held.' },
+  // ── Biceps ─────────────────────────────────────────────────────────
+  { id:'ex_curl',        name:'Barbell Curl',             cat:'Biceps',    type:'weight', desc:'Curl barbell from hips to shoulders. Keep elbows at sides. Squeeze at the top.' },
+  { id:'ex_hammer',      name:'Hammer Curl',              cat:'Biceps',    type:'weight', desc:'Neutral grip dumbbell curl. Works brachialis and brachioradialis alongside biceps.' },
+  { id:'ex_preacher',    name:'Preacher Curl',            cat:'Biceps',    type:'weight', desc:'Arms resting on preacher pad. Full range curl. Removes cheating from the movement.' },
+  { id:'ex_inclinecurl', name:'Incline Dumbbell Curl',    cat:'Biceps',    type:'weight', desc:'Lie back on incline bench, curl dumbbells. Greater stretch on biceps at bottom.' },
+  // ── Triceps ────────────────────────────────────────────────────────
+  { id:'ex_tricep',      name:'Tricep Pushdown',          cat:'Triceps',   type:'weight', desc:'Push cable bar down until arms straight. Keep elbows at sides. Squeeze at bottom.' },
+  { id:'ex_dips',        name:'Dips',                     cat:'Triceps',   type:'weight', desc:'Lower between parallel bars. Elbows tucked. Lean forward for chest, upright for triceps.' },
+  { id:'ex_skullcrush',  name:'Skull Crusher',            cat:'Triceps',   type:'weight', desc:'Lie on bench, lower bar toward forehead, extend. Keep elbows pointing up throughout.' },
+  { id:'ex_ohtext',      name:'Overhead Tricep Extension',cat:'Triceps',   type:'weight', desc:'Dumbbell overhead, lower behind head, extend. Great long-head tricep activation.' },
+  // ── Core ───────────────────────────────────────────────────────────
+  { id:'ex_plank',       name:'Plank',                    cat:'Core',      type:'time',   desc:'Forearms on floor, body in straight line. Brace core and glutes. Hold as long as possible.' },
+  { id:'ex_sidepl',      name:'Side Plank',               cat:'Core',      type:'time',   desc:'Side-lying, supported on one forearm. Keep hips raised, body in straight line.' },
+  { id:'ex_crunch',      name:'Crunch',                   cat:'Core',      type:'weight', desc:'Lie on back, curl shoulders off floor. Do not pull on your neck with your hands.' },
+  { id:'ex_legr',        name:'Leg Raise',                cat:'Core',      type:'weight', desc:'Lie flat, raise straight legs to 90°. Lower without touching floor. Press lower back down.' },
+  { id:'ex_abwheel',     name:'Ab Wheel Rollout',         cat:'Core',      type:'weight', desc:'On knees with ab wheel, roll forward keeping core braced, pull back. Advanced movement.' },
+  { id:'ex_russtwist',   name:'Russian Twist',            cat:'Core',      type:'weight', desc:'Sit with feet off floor, rotate torso side to side. Add weight for more difficulty.' },
+  { id:'ex_mountclimb',  name:'Mountain Climbers',        cat:'Core',      type:'time',   desc:'In push-up position, drive knees to chest alternately at pace. Great cardio + core.' },
+  // ── Cardio / Time-based ────────────────────────────────────────────
+  { id:'ex_run',         name:'Running',                  cat:'Cardio',    type:'time',   desc:'Steady-state or interval running. Record duration per session or interval.' },
+  { id:'ex_bike',        name:'Cycling',                  cat:'Cardio',    type:'time',   desc:'Bike or stationary cycle. Good low-impact cardio. Record total time.' },
+  { id:'ex_row_erg',     name:'Rowing (Ergometer)',        cat:'Cardio',    type:'time',   desc:'Full-body cardio on rowing machine. Drive with legs, swing back, pull to chest.' },
+  { id:'ex_jumprope',    name:'Jump Rope',                cat:'Cardio',    type:'time',   desc:'High-intensity cardio. Great for coordination and agility. Record total duration.' },
+  { id:'ex_swim',        name:'Swimming',                 cat:'Cardio',    type:'time',   desc:'Full-body low-impact cardio. Record duration per session.' },
+  // ── Full Body ──────────────────────────────────────────────────────
+  { id:'ex_burpee',      name:'Burpee',                   cat:'Full Body', type:'weight', desc:'Squat thrust, jump up. Full-body explosive exercise. Count total reps.' },
+  { id:'ex_kettleswing', name:'Kettlebell Swing',         cat:'Full Body', type:'weight', desc:'Hip-hinge swing kettlebell to shoulder height. Power from hips, not arms.' },
+  { id:'ex_thruster',    name:'Thruster',                 cat:'Full Body', type:'weight', desc:'Front squat directly into overhead press. Barbell or dumbbell. Full-body compound.' },
 ];
 
 /* ── STORAGE ────────────────────────────────────────────────────────── */
@@ -54,6 +99,46 @@ function uid() {
 }
 
 let DB = loadDB();
+mergeExerciseDefaults(); // ensure existing saved exercises have desc/type
+
+/* ── TYPE HELPERS ──────────────────────────────────────────────────── */
+/** Returns true when the exercise tracks duration (seconds) instead of weight+reps. */
+function isTimeEx(exId) {
+  const ex = DB.exercises.find(e => e.id === exId);
+  if (ex?.type) return ex.type === 'time';
+  const built = BUILT_IN_EXERCISES.find(e => e.id === exId);
+  return built?.type === 'time';
+}
+
+/** Parse "mm:ss", "hh:mm:ss", or plain seconds string → integer seconds. */
+function parseDuration(str) {
+  str = String(str || '').trim();
+  if (!str) return 0;
+  const parts = str.split(':');
+  if (parts.length === 1) return Math.max(0, parseInt(parts[0]) || 0);
+  if (parts.length === 2) return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+  return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+}
+
+/** Merge new desc/type fields into already-saved exercises, add new built-ins. */
+function mergeExerciseDefaults() {
+  let changed = false;
+  DB.exercises = DB.exercises.map(ex => {
+    const built = BUILT_IN_EXERCISES.find(b => b.id === ex.id);
+    if (!built) return ex;
+    const updated = { ...ex };
+    if (!updated.type && built.type) { updated.type = built.type; changed = true; }
+    if (!updated.desc && built.desc) { updated.desc = built.desc; changed = true; }
+    return updated;
+  });
+  BUILT_IN_EXERCISES.forEach(built => {
+    if (!DB.exercises.find(e => e.id === built.id)) {
+      DB.exercises.push({ ...built });
+      changed = true;
+    }
+  });
+  if (changed) saveDB();
+}
 
 /* ── ROUTER ─────────────────────────────────────────────────────────── */
 const screens = document.querySelectorAll('.screen');
@@ -297,7 +382,10 @@ function renderActiveWorkout() {
 
 function renderExBlock(ex, ei) {
   const exObj = findExercise(ex.exerciseId);
+  const isTime = isTimeEx(ex.exerciseId);
   const rows = ex.sets.map((s,si) => renderSetRow(s,si,ei,ex)).join('');
+  const descHtml = exObj?.desc
+    ? `<div class="ex-block-desc">${esc(exObj.desc)}</div>` : '';
   return `
     <div class="ex-block animate-in" id="ex-block-${ei}">
       <div class="ex-block-header">
@@ -305,9 +393,14 @@ function renderExBlock(ex, ei) {
         <button class="ex-block-timer-btn" onclick="startRestTimer(${ex.defaultRest||90}, ${ei})">⏱ Rest</button>
         <button class="btn-icon" style="color:var(--danger)" onclick="removeExerciseFromWorkout(${ei})">✕</button>
       </div>
+      ${descHtml}
       <table class="sets-table">
         <thead><tr>
-          <th>Set</th><th>${DB.settings.unit}</th><th>Reps</th><th></th><th></th>
+          <th>Set</th>
+          ${isTime
+            ? '<th colspan="2">Time (mm:ss)</th>'
+            : `<th>${DB.settings.unit}</th><th>Reps</th>`}
+          <th></th><th></th>
         </tr></thead>
         <tbody id="sets-body-${ei}">${rows}</tbody>
       </table>
@@ -319,6 +412,21 @@ function renderExBlock(ex, ei) {
 }
 
 function renderSetRow(s, si, ei, ex) {
+  if (isTimeEx(ex.exerciseId)) {
+    const prev = getPrevSet(ex.exerciseId, si);
+    const phD  = prev?.duration ? fmtDur(prev.duration) : '';
+    return `
+      <tr class="set-row" id="set-row-${ei}-${si}">
+        <td class="set-num">${si+1}</td>
+        <td colspan="2"><input class="set-input" type="text"
+            value="${s.duration ? fmtDur(s.duration) : ''}" placeholder="${phD||'00:30'}"
+            data-ei="${ei}" data-si="${si}" data-field="duration"
+            style="text-align:center;font-family:monospace;width:90px"></td>
+        <td><button class="set-done-btn ${s.completed?'done':''}"
+            onclick="toggleSetDone(${ei},${si})">${s.completed?'✓':''}</button></td>
+        <td><button class="set-delete-btn" onclick="deleteSet(${ei},${si})">🗑</button></td>
+      </tr>`;
+  }
   const prev = getPrevSet(ex.exerciseId, si);
   const phW = prev ? prev.weight : '';
   const phR = prev ? prev.reps   : '';
@@ -338,12 +446,19 @@ function renderSetRow(s, si, ei, ex) {
 }
 
 function renderSetPRBadges(ex) {
+  const pr = DB.prs[ex.exerciseId] || {};
+  if (isTimeEx(ex.exerciseId)) {
+    const done = ex.sets.filter(s => s.completed && s.duration > 0);
+    if (!done.length) return '';
+    const best = Math.max(...done.map(s => s.duration));
+    if (!pr.duration || best > pr.duration.value) return '<div style="margin-left:auto"><span class="pr-badge weight">PR Time</span></div>';
+    return '';
+  }
   const bestSets = ex.sets.filter(s=>s.completed && s.weight && s.reps);
   if (!bestSets.length) return '';
   const bestW  = Math.max(...bestSets.map(s=>s.weight));
   const bestE  = Math.max(...bestSets.map(s=>EPLEY(s.weight, s.reps)));
   const bestVol= ex.sets.filter(s=>s.completed).reduce((a,s)=>a+(s.weight*s.reps),0);
-  const pr     = DB.prs[ex.exerciseId]||{};
   let badges = '';
   if (!pr.weight  || bestW  > pr.weight.value)  badges += '<span class="pr-badge weight">PR Weight</span> ';
   if (!pr.e1rm    || bestE  > pr.e1rm.value)    badges += '<span class="pr-badge e1rm">PR e1RM</span> ';
@@ -355,7 +470,13 @@ function attachSetListeners() {
   document.querySelectorAll('.set-input').forEach(inp => {
     inp.addEventListener('change', e => {
       const ei = +e.target.dataset.ei, si = +e.target.dataset.si, field = e.target.dataset.field;
-      activeWorkout.exercises[ei].sets[si][field] = parseFloat(e.target.value)||0;
+      if (field === 'duration') {
+        const secs = parseDuration(e.target.value);
+        activeWorkout.exercises[ei].sets[si].duration = secs;
+        e.target.value = secs ? fmtDur(secs) : '';
+      } else {
+        activeWorkout.exercises[ei].sets[si][field] = parseFloat(e.target.value)||0;
+      }
       refreshExBlock(ei);
     });
   });
@@ -376,18 +497,27 @@ function refreshExBlock(ei) {
 function addSet(ei) {
   const ex = activeWorkout.exercises[ei];
   const prev = ex.sets[ex.sets.length-1];
-  ex.sets.push({ weight: prev?.weight||0, reps: prev?.reps||0, completed:false });
+  if (isTimeEx(ex.exerciseId)) {
+    ex.sets.push({ duration: prev?.duration||0, completed:false });
+  } else {
+    ex.sets.push({ weight: prev?.weight||0, reps: prev?.reps||0, completed:false });
+  }
   refreshExBlock(ei);
   // scroll to new row
   setTimeout(()=>{ const rows = document.querySelectorAll(`#sets-body-${ei} tr`); rows[rows.length-1]?.scrollIntoView({block:'nearest'}); }, 50);
 }
 
 function toggleSetDone(ei, si) {
-  const s = activeWorkout.exercises[ei].sets[si];
-  // fill from input values first
-  const wInp = document.querySelector(`input[data-ei="${ei}"][data-si="${si}"][data-field="weight"]`);
-  const rInp = document.querySelector(`input[data-ei="${ei}"][data-si="${si}"][data-field="reps"]`);
-  if (wInp && rInp) { s.weight = parseFloat(wInp.value)||s.weight; s.reps = parseFloat(rInp.value)||s.reps; }
+  const s     = activeWorkout.exercises[ei].sets[si];
+  const exId  = activeWorkout.exercises[ei].exerciseId;
+  if (isTimeEx(exId)) {
+    const dInp = document.querySelector(`input[data-ei="${ei}"][data-si="${si}"][data-field="duration"]`);
+    if (dInp) s.duration = parseDuration(dInp.value) || s.duration;
+  } else {
+    const wInp = document.querySelector(`input[data-ei="${ei}"][data-si="${si}"][data-field="weight"]`);
+    const rInp = document.querySelector(`input[data-ei="${ei}"][data-si="${si}"][data-field="reps"]`);
+    if (wInp && rInp) { s.weight = parseFloat(wInp.value)||s.weight; s.reps = parseFloat(rInp.value)||s.reps; }
+  }
   s.completed = !s.completed;
   if (s.completed) {
     checkAndSavePR(activeWorkout.exercises[ei], activeWorkout.id, activeWorkout.date);
@@ -514,12 +644,19 @@ document.getElementById('rest-skip').addEventListener('click', () => {
 
 /* ── PR DETECTION ───────────────────────────────────────────────────── */
 function checkAndSavePR(ex, workoutId, date) {
+  const pr = DB.prs[ex.exerciseId] = DB.prs[ex.exerciseId] || {};
+  if (isTimeEx(ex.exerciseId)) {
+    const done = ex.sets.filter(s => s.completed && s.duration > 0);
+    if (!done.length) return;
+    const best = Math.max(...done.map(s => s.duration));
+    if (!pr.duration || best > pr.duration.value) pr.duration = { value: best, date, workoutId };
+    return;
+  }
   const completedSets = ex.sets.filter(s=>s.completed && s.weight>0 && s.reps>0);
   if (!completedSets.length) return;
   const bestW   = Math.max(...completedSets.map(s=>s.weight));
   const bestE   = Math.max(...completedSets.map(s=>EPLEY(s.weight, s.reps)));
   const vol     = completedSets.reduce((a,s)=>a+(s.weight*s.reps),0);
-  const pr      = DB.prs[ex.exerciseId] = DB.prs[ex.exerciseId]||{};
   if (!pr.weight  || bestW  > pr.weight.value)  pr.weight  = { value:bestW,  date, workoutId };
   if (!pr.e1rm    || bestE  > pr.e1rm.value)    pr.e1rm    = { value:Math.round(bestE*10)/10, date, workoutId };
   if (!pr.volume  || vol    > pr.volume.value)  pr.volume  = { value:vol,    date, workoutId };
@@ -665,10 +802,18 @@ function renderExercisePickerList(query) {
   const q = query.toLowerCase();
   const list = document.getElementById('ex-picker-list');
   const matches = DB.exercises.filter(ex => ex.name.toLowerCase().includes(q) || ex.cat.toLowerCase().includes(q));
-  list.innerHTML = matches.map(ex=>`
-    <div class="ex-search-item" onclick="pickExercise('${ex.id}')">
-      <div><div class="esi-name">${esc(ex.name)}</div><div class="esi-cat">${esc(ex.cat)}</div></div>
-    </div>`).join('');
+  list.innerHTML = matches.map(ex => {
+    const badge = ex.type === 'time' ? ' <span class="type-badge">⏱ time</span>' : '';
+    const desc  = ex.desc ? `<div class="esi-desc">${esc(ex.desc.length > 70 ? ex.desc.slice(0,70)+'…' : ex.desc)}</div>` : '';
+    return `
+      <div class="ex-search-item" onclick="pickExercise('${ex.id}')">
+        <div>
+          <div class="esi-name">${esc(ex.name)}${badge}</div>
+          <div class="esi-cat">${esc(ex.cat)}</div>
+          ${desc}
+        </div>
+      </div>`;
+  }).join('') || '<div style="padding:16px;text-align:center;color:var(--muted)">No exercises found.</div>';
 }
 
 function pickExercise(id) {
@@ -680,8 +825,12 @@ function pickExercise(id) {
 document.getElementById('btn-new-exercise').addEventListener('click', () => {
   const name = prompt('Exercise name:');
   if (!name?.trim()) return;
-  const cat  = prompt('Category (e.g. Chest, Back, Legs):')||'Other';
-  const ex   = { id:uid(), name:name.trim(), cat:cat.trim() };
+  const cat   = prompt('Category (e.g. Chest, Back, Legs, Cardio):')||'Other';
+  const typeQ = prompt('Tracking type:\n• Leave blank for weight + reps (default)\n• Type "time" for time-based exercises (plank, running, etc.)')||'';
+  const desc  = prompt('Short description / coaching cue (optional):')||'';
+  const ex = { id:uid(), name:name.trim(), cat:cat.trim(),
+               type: typeQ.trim().toLowerCase() === 'time' ? 'time' : 'weight',
+               desc: desc.trim() };
   DB.exercises.push(ex);
   saveDB();
   renderExercisePickerList(document.getElementById('ex-search-input').value);
@@ -721,7 +870,10 @@ function renderStatsTab(tab) {
 
 function renderProgressChart() {
   const wrap = document.getElementById('chart-wrap');
+  const note = document.getElementById('chart-note');
   const sessions = getExerciseSessions(currentExerciseId);
+  const isTime   = isTimeEx(currentExerciseId);
+  if (note) note.textContent = isTime ? 'Best duration per session (seconds)' : 'e1RM over time (Epley formula)';
   if (sessions.length < 2) {
     wrap.innerHTML = '<div class="chart-empty">Need at least 2 sessions to show progress.</div>';
     return;
@@ -736,11 +888,14 @@ function renderProgressChart() {
   const toY = v => PT + ih - (v-minV)/(maxV-minV)*ih;
   let path = sessions.map((s,i)=>`${i?'L':'M'}${toX(i).toFixed(1)},${toY(vals[i]).toFixed(1)}`).join(' ');
   let dots = sessions.map((s,i)=>`<circle cx="${toX(i).toFixed(1)}" cy="${toY(vals[i]).toFixed(1)}" r="4" fill="var(--accent)"/>`).join('');
+  // y-axis labels
+  const yMaxLabel = isTime ? fmtDur(Math.round(maxV)) : maxV.toFixed(0);
+  const yMinLabel = isTime ? fmtDur(Math.round(minV)) : minV.toFixed(0);
   // x labels (first + last)
   const xl = `<text x="${toX(0)}" y="${H-2}" text-anchor="middle" fill="var(--muted)" font-size="10">${fmtDateShort(dates[0])}</text>
     <text x="${toX(sessions.length-1)}" y="${H-2}" text-anchor="middle" fill="var(--muted)" font-size="10">${fmtDateShort(dates[dates.length-1])}</text>`;
-  const yl = `<text x="4" y="${toY(maxV)+4}" fill="var(--muted)" font-size="10">${maxV.toFixed(0)}</text>
-    <text x="4" y="${toY(minV)+4}" fill="var(--muted)" font-size="10">${minV.toFixed(0)}</text>`;
+  const yl = `<text x="4" y="${toY(maxV)+4}" fill="var(--muted)" font-size="10">${yMaxLabel}</text>
+    <text x="4" y="${toY(minV)+4}" fill="var(--muted)" font-size="10">${yMinLabel}</text>`;
   wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
     <path d="${path}" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linejoin="round"/>
     ${dots}${xl}${yl}
@@ -748,8 +903,13 @@ function renderProgressChart() {
 }
 
 function renderPRsTab() {
-  const pr = DB.prs[currentExerciseId]||{};
+  const pr   = DB.prs[currentExerciseId]||{};
   const unit = DB.settings.unit;
+  if (isTimeEx(currentExerciseId)) {
+    document.getElementById('tab-prs').innerHTML = `
+      <div class="pr-row"><div class="pr-label">⏱ Best Time</div><div><div class="pr-val">${pr.duration ? fmtDur(pr.duration.value) : '—'}</div><div class="pr-date">${pr.duration ? fmtDate(pr.duration.date) : ''}</div></div></div>`;
+    return;
+  }
   document.getElementById('tab-prs').innerHTML = `
     <div class="pr-row"><div class="pr-label">🏋️ Best Weight</div><div><div class="pr-val">${pr.weight ? pr.weight.value+' '+unit : '—'}</div><div class="pr-date">${pr.weight ? fmtDate(pr.weight.date):''}</div></div></div>
     <div class="pr-row"><div class="pr-label">📊 Best e1RM</div><div><div class="pr-val">${pr.e1rm ? pr.e1rm.value+' '+unit : '—'}</div><div class="pr-date">${pr.e1rm ? fmtDate(pr.e1rm.date):''}</div></div></div>
@@ -760,14 +920,27 @@ function renderHistoryTab() {
   const sessions = getExerciseSessions(currentExerciseId).reverse();
   const el = document.getElementById('tab-history');
   if (!sessions.length) { el.innerHTML='<div class="empty-state"><p>No history yet.</p></div>'; return; }
+  const isTime = isTimeEx(currentExerciseId);
   el.innerHTML = sessions.map(s=>`
     <div class="history-item">
       <div class="hi-date">${fmtDate(s.date)}</div>
-      <div class="hi-sets">${s.sets.map((st,i)=>`Set ${i+1}: ${st.weight} × ${st.reps}`).join(' · ')}</div>
+      <div class="hi-sets">${s.sets.map((st,i) =>
+        isTime ? `Set ${i+1}: ${fmtDur(st.duration)}` : `Set ${i+1}: ${st.weight} × ${st.reps}`
+      ).join(' · ')}</div>
     </div>`).join('');
 }
 
 function getExerciseSessions(exId) {
+  if (isTimeEx(exId)) {
+    return DB.workouts
+      .filter(w => w.exercises.some(e => e.exerciseId === exId))
+      .map(w => {
+        const ex   = w.exercises.find(e => e.exerciseId === exId);
+        const done = ex.sets.filter(s => s.completed && s.duration > 0);
+        return { date: w.date, sets: done, topE1rm: done.length ? Math.max(...done.map(s => s.duration)) : 0 };
+      })
+      .filter(s => s.sets.length > 0);
+  }
   return DB.workouts
     .filter(w=>w.exercises.some(e=>e.exerciseId===exId))
     .map(w=>{ const ex=w.exercises.find(e=>e.exerciseId===exId);
@@ -937,12 +1110,17 @@ document.getElementById('btn-export-json').addEventListener('click', () => {
 });
 
 document.getElementById('btn-export-csv').addEventListener('click', () => {
-  const rows = [['Date','Template','Exercise','Set','Weight','Reps','e1RM']];
+  const rows = [['Date','Template','Exercise','Set','Weight','Reps','e1RM','Duration(s)']];
   DB.workouts.forEach(w => {
     w.exercises.forEach(ex => {
-      const exObj = findExercise(ex.exerciseId);
+      const exObj  = findExercise(ex.exerciseId);
+      const isTime = isTimeEx(ex.exerciseId);
       ex.sets.filter(s=>s.completed).forEach((s,i)=>{
-        rows.push([w.date.slice(0,10), w.templateName||'', exObj?.name||ex.exerciseId, i+1, s.weight, s.reps, EPLEY(s.weight,s.reps).toFixed(1)]);
+        if (isTime) {
+          rows.push([w.date.slice(0,10), w.templateName||'', exObj?.name||ex.exerciseId, i+1, '', '', '', s.duration||0]);
+        } else {
+          rows.push([w.date.slice(0,10), w.templateName||'', exObj?.name||ex.exerciseId, i+1, s.weight, s.reps, EPLEY(s.weight,s.reps).toFixed(1), '']);
+        }
       });
     });
   });

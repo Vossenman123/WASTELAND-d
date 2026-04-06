@@ -215,18 +215,27 @@ function deleteWorkout(id) {
   if (!confirm('Delete this workout?')) return;
   const db = loadDB(); if (!db) return;
   db.workouts = db.workouts.filter(w => w.id !== id);
-  // recalc PRs
+  // recalc PRs (handles both weight-based and time-based exercises)
   db.prs = {};
   db.workouts.forEach(w => w.exercises.forEach(ex => {
-    const done = (ex.sets || []).filter(s => s.completed && s.weight > 0 && s.reps > 0);
-    if (!done.length) return;
-    const pr = db.prs[ex.exerciseId] = db.prs[ex.exerciseId] || {};
-    const bW = Math.max(...done.map(s => s.weight));
-    const bE = Math.max(...done.map(s => EPLEY(s.weight, s.reps)));
-    const bV = done.reduce((a, s) => a + s.weight * s.reps, 0);
-    if (!pr.weight || bW > pr.weight.value) pr.weight = { value: bW, date: w.date };
-    if (!pr.e1rm   || bE > pr.e1rm.value)   pr.e1rm   = { value: Math.round(bE * 10) / 10, date: w.date };
-    if (!pr.volume || bV > pr.volume.value)  pr.volume = { value: bV, date: w.date };
+    const exObj  = (db.exercises || []).find(e => e.id === ex.exerciseId);
+    const isTime = exObj?.type === 'time';
+    const pr     = db.prs[ex.exerciseId] = db.prs[ex.exerciseId] || {};
+    if (isTime) {
+      const done = (ex.sets || []).filter(s => s.completed && s.duration > 0);
+      if (!done.length) return;
+      const best = Math.max(...done.map(s => s.duration));
+      if (!pr.duration || best > pr.duration.value) pr.duration = { value: best, date: w.date };
+    } else {
+      const done = (ex.sets || []).filter(s => s.completed && s.weight > 0 && s.reps > 0);
+      if (!done.length) return;
+      const bW = Math.max(...done.map(s => s.weight));
+      const bE = Math.max(...done.map(s => EPLEY(s.weight, s.reps)));
+      const bV = done.reduce((a, s) => a + s.weight * s.reps, 0);
+      if (!pr.weight || bW > pr.weight.value) pr.weight = { value: bW, date: w.date };
+      if (!pr.e1rm   || bE > pr.e1rm.value)   pr.e1rm   = { value: Math.round(bE * 10) / 10, date: w.date };
+      if (!pr.volume || bV > pr.volume.value)  pr.volume = { value: bV, date: w.date };
+    }
   }));
   saveDB(db); renderWorkouts(); showToast('Workout deleted.');
 }
@@ -252,7 +261,16 @@ function renderUsers() {
   const prs = db.prs || {};
   const exercises = db.exercises || [];
   document.getElementById('prs-tbody').innerHTML = Object.entries(prs).map(([exId, pr]) => {
-    const ex = exercises.find(e => e.id === exId);
+    const ex     = exercises.find(e => e.id === exId);
+    const isTime = ex?.type === 'time';
+    if (isTime) {
+      return `<tr>
+        <td>${esc(ex?.name || exId)}</td>
+        <td colspan="2">${pr.duration ? fmtDur(pr.duration.value) : '—'}</td>
+        <td>—</td>
+        <td>${fmtDate(pr.duration?.date)}</td>
+      </tr>`;
+    }
     return `<tr>
       <td>${esc(ex?.name || exId)}</td>
       <td>${pr.weight ? pr.weight.value + ' ' + (s.unit || 'kg') : '—'}</td>
