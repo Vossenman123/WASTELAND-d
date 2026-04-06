@@ -516,3 +516,136 @@ select option { background: var(--surface2); }
   width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;
 }
 .offline-dot { background: var(--muted); }
+
+/* ===== RESPONSIVE – TABLET / DESKTOP (≥ 768px) ===== */
+@media (min-width: 768px) {
+  :root {
+    --sidebar-w: 200px;
+  }
+
+  /* Full viewport width on desktop */
+  #app {
+    max-width: 100%;
+    flex-direction: row;
+    height: 100dvh;
+  }
+
+  /* Sidebar navigation replaces bottom nav */
+  #bottom-nav {
+    position: static;
+    width: var(--sidebar-w);
+    height: 100dvh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    transform: none;
+    left: auto;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    padding: 12px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+  #bottom-nav.hidden { display: flex; } /* always show on desktop */
+
+  .nav-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 20px;
+    font-size: 13px;
+    border-radius: 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .nav-btn .nav-icon { font-size: 20px; }
+  .nav-btn.active { background: rgba(232,255,0,.08); border-left: 3px solid var(--accent); }
+
+  /* Sidebar header / branding */
+  #bottom-nav::before {
+    content: '🏋️  Gym Log';
+    display: block;
+    padding: 20px 20px 16px;
+    font-size: 16px;
+    font-weight: 800;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  /* Admin link at bottom of sidebar */
+  #bottom-nav::after {
+    content: '⚙️  Admin Panel →';
+    display: block;
+    margin-top: auto;
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  /* Screen container beside sidebar */
+  .screen {
+    padding-bottom: 0;
+    flex: 1;
+    overflow-y: auto;
+    min-width: 0;
+  }
+  /* Onboarding is still centred */
+  .screen-onboarding { justify-content: center; align-items: center; }
+  .onboard-wrap { max-width: 440px; width: 100%; }
+
+  /* Active workout full-width modal feel */
+  #screen-active-workout { max-width: 760px; margin: 0 auto; }
+  .workout-content { max-width: 720px; margin: 0 auto; width: 100%; }
+
+  /* Dashboard: wider stat cards */
+  .card-row { gap: 14px; }
+  .stat-card { padding: 20px 14px; }
+  .stat-card .stat-value { font-size: 34px; }
+
+  /* Home content wider */
+  .home-content { padding: 20px 24px; gap: 20px; max-width: 860px; }
+
+  /* Two-column layout for home (last workout + recent) */
+  .home-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Templates: two-column grid */
+  .templates-content { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .templates-content .empty-state { grid-column: 1/-1; }
+
+  /* Stats: wider chart */
+  .stats-content { padding: 20px 24px; }
+  .chart-wrap svg { height: 200px; }
+
+  /* Friends / settings wider padding */
+  .friends-content  { padding: 20px 24px; }
+  .settings-content { padding: 20px 24px; }
+  .friend-profile-content { padding: 20px 24px; }
+
+  /* Topbar styling on desktop */
+  .topbar { padding: 12px 24px; }
+  .topbar h1 { font-size: 20px; }
+}
+
+@media (min-width: 1100px) {
+  /* Ultra-wide: cap content width */
+  .home-content      { max-width: 900px; }
+  .templates-content { max-width: 900px; grid-template-columns: repeat(3, 1fr); }
+  .stats-content     { max-width: 900px; }
+  .settings-content  { max-width: 700px; }
+  .friends-content   { max-width: 800px; }
+}
+
+/* Admin panel link in settings (added via JS) */
+.admin-panel-link {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 13px; text-decoration: none;
+}
+.admin-panel-link:hover { color: var(--text); }

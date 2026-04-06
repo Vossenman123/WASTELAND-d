@@ -89,18 +89,21 @@
         </div>
       </div>
 
-      <!-- Last workout -->
-      <div id="last-workout-card" class="last-workout-card hidden">
-        <div class="section-title">Last workout</div>
-        <div class="lw-name" id="lw-name">—</div>
-        <div class="lw-meta" id="lw-meta"></div>
-        <button class="btn btn-secondary btn-sm" id="btn-continue">View details →</button>
-      </div>
+      <!-- Last workout + Recent workouts (2-col on desktop) -->
+      <div class="home-two-col">
+        <!-- Last workout -->
+        <div id="last-workout-card" class="last-workout-card hidden">
+          <div class="section-title">Last workout</div>
+          <div class="lw-name" id="lw-name">—</div>
+          <div class="lw-meta" id="lw-meta"></div>
+          <button class="btn btn-secondary btn-sm" id="btn-continue">View details →</button>
+        </div>
 
-      <!-- Recent workouts -->
-      <div>
-        <div class="section-title">Recent</div>
-        <div class="recent-list" id="recent-list"></div>
+        <!-- Recent workouts -->
+        <div>
+          <div class="section-title">Recent</div>
+          <div class="recent-list" id="recent-list"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -327,6 +330,16 @@
 
       <div class="settings-section-title">Danger zone</div>
       <button class="btn btn-danger btn-full" id="btn-reset-data">🗑 Reset all data</button>
+
+      <div class="settings-section-title">Admin</div>
+      <div class="settings-row">
+        <span class="sr-icon">🛠</span>
+        <div class="sr-info">
+          <div class="sr-label">Admin Panel</div>
+          <div class="sr-sub">Manage exercises, workouts &amp; API settings</div>
+        </div>
+        <a href="admin.html" class="btn btn-secondary btn-sm">Open →</a>
+      </div>
     </div>
   </section>
 
@@ -412,6 +425,7 @@
 
 </div><!-- #app -->
 
+<script src="api.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

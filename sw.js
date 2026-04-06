@@ -1,6 +1,6 @@
 /* Gym Progress Log – Service Worker */
 const CACHE = 'gymlog-v1';
-const ASSETS = ['/', '/index.html', '/styles.css', '/app.js'];
+const ASSETS = ['/', '/index.html', '/styles.css', '/app.js', '/api.js', '/admin.html', '/admin.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

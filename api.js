@@ -1,0 +1,281 @@
+/**
+ * api.js – GymLog Data Abstraction Layer
+ * =========================================
+ * This file decouples all data operations from their storage backend.
+ *
+ * To connect to a Laravel (or any REST) backend:
+ *   1. Set  API_CONFIG.useBackend = true
+ *   2. Set  API_CONFIG.baseUrl    = 'https://your-laravel-app.test/api'
+ *   3. Set  API_CONFIG.token      = '<your Sanctum / Passport token>'
+ *
+ * Expected Laravel API routes (see bottom of file for full route map):
+ *   GET    /api/exercises          – index
+ *   POST   /api/exercises          – store
+ *   PUT    /api/exercises/{id}     – update
+ *   DELETE /api/exercises/{id}     – destroy
+ *   GET    /api/workouts           – index
+ *   POST   /api/workouts           – store
+ *   DELETE /api/workouts/{id}      – destroy
+ *   GET    /api/templates          – index
+ *   POST   /api/templates          – store
+ *   PUT    /api/templates/{id}     – update
+ *   DELETE /api/templates/{id}     – destroy
+ *   GET    /api/prs                – index (keyed by exercise id)
+ *   GET    /api/settings           – show
+ *   PUT    /api/settings           – update
+ *   GET    /api/friends            – index
+ *   POST   /api/friends            – store  { share_code }
+ *   DELETE /api/friends/{id}       – destroy
+ */
+
+'use strict';
+
+const API_CONFIG = {
+  /** Set to true to send all reads/writes to the Laravel backend. */
+  useBackend: false,
+  /** Base URL of your Laravel API, e.g. 'https://gym.example.com/api' */
+  baseUrl: '',
+  /**
+   * Bearer token for authentication (Laravel Sanctum / Passport).
+   * Populate after user logs in, e.g.:
+   *   API_CONFIG.token = localStorage.getItem('api_token');
+   */
+  token: null,
+};
+
+/* ── Internal localStorage helpers ─────────────────────────────────── */
+const STORE_KEY_API = 'gymlog_v1';
+
+function _loadLocal() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY_API)) || null; }
+  catch (e) { return null; }
+}
+function _saveLocal(db) {
+  localStorage.setItem(STORE_KEY_API, JSON.stringify(db));
+}
+
+/* ── HTTP helper ────────────────────────────────────────────────────── */
+async function _http(method, path, body) {
+  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+  if (API_CONFIG.token) headers['Authorization'] = 'Bearer ' + API_CONFIG.token;
+  const res = await fetch(API_CONFIG.baseUrl + path, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { const json = await res.clone().json(); detail = json.message || JSON.stringify(json); }
+    catch (_) { try { detail = await res.text(); } catch (__) {} }
+    throw new Error(`API error ${res.status} (${path}): ${detail || res.statusText}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PUBLIC API CLIENT
+   ═══════════════════════════════════════════════════════════════════ */
+
+const GymApi = {
+
+  /* ── EXERCISES ──────────────────────────────────────────────────── */
+
+  async getExercises() {
+    if (!API_CONFIG.useBackend) return (_loadLocal()?.exercises) || [];
+    return _http('GET', '/exercises');
+  },
+
+  async createExercise(data) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.exercises.push(data); _saveLocal(db); return data;
+    }
+    return _http('POST', '/exercises', data);
+  },
+
+  async updateExercise(id, data) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      const i = db.exercises.findIndex(e => e.id === id);
+      if (i === -1) throw new Error('Exercise not found');
+      db.exercises[i] = { ...db.exercises[i], ...data }; _saveLocal(db);
+      return db.exercises[i];
+    }
+    return _http('PUT', '/exercises/' + id, data);
+  },
+
+  async deleteExercise(id) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.exercises = db.exercises.filter(e => e.id !== id); _saveLocal(db); return null;
+    }
+    return _http('DELETE', '/exercises/' + id);
+  },
+
+  /* ── WORKOUTS ───────────────────────────────────────────────────── */
+
+  async getWorkouts() {
+    if (!API_CONFIG.useBackend) return (_loadLocal()?.workouts) || [];
+    return _http('GET', '/workouts');
+  },
+
+  async getWorkout(id) {
+    if (!API_CONFIG.useBackend) {
+      return ((_loadLocal()?.workouts) || []).find(w => w.id === id) || null;
+    }
+    return _http('GET', '/workouts/' + id);
+  },
+
+  async createWorkout(data) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.workouts.push(data); _saveLocal(db); return data;
+    }
+    return _http('POST', '/workouts', data);
+  },
+
+  async deleteWorkout(id) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.workouts = db.workouts.filter(w => w.id !== id); _saveLocal(db); return null;
+    }
+    return _http('DELETE', '/workouts/' + id);
+  },
+
+  /* ── TEMPLATES ──────────────────────────────────────────────────── */
+
+  async getTemplates() {
+    if (!API_CONFIG.useBackend) return (_loadLocal()?.templates) || [];
+    return _http('GET', '/templates');
+  },
+
+  async createTemplate(data) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.templates.push(data); _saveLocal(db); return data;
+    }
+    return _http('POST', '/templates', data);
+  },
+
+  async updateTemplate(id, data) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      const i = db.templates.findIndex(t => t.id === id);
+      if (i === -1) throw new Error('Template not found');
+      db.templates[i] = { ...db.templates[i], ...data }; _saveLocal(db);
+      return db.templates[i];
+    }
+    return _http('PUT', '/templates/' + id, data);
+  },
+
+  async deleteTemplate(id) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.templates = db.templates.filter(t => t.id !== id); _saveLocal(db); return null;
+    }
+    return _http('DELETE', '/templates/' + id);
+  },
+
+  /* ── PRs ────────────────────────────────────────────────────────── */
+
+  async getPRs() {
+    if (!API_CONFIG.useBackend) return (_loadLocal()?.prs) || {};
+    return _http('GET', '/prs');
+  },
+
+  async savePRs(prs) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.prs = prs; _saveLocal(db); return prs;
+    }
+    /* In a backend scenario PRs are typically computed server-side
+       from workout data; this endpoint may not be needed. */
+    return _http('PUT', '/prs', prs);
+  },
+
+  /* ── SETTINGS ───────────────────────────────────────────────────── */
+
+  async getSettings() {
+    if (!API_CONFIG.useBackend) return (_loadLocal()?.settings) || {};
+    return _http('GET', '/settings');
+  },
+
+  async updateSettings(data) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.settings = { ...db.settings, ...data }; _saveLocal(db); return db.settings;
+    }
+    return _http('PUT', '/settings', data);
+  },
+
+  /* ── FRIENDS ────────────────────────────────────────────────────── */
+
+  async getFriends() {
+    if (!API_CONFIG.useBackend) return (_loadLocal()?.friends) || [];
+    return _http('GET', '/friends');
+  },
+
+  async addFriend(shareCode) {
+    if (!API_CONFIG.useBackend) {
+      /* Handled inline in app.js (decoding share code) */
+      return null;
+    }
+    return _http('POST', '/friends', { share_code: shareCode });
+  },
+
+  async removeFriend(id) {
+    if (!API_CONFIG.useBackend) {
+      const db = _loadLocal(); if (!db) throw new Error('No DB');
+      db.friends = db.friends.filter(f => f.id !== id); _saveLocal(db); return null;
+    }
+    return _http('DELETE', '/friends/' + id);
+  },
+
+  /* ── AUTH (backend only) ────────────────────────────────────────── */
+
+  /**
+   * Login via Laravel Sanctum.
+   * POST /api/login  { email, password }  → { token }
+   */
+  async login(email, password) {
+    if (!API_CONFIG.useBackend) return null;
+    const res = await _http('POST', '/login', { email, password });
+    if (res?.token) { API_CONFIG.token = res.token; }
+    return res;
+  },
+
+  async logout() {
+    if (!API_CONFIG.useBackend) return;
+    await _http('POST', '/logout');
+    API_CONFIG.token = null;
+  },
+};
+
+/*
+ * ╔══════════════════════════════════════════════════════════════════╗
+ * ║  LARAVEL ROUTE MAP                                              ║
+ * ║  Add this to your routes/api.php:                              ║
+ * ╠══════════════════════════════════════════════════════════════════╣
+ * ║  use App\Http\Controllers\{                                     ║
+ * ║    AuthController, ExerciseController, WorkoutController,      ║
+ * ║    TemplateController, PrController, SettingsController,       ║
+ * ║    FriendController                                             ║
+ * ║  };                                                             ║
+ * ║                                                                  ║
+ * ║  Route::post('/login',  [AuthController::class, 'login']);      ║
+ * ║  Route::post('/logout', [AuthController::class, 'logout'])      ║
+ * ║      ->middleware('auth:sanctum');                              ║
+ * ║                                                                  ║
+ * ║  Route::middleware('auth:sanctum')->group(function () {         ║
+ * ║    Route::apiResource('exercises', ExerciseController::class);  ║
+ * ║    Route::apiResource('workouts',  WorkoutController::class);   ║
+ * ║    Route::apiResource('templates', TemplateController::class);  ║
+ * ║    Route::apiResource('friends',   FriendController::class);    ║
+ * ║    Route::get ('prs',      [PrController::class, 'index']);     ║
+ * ║    Route::put ('prs',      [PrController::class, 'update']);    ║
+ * ║    Route::get ('settings', [SettingsController::class,'show']); ║
+ * ║    Route::put ('settings', [SettingsController::class,'update']);║
+ * ║  });                                                             ║
+ * ╚══════════════════════════════════════════════════════════════════╝
+ */
