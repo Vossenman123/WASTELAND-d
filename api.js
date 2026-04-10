@@ -89,10 +89,28 @@ async function _http(method, path, body) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
+    let json = null;
     let detail = '';
-    try { const json = await res.clone().json(); detail = json.message || JSON.stringify(json); }
-    catch (_) { try { detail = await res.text(); } catch (__) {} }
-    throw new Error(`API error ${res.status} (${path}): ${detail || res.statusText}`);
+    try {
+      json = await res.clone().json();
+      detail = json.message || JSON.stringify(json);
+    } catch (_) {
+      try { detail = await res.text(); } catch (__) {}
+    }
+
+    const err = new Error(`API error ${res.status} (${path}): ${detail || res.statusText}`);
+    err.status = res.status;
+    err.path = path;
+    err.payload = json;
+
+    if (path === '/login' && (res.status === 401 || res.status === 422)) {
+      err.message = 'Incorrect email or password.';
+    }
+    if (path === '/register' && res.status === 422) {
+      err.message = 'Registration failed. Please check your details and try again.';
+    }
+
+    throw err;
   }
   if (res.status === 204) return null;
   return res.json();

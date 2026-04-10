@@ -6,9 +6,10 @@
 
 const STORE_KEY  = 'gymlog_v1';
 const ADMIN_PASS = 'gymadmin';   // ⚠️  DEV / DEMO ONLY – password visible in source.
-                                   // For production: replace the login() function with a
-                                   // server-side authentication call (e.g. Laravel Sanctum)
-                                   // and never ship credentials in client-side code.
+const ADMIN_PASS_KEY = 'gymlog_admin_password';
+                                    // For production: replace the login() function with a
+                                    // server-side authentication call (e.g. Laravel Sanctum)
+                                    // and never ship credentials in client-side code.
 
 const EPLEY = (w, r) => r === 1 ? w : w * (1 + r / 30);
 
@@ -45,20 +46,37 @@ function vol(workout) {
 /* ── AUTH ────────────────────────────────────────────────────────── */
 let adminAuthed = sessionStorage.getItem('admin_auth') === '1';
 
+function getAdminPassword() {
+  const configured = String(localStorage.getItem(ADMIN_PASS_KEY) || '').trim();
+  return configured || ADMIN_PASS;
+}
+
+function ensureAdminPasswordSeeded() {
+  if (!String(localStorage.getItem(ADMIN_PASS_KEY) || '').trim()) {
+    localStorage.setItem(ADMIN_PASS_KEY, ADMIN_PASS);
+  }
+}
+
 function tryLogin() {
-  const pw = document.getElementById('admin-password').value;
-  if (pw === ADMIN_PASS) {
+  const pw = document.getElementById('admin-password').value.trim();
+  const expected = getAdminPassword();
+  const ok = pw === expected || pw.toLowerCase() === expected.toLowerCase();
+
+  if (ok) {
     adminAuthed = true;
     sessionStorage.setItem('admin_auth', '1');
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('admin-app').classList.remove('hidden');
     boot();
   } else {
-    document.getElementById('login-error').textContent = 'Incorrect password.';
+    document.getElementById('login-error').textContent = 'Incorrect admin password.';
   }
 }
 
 document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); tryLogin(); });
+document.getElementById('admin-password').addEventListener('input', () => {
+  document.getElementById('login-error').textContent = '';
+});
 document.getElementById('btn-logout').addEventListener('click', () => {
   sessionStorage.removeItem('admin_auth');
   adminAuthed = false;
@@ -322,5 +340,6 @@ function showToast(msg) {
 
 /* ── INIT ────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  ensureAdminPasswordSeeded();
   if (adminAuthed) boot();
 });
