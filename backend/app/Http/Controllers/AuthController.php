@@ -15,6 +15,13 @@ class AuthController extends Controller
     /** POST /api/register */
     public function register(Request $request): JsonResponse
     {
+        $name  = trim((string) $request->input('name', ''));
+        $email = mb_strtolower(trim((string) $request->input('email', '')));
+        $request->merge([
+            'name'  => $name,
+            'email' => $email,
+        ]);
+
         $validated = $request->validate([
             'name'                  => 'required|string|max:64',
             'email'                 => 'required|email|unique:users,email',
@@ -44,12 +51,31 @@ class AuthController extends Controller
     /** POST /api/login */
     public function login(Request $request): JsonResponse
     {
+        $emailInput    = trim((string) $request->input('email', ''));
+        $passwordInput = (string) $request->input('password', '');
+        $request->merge([
+            'email'    => $emailInput,
+            'password' => $passwordInput,
+        ]);
+
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
-        if (! Auth::attempt($request->only('email', 'password'))) {
+        $emails = array_values(array_unique([$emailInput, mb_strtolower($emailInput)]));
+        $passwords = array_values(array_unique([$passwordInput, trim($passwordInput)]));
+        $authenticated = false;
+        foreach ($emails as $email) {
+            foreach ($passwords as $password) {
+                if (Auth::attempt(['email' => $email, 'password' => $password])) {
+                    $authenticated = true;
+                    break 2;
+                }
+            }
+        }
+
+        if (! $authenticated) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);

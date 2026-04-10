@@ -1255,9 +1255,12 @@ document.getElementById('login-form')?.addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Signing in…';
   try {
-    const email    = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const res = await GymApi.login(email, password);
+    const email       = document.getElementById('login-email').value.trim().toLowerCase();
+    const passwordRaw = document.getElementById('login-password').value;
+    let res = await GymApi.login(email, passwordRaw);
+    if (!res?.token && passwordRaw !== passwordRaw.trim()) {
+      res = await GymApi.login(email, passwordRaw.trim());
+    }
     if (res?.token) {
       DB.settings.username = res.user?.name || email;
       DB.settings.userId   = String(res.user?.id || '');
@@ -1289,7 +1292,7 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
   e.preventDefault();
   showAuthError('register-error', '');
   const name  = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
   const pw    = document.getElementById('reg-password').value;
   const pw2   = document.getElementById('reg-password-confirm').value;
 
