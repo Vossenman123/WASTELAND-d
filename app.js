@@ -822,7 +822,7 @@ function pickExercise(id) {
   exercisePickerCallback = null;
 }
 
-document.getElementById('btn-new-exercise').addEventListener('click', () => {
+function createCustomExercise(onCreated) {
   const name = prompt('Exercise name:');
   if (!name?.trim()) return;
   const cat   = prompt('Category (e.g. Chest, Back, Legs, Cardio):')||'Other';
@@ -833,8 +833,12 @@ document.getElementById('btn-new-exercise').addEventListener('click', () => {
                desc: desc.trim() };
   DB.exercises.push(ex);
   saveDB();
-  renderExercisePickerList(document.getElementById('ex-search-input').value);
+  if (typeof onCreated === 'function') onCreated(ex);
   showToast('Exercise added!');
+}
+
+document.getElementById('btn-new-exercise').addEventListener('click', () => {
+  createCustomExercise(() => renderExercisePickerList(document.getElementById('ex-search-input').value));
 });
 
 /* ── EXERCISE STATS ─────────────────────────────────────────────────── */
@@ -1065,11 +1069,17 @@ document.getElementById('btn-back-friend').addEventListener('click', () => { ren
 
 /* ── SETTINGS ───────────────────────────────────────────────────────── */
 function renderSettings() {
-  document.getElementById('settings-username').textContent = DB.settings.username||'Athlete';
+  const username = DB.settings.username||'Athlete';
+  document.getElementById('settings-username').textContent = username;
   document.getElementById('settings-unit-select').value = DB.settings.unit;
   document.getElementById('settings-privacy-select').value = DB.settings.privacy;
   document.getElementById('offline-status').textContent = navigator.onLine ? '🟢 Online' : '🔴 Offline';
   renderSharedExercises();
+  document.getElementById('settings-userpanel-name').textContent = username;
+  document.getElementById('settings-userpanel-id').textContent = 'ID ' + String(DB.settings.userId || 'LOCAL').slice(0,8).toUpperCase();
+  document.getElementById('settings-userpanel-workouts').textContent = `${DB.workouts.length} workout${DB.workouts.length !== 1 ? 's' : ''}`;
+  document.getElementById('settings-userpanel-unit').textContent = (DB.settings.unit || 'kg').toUpperCase();
+  document.getElementById('settings-user-avatar').textContent = username.slice(0,1).toUpperCase();
 
   // Account section – only visible when using the backend
   const authUser = GymApi.getAuthUser();
@@ -1094,6 +1104,15 @@ document.getElementById('settings-privacy-select').addEventListener('change', e 
 document.getElementById('btn-change-name').addEventListener('click', () => {
   const n = prompt('Your name:', DB.settings.username);
   if (n?.trim()) { DB.settings.username=n.trim(); saveDB(); renderSettings(); }
+});
+document.getElementById('btn-userpanel-edit').addEventListener('click', () => {
+  document.getElementById('btn-change-name').click();
+});
+document.getElementById('btn-userpanel-add-exercise').addEventListener('click', () => {
+  createCustomExercise();
+});
+document.getElementById('btn-userpanel-export').addEventListener('click', () => {
+  document.getElementById('btn-export-json').click();
 });
 
 function renderSharedExercises() {

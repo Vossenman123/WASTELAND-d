@@ -481,6 +481,39 @@ select option { background: var(--surface2); }
 
 /* ===== SETTINGS ===== */
 .settings-content { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.user-panel {
+  background: linear-gradient(135deg, rgba(232,255,0,.12), rgba(255,107,0,.08));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.user-panel-head { display: flex; align-items: center; gap: 10px; }
+.user-panel-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #000; font-size: 18px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+.user-panel-info { min-width: 0; }
+.user-panel-name { font-size: 17px; font-weight: 800; }
+.user-panel-id {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.user-panel-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.user-chip {
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 4px 10px;
+}
+.user-panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .settings-section-title {
   font-size: 11px; font-weight: 700; color: var(--muted);
   text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 4px;
