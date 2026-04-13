@@ -1921,14 +1921,15 @@ window.addEventListener('offline', () => updateConnectivityIndicators());
 document.addEventListener('DOMContentLoaded', () => {
   // If a backend URL is configured and we have a stored token, go straight to the app.
   // Otherwise show the login screen (if backend configured) or go directly offline.
-  if (API_CONFIG.useBackend && API_CONFIG.token) {
+  const isFirebaseBackend = API_CONFIG.useBackend && API_CONFIG.provider === 'firebase';
+  if (API_CONFIG.useBackend && (API_CONFIG.token || isFirebaseBackend)) {
     // Validate the token silently, then start
     GymApi.me().then(user => {
       if (user) {
         startApp();
       } else {
-        // Token expired – clear it and show login
-        GymApi.logout();
+        // Not authenticated – show login
+        if (!isFirebaseBackend) GymApi.logout();
         showAuthScreen('screen-login');
       }
     }).catch(() => {

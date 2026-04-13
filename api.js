@@ -37,11 +37,22 @@ const API_CONFIG = {
 /* ── Token persistence ─────────────────────────────────────────────── */
 const TOKEN_KEY = 'gymlog_api_token';
 const AUTH_USER_KEY = 'gymlog_auth_user';
+let _authUserCache = null;
 
 function _loadToken() {
+  if (API_CONFIG.provider === 'firebase') {
+    API_CONFIG.token = null;
+    return;
+  }
   API_CONFIG.token = localStorage.getItem(TOKEN_KEY) || null;
+  _authUserCache = _getAuthUser();
 }
 function _saveToken(token, user) {
+  if (API_CONFIG.provider === 'firebase') {
+    API_CONFIG.token = token || null;
+    _authUserCache = user || null;
+    return;
+  }
   if (token) {
     localStorage.setItem(TOKEN_KEY, token);
     API_CONFIG.token = token;
@@ -53,6 +64,7 @@ function _saveToken(token, user) {
   else localStorage.removeItem(AUTH_USER_KEY);
 }
 function _getAuthUser() {
+  if (API_CONFIG.provider === 'firebase') return _authUserCache;
   try { return JSON.parse(localStorage.getItem(AUTH_USER_KEY)) || null; }
   catch (_) { return null; }
 }
@@ -585,14 +597,12 @@ const GymApi = {
         await ctx.signOut(ctx.auth);
       } catch (_) {}
       _saveToken(null, null);
-      API_CONFIG.useBackend = false;
       _persistApiConfig();
       return;
     }
 
     try { await _http('POST', '/logout'); } catch (_) {}
     _saveToken(null, null);
-    API_CONFIG.useBackend = false;
     _persistApiConfig();
   },
 
