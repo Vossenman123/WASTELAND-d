@@ -776,8 +776,8 @@ select option { background: var(--surface2); }
   --surface: #0f1628;
   --surface2: #151f35;
   --border: #233251;
-  --accent: #8cf56a;
-  --accent2: #63a2ff;
+  --accent: #ff5b47;
+  --accent2: #ff9a3d;
   --text: #eef3ff;
   --muted: #9eb0d1;
   --radius: 14px;
@@ -785,13 +785,16 @@ select option { background: var(--surface2); }
 }
 
 body {
+  background-color: #070b16;
   background-image:
-    linear-gradient(to bottom, rgba(7,11,22,.82), rgba(7,11,22,.9)),
-    url('https://github.com/user-attachments/assets/409fc830-286d-4979-8be3-bdb1d9cdb53a');
+    radial-gradient(circle at 78% 20%, rgba(255,70,50,.32), transparent 34%),
+    radial-gradient(circle at 12% 78%, rgba(255,130,60,.22), transparent 42%),
+    linear-gradient(to bottom, rgba(7,11,22,.76), rgba(7,11,22,.9)),
+    url("https://github.com/user-attachments/assets/409fc830-286d-4979-8be3-bdb1d9cdb53a");
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
 .card,
@@ -812,21 +815,24 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), #70dfd8);
-  color: #071012;
+  background: linear-gradient(135deg, #ff735f, #ff4d3d 55%, #ff9a3d);
+  color: #fff;
+  border: 1px solid rgba(255,145,110,.45);
+  box-shadow: 0 8px 20px rgba(255,72,56,.28);
 }
 
 .btn-secondary {
-  background: linear-gradient(180deg, #1b2842, #151f35);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #1c2436, #141b2a);
+  border: 1px solid #2d3b57;
+  color: #dbe6ff;
 }
 
 .btn-ghost {
-  border-color: color-mix(in srgb, var(--accent) 80%, #fff 20%);
-  color: color-mix(in srgb, var(--accent) 84%, #fff 16%);
+  border-color: rgba(255,120,90,.75);
+  color: #ffb5a7;
 }
 
 .nav-btn.active {
   color: var(--accent);
-  text-shadow: 0 0 12px rgba(140,245,106,.25);
+  text-shadow: 0 0 12px rgba(255,91,71,.35);
 }
