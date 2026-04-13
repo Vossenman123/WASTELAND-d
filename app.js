@@ -1277,7 +1277,7 @@ document.getElementById('workout-notes-form').addEventListener('submit', e => {
   closeModal('modal-workout-notes');
 });
 
-document.getElementById('btn-new-ex-cancel').addEventListener('click', () => closeModal('modal-new-exercise'));
+document.getElementById('btn-new-ex-cancel').addEventListener('click', () => closeAnyModal('modal-new-exercise'));
 document.getElementById('new-exercise-form').addEventListener('submit', e => {
   e.preventDefault();
   const name = document.getElementById('new-ex-name').value.trim();
@@ -1294,11 +1294,17 @@ document.getElementById('new-exercise-form').addEventListener('submit', e => {
   showToast('Exercise added!');
 });
 
+function closeAnyModal(id) {
+  if (id === 'modal-confirm') confirmDialogAction = null;
+  if (id === 'modal-new-exercise') pendingExerciseCreatedCb = null;
+  closeModal(id);
+}
+
 document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target===m) m.classList.remove('show'); });
+  m.addEventListener('click', e => { if (e.target===m) closeAnyModal(m.id); });
 });
 document.querySelectorAll('.btn-modal-close').forEach(b => {
-  b.addEventListener('click', () => closeModal(b.closest('.modal-overlay').id));
+  b.addEventListener('click', () => closeAnyModal(b.closest('.modal-overlay').id));
 });
 
 /* ── HELPERS ────────────────────────────────────────────────────────── */
