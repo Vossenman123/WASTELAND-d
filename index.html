@@ -538,6 +538,96 @@
     </div>
   </div>
 
+  <!-- Confirm action modal -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title" id="confirm-title">Confirm action</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <p id="confirm-message" style="font-size:13px;color:var(--muted);line-height:1.5">Are you sure?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-full" id="btn-confirm-cancel">Cancel</button>
+        <button class="btn btn-danger btn-full" id="btn-confirm-ok">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit name modal -->
+  <div class="modal-overlay" id="modal-edit-name">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Edit profile</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <form id="edit-name-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="input-group">
+          <label for="edit-name-input">Display name</label>
+          <input type="text" id="edit-name-input" placeholder="Your name" maxlength="32" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-full" id="btn-edit-name-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New exercise modal -->
+  <div class="modal-overlay" id="modal-new-exercise">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Create new exercise</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <form id="new-exercise-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="input-group">
+          <label for="new-ex-name">Exercise name</label>
+          <input type="text" id="new-ex-name" placeholder="e.g. Incline Dumbbell Press" maxlength="64" required>
+        </div>
+        <div class="input-group">
+          <label for="new-ex-cat">Category</label>
+          <input type="text" id="new-ex-cat" placeholder="e.g. Chest, Back, Legs" maxlength="32">
+        </div>
+        <div class="input-group">
+          <label for="new-ex-type">Tracking type</label>
+          <select id="new-ex-type">
+            <option value="weight">Weight + reps</option>
+            <option value="time">Time (seconds)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="new-ex-desc">Description / coaching cue (optional)</label>
+          <textarea id="new-ex-desc" rows="3" maxlength="160" placeholder="Short exercise note"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-full" id="btn-new-ex-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Add exercise</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Workout notes modal -->
+  <div class="modal-overlay" id="modal-workout-notes">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Workout notes</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <form id="workout-notes-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="input-group">
+          <label for="workout-notes-input">Notes</label>
+          <textarea id="workout-notes-input" rows="4" maxlength="400" placeholder="How did this workout feel?"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-full" id="btn-workout-notes-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Save notes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div><!-- #app -->
 
 <script src="api.js"></script>

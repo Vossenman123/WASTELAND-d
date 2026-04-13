@@ -326,12 +326,19 @@ function showWorkoutSummary(id) {
 document.getElementById('btn-back-summary').addEventListener('click', () => { renderHome(); showScreen('screen-home'); });
 
 function deleteWorkout(id) {
-  if (!confirm('Delete this workout?')) return;
-  DB.workouts = DB.workouts.filter(w=>w.id!==id);
-  recalcAllPRs();
-  saveDB();
-  renderHome();
-  showScreen('screen-home');
+  openConfirmDialog({
+    title: 'Delete workout',
+    message: 'Delete this workout? This cannot be undone.',
+    danger: true,
+    confirmText: 'Delete',
+    onConfirm: () => {
+      DB.workouts = DB.workouts.filter(w=>w.id!==id);
+      recalcAllPRs();
+      saveDB();
+      renderHome();
+      showScreen('screen-home');
+    }
+  });
 }
 
 /* ── ACTIVE WORKOUT ─────────────────────────────────────────────────── */
@@ -534,9 +541,16 @@ function deleteSet(ei, si) {
 }
 
 function removeExerciseFromWorkout(ei) {
-  if (!confirm('Remove this exercise?')) return;
-  activeWorkout.exercises.splice(ei,1);
-  renderActiveWorkout();
+  openConfirmDialog({
+    title: 'Remove exercise',
+    message: 'Remove this exercise from the workout?',
+    danger: true,
+    confirmText: 'Remove',
+    onConfirm: () => {
+      activeWorkout.exercises.splice(ei,1);
+      renderActiveWorkout();
+    }
+  });
 }
 
 function showUndo() {
@@ -564,8 +578,7 @@ document.getElementById('btn-add-exercise').addEventListener('click', () => open
 
 /* Notes */
 document.getElementById('workout-notes-bar').addEventListener('click', () => {
-  const n = prompt('Workout notes:', activeWorkout?.notes||'');
-  if (n !== null) { activeWorkout.notes = n; document.getElementById('workout-notes-bar').textContent = n||'📝 Add notes…'; }
+  openWorkoutNotesModal();
 });
 
 /* Finish workout */
@@ -574,8 +587,20 @@ document.getElementById('btn-finish-workout').addEventListener('click', finishWo
 function finishWorkout() {
   if (!activeWorkout) return;
   if (!activeWorkout.exercises.some(ex=>ex.sets.some(s=>s.completed))) {
-    if (!confirm('No completed sets. Finish anyway?')) return;
+    openConfirmDialog({
+      title: 'Finish empty workout?',
+      message: 'No completed sets found. Finish this workout anyway?',
+      danger: false,
+      confirmText: 'Finish anyway',
+      onConfirm: () => completeActiveWorkout(),
+    });
+    return;
   }
+  completeActiveWorkout();
+}
+
+function completeActiveWorkout() {
+  if (!activeWorkout) return;
   clearInterval(workoutTimerInterval);
   activeWorkout.duration = Math.floor((Date.now()-activeWorkout.startTime)/1000);
   activeWorkout.exercises.forEach(ex => checkAndSavePR(ex, activeWorkout.id, activeWorkout.date));
@@ -589,13 +614,19 @@ function finishWorkout() {
 }
 
 document.getElementById('btn-cancel-workout').addEventListener('click', () => {
-  if (confirm('Cancel workout? Progress will be lost.')) {
-    clearInterval(workoutTimerInterval);
-    clearRestTimer();
-    activeWorkout = null;
-    renderHome();
-    showScreen('screen-home');
-  }
+  openConfirmDialog({
+    title: 'Cancel workout',
+    message: 'Progress from this workout will be lost.',
+    danger: true,
+    confirmText: 'Cancel workout',
+    onConfirm: () => {
+      clearInterval(workoutTimerInterval);
+      clearRestTimer();
+      activeWorkout = null;
+      renderHome();
+      showScreen('screen-home');
+    }
+  });
 });
 
 /* ── REST TIMER ─────────────────────────────────────────────────────── */
@@ -704,10 +735,17 @@ document.getElementById('btn-new-template').addEventListener('click', () => {
 });
 
 function deleteTemplate(id) {
-  if (!confirm('Delete this template?')) return;
-  DB.templates = DB.templates.filter(t=>t.id!==id);
-  saveDB();
-  renderTemplates();
+  openConfirmDialog({
+    title: 'Delete template',
+    message: 'Delete this template? This action cannot be undone.',
+    danger: true,
+    confirmText: 'Delete',
+    onConfirm: () => {
+      DB.templates = DB.templates.filter(t=>t.id!==id);
+      saveDB();
+      renderTemplates();
+    }
+  });
 }
 
 /* Template editor */
@@ -822,19 +860,15 @@ function pickExercise(id) {
   exercisePickerCallback = null;
 }
 
+let pendingExerciseCreatedCb = null;
+
 function createCustomExercise(onCreated) {
-  const name = prompt('Exercise name:');
-  if (!name?.trim()) return;
-  const cat   = prompt('Category (e.g. Chest, Back, Legs, Cardio):')||'Other';
-  const typeQ = prompt('Tracking type:\n• Leave blank for weight + reps (default)\n• Type "time" for time-based exercises (plank, running, etc.)')||'';
-  const desc  = prompt('Short description / coaching cue (optional):')||'';
-  const ex = { id:uid(), name:name.trim(), cat:cat.trim(),
-               type: typeQ.trim().toLowerCase() === 'time' ? 'time' : 'weight',
-               desc: desc.trim() };
-  DB.exercises.push(ex);
-  saveDB();
-  if (typeof onCreated === 'function') onCreated(ex);
-  showToast('Exercise added!');
+  pendingExerciseCreatedCb = typeof onCreated === 'function' ? onCreated : null;
+  document.getElementById('new-ex-name').value = '';
+  document.getElementById('new-ex-cat').value = '';
+  document.getElementById('new-ex-type').value = 'weight';
+  document.getElementById('new-ex-desc').value = '';
+  openModal('modal-new-exercise');
 }
 
 document.getElementById('btn-new-exercise').addEventListener('click', () => {
@@ -1058,9 +1092,16 @@ function openFriendProfile(id) {
     }).join('');
   }
   document.getElementById('btn-remove-friend').onclick = () => {
-    if (!confirm(`Remove ${f.username}?`)) return;
-    DB.friends = DB.friends.filter(x=>x.id!==id);
-    saveDB(); renderFriends(); showScreen('screen-friends');
+    openConfirmDialog({
+      title: 'Remove friend',
+      message: `Remove ${f.username} from your friends list?`,
+      danger: true,
+      confirmText: 'Remove',
+      onConfirm: () => {
+        DB.friends = DB.friends.filter(x=>x.id!==id);
+        saveDB(); renderFriends(); showScreen('screen-friends');
+      }
+    });
   };
   showScreen('screen-friend-profile', true);
 }
@@ -1102,8 +1143,7 @@ document.getElementById('settings-privacy-select').addEventListener('change', e 
   DB.settings.privacy = e.target.value; saveDB();
 });
 document.getElementById('btn-change-name').addEventListener('click', () => {
-  const n = prompt('Your name:', DB.settings.username);
-  if (n?.trim()) { DB.settings.username=n.trim(); saveDB(); renderSettings(); }
+  openEditNameModal();
 });
 document.getElementById('btn-userpanel-edit').addEventListener('click', () => {
   document.getElementById('btn-change-name').click();
@@ -1162,10 +1202,16 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
 });
 
 document.getElementById('btn-reset-data').addEventListener('click', () => {
-  if (!confirm('⚠️ This will delete ALL data. Are you sure?')) return;
-  if (!confirm('Really delete everything? This cannot be undone.')) return;
-  localStorage.removeItem(STORE_KEY);
-  location.reload();
+  openConfirmDialog({
+    title: 'Reset all data',
+    message: 'This permanently deletes all workouts, templates and settings on this device.',
+    danger: true,
+    confirmText: 'Delete all data',
+    onConfirm: () => {
+      localStorage.removeItem(STORE_KEY);
+      location.reload();
+    }
+  });
 });
 
 /* ── MODALS ─────────────────────────────────────────────────────────── */
@@ -1175,6 +1221,78 @@ function openModal(id) {
 function closeModal(id) {
   document.getElementById(id).classList.remove('show');
 }
+
+let confirmDialogAction = null;
+function openConfirmDialog({ title='Confirm', message='Are you sure?', confirmText='Continue', danger=false, onConfirm=()=>{} }) {
+  confirmDialogAction = onConfirm;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  const btn = document.getElementById('btn-confirm-ok');
+  btn.textContent = confirmText;
+  btn.classList.toggle('btn-danger', !!danger);
+  btn.classList.toggle('btn-primary', !danger);
+  openModal('modal-confirm');
+}
+
+function closeConfirmDialog() {
+  confirmDialogAction = null;
+  closeModal('modal-confirm');
+}
+
+document.getElementById('btn-confirm-cancel').addEventListener('click', closeConfirmDialog);
+document.getElementById('btn-confirm-ok').addEventListener('click', () => {
+  const action = confirmDialogAction;
+  closeConfirmDialog();
+  if (typeof action === 'function') action();
+});
+
+function openEditNameModal() {
+  document.getElementById('edit-name-input').value = DB.settings.username || '';
+  openModal('modal-edit-name');
+}
+document.getElementById('btn-edit-name-cancel').addEventListener('click', () => closeModal('modal-edit-name'));
+document.getElementById('edit-name-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const next = document.getElementById('edit-name-input').value.trim();
+  if (!next) return;
+  DB.settings.username = next;
+  saveDB();
+  renderSettings();
+  renderFriends();
+  closeModal('modal-edit-name');
+  showToast('Profile updated!');
+});
+
+function openWorkoutNotesModal() {
+  document.getElementById('workout-notes-input').value = activeWorkout?.notes || '';
+  openModal('modal-workout-notes');
+}
+document.getElementById('btn-workout-notes-cancel').addEventListener('click', () => closeModal('modal-workout-notes'));
+document.getElementById('workout-notes-form').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!activeWorkout) return;
+  const notes = document.getElementById('workout-notes-input').value;
+  activeWorkout.notes = notes;
+  document.getElementById('workout-notes-bar').textContent = notes || '📝 Add notes…';
+  closeModal('modal-workout-notes');
+});
+
+document.getElementById('btn-new-ex-cancel').addEventListener('click', () => closeModal('modal-new-exercise'));
+document.getElementById('new-exercise-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('new-ex-name').value.trim();
+  if (!name) return;
+  const cat = document.getElementById('new-ex-cat').value.trim() || 'Other';
+  const type = document.getElementById('new-ex-type').value === 'time' ? 'time' : 'weight';
+  const desc = document.getElementById('new-ex-desc').value.trim();
+  const ex = { id:uid(), name, cat, type, desc };
+  DB.exercises.push(ex);
+  saveDB();
+  closeModal('modal-new-exercise');
+  if (typeof pendingExerciseCreatedCb === 'function') pendingExerciseCreatedCb(ex);
+  pendingExerciseCreatedCb = null;
+  showToast('Exercise added!');
+});
 
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target===m) m.classList.remove('show'); });
@@ -1331,10 +1449,16 @@ document.getElementById('btn-offline-mode')?.addEventListener('click', () => {
 
 // Logout (in settings)
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
-  if (!confirm('Sign out?')) return;
-  await GymApi.logout();
-  // Reload to show login screen
-  location.reload();
+  openConfirmDialog({
+    title: 'Sign out',
+    message: 'Do you want to sign out from this account?',
+    danger: false,
+    confirmText: 'Sign out',
+    onConfirm: async () => {
+      await GymApi.logout();
+      location.reload();
+    }
+  });
 });
 
 /** Called once auth is confirmed (token found or offline chosen). Shows the app. */
