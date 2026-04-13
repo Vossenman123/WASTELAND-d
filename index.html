@@ -147,7 +147,11 @@
        ══════════════════════════════════════════════════════════ -->
   <section class="screen" id="screen-home">
     <div class="topbar">
-      <h1>🏋️ Gym Log</h1>
+      <button class="topbar-back topbar-home-back" type="button">‹</button>
+      <h1>Dashboard</h1>
+      <div class="topbar-search-wrap">
+        <input id="home-search" type="text" placeholder="Search" aria-label="Search dashboard">
+      </div>
       <span id="online-indicator" style="font-size:12px;color:var(--muted)">offline</span>
     </div>
     <div class="home-content">
@@ -155,28 +159,74 @@
         <button class="btn-start-workout" id="btn-start-workout">▶ Start Workout</button>
       </div>
 
-      <!-- Stats cards -->
       <div>
         <div class="section-title">This week</div>
-        <div class="card-row">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-workouts">0</div>
+        <div class="dashboard-stat-grid">
+          <article class="stat-card dashboard-stat-card">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-workouts">0</div>
+              <div class="ds-icon">🏋️</div>
+            </div>
             <div class="stat-label">Workouts</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-volume">0</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-workouts-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-workouts" style="width:0%"></div></div>
+            </div>
+          </article>
+          <article class="stat-card dashboard-stat-card">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-volume">0</div>
+              <div class="ds-icon">📈</div>
+            </div>
             <div class="stat-label">Volume (kg)</div>
-          </div>
-          <div class="stat-card pr">
-            <div class="stat-value" id="stat-prs">0</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-volume-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-volume" style="width:0%"></div></div>
+            </div>
+          </article>
+          <article class="stat-card dashboard-stat-card pr">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-prs">0</div>
+              <div class="ds-icon">🏆</div>
+            </div>
             <div class="stat-label">New PRs</div>
-          </div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-prs-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-prs" style="width:0%"></div></div>
+            </div>
+          </article>
+          <article class="stat-card dashboard-stat-card">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-streak">0</div>
+              <div class="ds-icon">🔥</div>
+            </div>
+            <div class="stat-label">Day streak</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-streak-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-streak" style="width:0%"></div></div>
+            </div>
+          </article>
         </div>
       </div>
 
-      <!-- Last workout + Recent workouts (2-col on desktop) -->
+      <div class="home-analytics-grid">
+        <section class="card dashboard-panel">
+          <div class="panel-head">
+            <div class="section-title">Weekly training</div>
+            <span class="panel-subtle">Week</span>
+          </div>
+          <div class="week-chart" id="week-chart-bars"></div>
+        </section>
+        <section class="card dashboard-panel">
+          <div class="panel-head">
+            <div class="section-title">Category focus</div>
+            <span class="panel-subtle">See all</span>
+          </div>
+          <div id="dashboard-muscle-list" class="category-table-list"></div>
+        </section>
+      </div>
+
       <div class="home-two-col">
-        <!-- Last workout -->
         <div id="last-workout-card" class="last-workout-card hidden">
           <div class="section-title">Last workout</div>
           <div class="lw-name" id="lw-name">—</div>
@@ -184,11 +234,25 @@
           <button class="btn btn-secondary btn-sm" id="btn-continue">View details →</button>
         </div>
 
-        <!-- Recent workouts -->
         <div>
           <div class="section-title">Recent</div>
           <div class="recent-list" id="recent-list"></div>
         </div>
+      </div>
+
+      <div class="home-quick-actions">
+        <button class="quick-card quick-card-dark" id="quick-view-templates" type="button">
+          <span class="qc-title">Templates</span>
+          <span class="qc-sub">Manage your plans</span>
+        </button>
+        <button class="quick-card quick-card-coral" id="quick-auto-plan" type="button">
+          <span class="qc-title">Auto plan</span>
+          <span class="qc-sub">Build smart templates</span>
+        </button>
+        <button class="quick-card quick-card-teal" id="quick-open-friends" type="button">
+          <span class="qc-title">Friends</span>
+          <span class="qc-sub">Compare progress</span>
+        </button>
       </div>
     </div>
   </section>
@@ -278,6 +342,71 @@
                 <option value="ppl">Push / pull / legs</option>
               </select>
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-intensity">Intensity</label>
+                <select id="auto-intensity">
+                  <option value="moderate" selected>Moderate</option>
+                  <option value="high">High</option>
+                  <option value="low">Low stress</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-preference">Session preference</label>
+                <select id="auto-preference">
+                  <option value="balanced" selected>Balanced</option>
+                  <option value="heavy">Heavy compounds</option>
+                  <option value="pump">Pump/isolation</option>
+                  <option value="quick">Quick circuits</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Focus muscles</label>
+              <div class="auto-pill-grid">
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Chest">Chest</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Back">Back</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Legs">Legs</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Shoulders">Shoulders</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Core">Core</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Arms">Arms</label>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Avoid / limit</label>
+              <div class="auto-pill-grid">
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Legs">Heavy legs</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Back">Lower back</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Shoulders">Overhead pressing</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Core">Core loading</label>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-cardio">Cardio add-on</label>
+                <select id="auto-cardio">
+                  <option value="none" selected>None</option>
+                  <option value="light">Light finishers</option>
+                  <option value="focus">Cardio focus</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-rest-style">Rest style</label>
+                <select id="auto-rest-style">
+                  <option value="auto" selected>Auto</option>
+                  <option value="short">Short rests</option>
+                  <option value="long">Long rests</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="auto-notes">Injury / personal notes (optional)</label>
+              <input type="text" id="auto-notes" placeholder="e.g. avoid deep knee flexion this month" maxlength="120">
+            </div>
+            <label class="checkbox-inline">
+              <input type="checkbox" id="auto-save-profile" checked>
+              Save these preferences for next time
+            </label>
             <button type="submit" class="btn btn-primary btn-full">Generate smart templates</button>
           </form>
         </div>

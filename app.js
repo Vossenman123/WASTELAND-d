@@ -108,6 +108,24 @@ function defaultMotivation() {
     earned: []
   };
 }
+function defaultAutoTemplateProfile() {
+  return {
+    name: '',
+    goal: 'strength',
+    days: 3,
+    minutes: 45,
+    level: 'intermediate',
+    equipment: 'full',
+    split: 'auto',
+    intensity: 'moderate',
+    preference: 'balanced',
+    focus: [],
+    avoid: [],
+    cardio: 'none',
+    restStyle: 'auto',
+    notes: ''
+  };
+}
 function uid() {
   const arr = new Uint32Array(2);
   crypto.getRandomValues(arr);
@@ -121,6 +139,7 @@ mergeExerciseDefaults(); // ensure existing saved exercises have desc/type
 function ensureDBDefaults() {
   if (!DB.settings) DB.settings = {};
   if (!DB.settings.motivation) DB.settings.motivation = defaultMotivation();
+  if (!DB.settings.autoTemplateProfile) DB.settings.autoTemplateProfile = defaultAutoTemplateProfile();
   if (!Array.isArray(DB.settings.motivation.earned)) DB.settings.motivation.earned = [];
   if (!DB.settings.motivation.baseline) DB.settings.motivation.baseline = { workouts: 0, volume: 0, prs: 0 };
   if (!DB.settings.motivation.startedAt) DB.settings.motivation.startedAt = new Date().toISOString();
@@ -251,6 +270,11 @@ function renderHome() {
   const weekWorkouts = DB.workouts.filter(w => now - new Date(w.date).getTime() < week);
   const weekVolume   = weekWorkouts.reduce((s,w) => s + workoutVolume(w), 0);
   const recentPRs    = countRecentPRs(mon);
+  const streakDays   = getWorkoutStreakDays();
+  const workoutGoal  = Math.max(3, DB.settings?.motivation?.goalTarget || 6);
+  const volumeGoal   = workoutGoal * 2500;
+  const prsGoal      = 6;
+  const streakGoal   = 7;
 
   document.getElementById('stat-workouts').textContent = weekWorkouts.length;
   document.getElementById('stat-volume').textContent   = fmtVol(weekVolume);
@@ -259,6 +283,13 @@ function renderHome() {
   if (volCard) { const lbl = volCard.querySelector('.stat-label'); if (lbl) lbl.textContent = 'Volume ('+DB.settings.unit+')'; }
   updateConnectivityIndicators();
   document.getElementById('stat-prs').textContent      = recentPRs;
+  document.getElementById('stat-streak').textContent   = streakDays;
+  updateProgressChip('stat-progress-workouts', 'stat-progress-workouts-label', weekWorkouts.length, workoutGoal);
+  updateProgressChip('stat-progress-volume', 'stat-progress-volume-label', weekVolume, volumeGoal);
+  updateProgressChip('stat-progress-prs', 'stat-progress-prs-label', recentPRs, prsGoal);
+  updateProgressChip('stat-progress-streak', 'stat-progress-streak-label', streakDays, streakGoal);
+  renderWeekChartBars();
+  renderCategoryFocusTable(weekWorkouts);
 
   const last = DB.workouts[DB.workouts.length - 1];
   const lwCard = document.getElementById('last-workout-card');
@@ -288,6 +319,90 @@ function renderHome() {
 }
 
 document.getElementById('btn-start-workout').addEventListener('click', openStartModal);
+document.getElementById('quick-view-templates').addEventListener('click', () => { renderTemplates(); showScreen('screen-templates'); });
+document.getElementById('quick-auto-plan').addEventListener('click', () => {
+  templateMode = 'auto';
+  renderTemplates();
+  showScreen('screen-templates');
+});
+document.getElementById('quick-open-friends').addEventListener('click', () => { renderFriends(); showScreen('screen-friends'); });
+
+function updateProgressChip(barId, labelId, value, target) {
+  const pct = Math.max(0, Math.min(100, Math.round((value / Math.max(1, target)) * 100)));
+  const bar = document.getElementById(barId);
+  const label = document.getElementById(labelId);
+  if (bar) bar.style.width = pct + '%';
+  if (label) label.textContent = pct + '%';
+}
+
+function renderWeekChartBars() {
+  const host = document.getElementById('week-chart-bars');
+  if (!host) return;
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const counts = new Array(7).fill(0);
+  const now = new Date();
+  DB.workouts.forEach(w => {
+    const d = new Date(w.date);
+    const diff = Math.floor((now - d) / (24 * 3600 * 1000));
+    if (diff >= 0 && diff < 7) {
+      const i = d.getDay();
+      const monFirst = (i + 6) % 7;
+      counts[monFirst] += 1;
+    }
+  });
+  const max = Math.max(1, ...counts);
+  host.innerHTML = counts.map((n, i) => `
+    <div class="week-bar-col">
+      <div class="week-bar-value">${n}</div>
+      <div class="week-bar" style="height:${Math.max(8, Math.round((n / max) * 90))}px"></div>
+      <div class="week-bar-day">${days[i]}</div>
+    </div>
+  `).join('');
+}
+
+function renderCategoryFocusTable(weekWorkouts) {
+  const host = document.getElementById('dashboard-muscle-list');
+  if (!host) return;
+  const totals = {};
+  (weekWorkouts || []).forEach(w => (w.exercises || []).forEach(ex => {
+    const exObj = findExercise(ex.exerciseId);
+    const cat = (exObj?.cat || 'Other') === 'Biceps' || (exObj?.cat || 'Other') === 'Triceps' ? 'Arms' : (exObj?.cat || 'Other');
+    const score = (ex.sets || []).filter(s => s.completed).reduce((sum, s) => sum + ((s.weight || 0) * (s.reps || 0) + (s.duration || 0)), 0);
+    totals[cat] = (totals[cat] || 0) + score;
+  }));
+  const top = Object.entries(totals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+  if (!top.length) {
+    host.innerHTML = '<div class="text-muted" style="font-size:12px">No data yet. Complete a workout to populate this panel.</div>';
+    return;
+  }
+  const best = top[0][1] || 1;
+  host.innerHTML = top.map(([name, val]) => {
+    const pct = ((val / best) * 100).toFixed(1);
+    return `
+      <div class="category-row">
+        <div class="cr-name">${esc(name)}</div>
+        <div class="cr-value">${Math.round(val)}</div>
+        <div class="cr-delta">+${pct}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getWorkoutStreakDays() {
+  if (!DB.workouts.length) return 0;
+  const doneDays = new Set(DB.workouts.map(w => new Date(w.date).toISOString().slice(0, 10)));
+  const cursor = new Date();
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const key = cursor.toISOString().slice(0, 10);
+    if (doneDays.has(key)) streak++;
+    else if (streak > 0) break;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
 
 function countRecentPRs(ms) {
   let count = 0;
@@ -734,6 +849,7 @@ function getPrevSet(exerciseId, setIndex) {
 let templateMode = 'manual';
 
 function renderTemplates() {
+  hydrateAutoTemplateForm();
   renderTemplateMode();
   renderTemplateList();
 }
@@ -793,8 +909,18 @@ document.getElementById('auto-template-form').addEventListener('submit', e => {
     minutes: parseInt(document.getElementById('auto-minutes').value, 10) || 45,
     level: document.getElementById('auto-level').value,
     equipment: document.getElementById('auto-equipment').value,
-    split: document.getElementById('auto-split').value
+    split: document.getElementById('auto-split').value,
+    intensity: document.getElementById('auto-intensity').value,
+    preference: document.getElementById('auto-preference').value,
+    focus: getCheckedValues('auto-focus'),
+    avoid: getCheckedValues('auto-avoid'),
+    cardio: document.getElementById('auto-cardio').value,
+    restStyle: document.getElementById('auto-rest-style').value,
+    notes: document.getElementById('auto-notes').value.trim()
   };
+  if (document.getElementById('auto-save-profile')?.checked) {
+    DB.settings.autoTemplateProfile = { ...defaultAutoTemplateProfile(), ...profile };
+  }
   const generated = buildSmartTemplates(profile);
   if (!generated.length) {
     showToast('No matching exercises found for this setup.');
@@ -809,11 +935,11 @@ document.getElementById('auto-template-form').addEventListener('submit', e => {
 
 function buildSmartTemplates(profile) {
   const days = Math.max(2, Math.min(6, profile.days || 3));
-  const split = chooseSplit(profile.split, days, profile.goal);
-  const exerciseSlots = getExerciseSlots(profile.goal, profile.minutes, profile.level);
-  const rest = getRestForGoal(profile.goal, profile.level);
+  const split = chooseSplit(profile.split, days, profile.goal, profile.preference);
+  const exerciseSlots = getExerciseSlots(profile.goal, profile.minutes, profile.level, profile.intensity, profile.preference);
+  const rest = getRestForGoal(profile.goal, profile.level, profile.restStyle, profile.intensity);
   const sessions = split.map((focus, i) => {
-    const exercises = pickExercisesForFocus(focus, exerciseSlots, profile.equipment).map(exId => ({ exerciseId: exId, rest }));
+    const exercises = pickExercisesForFocus(focus, exerciseSlots, profile.equipment, profile).map(exId => ({ exerciseId: exId, rest }));
     const fallbackName = `${focus.label} ${i + 1}`;
     return {
       id: uid(),
@@ -824,7 +950,7 @@ function buildSmartTemplates(profile) {
   return sessions;
 }
 
-function chooseSplit(requestedSplit, days, goal) {
+function chooseSplit(requestedSplit, days, goal, preference) {
   if (requestedSplit === 'fullbody') return Array.from({ length: days }, (_, i) => ({ label: `Full Body`, cats: ['Chest','Back','Legs','Shoulders','Core'] }));
   if (requestedSplit === 'upperlower') {
     const cycle = [
@@ -842,25 +968,31 @@ function chooseSplit(requestedSplit, days, goal) {
     return Array.from({ length: days }, (_, i) => cycle[i % 3]);
   }
   if (days <= 3) return Array.from({ length: days }, (_, i) => ({ label: `Full Body`, cats: ['Chest','Back','Legs','Shoulders','Core'] }));
-  if (goal === 'strength') return chooseSplit('upperlower', days, goal);
-  return chooseSplit('ppl', days, goal);
+  if (goal === 'strength' || preference === 'heavy') return chooseSplit('upperlower', days, goal, preference);
+  return chooseSplit('ppl', days, goal, preference);
 }
 
-function getExerciseSlots(goal, minutes, level) {
+function getExerciseSlots(goal, minutes, level, intensity, preference) {
   const levelAdj = level === 'advanced' ? 1 : level === 'beginner' ? -1 : 0;
   const base = minutes <= 35 ? 4 : minutes <= 50 ? 5 : minutes <= 70 ? 6 : 7;
   const goalAdj = goal === 'strength' ? -1 : goal === 'fatloss' ? 1 : 0;
-  return Math.max(3, Math.min(8, base + levelAdj + goalAdj));
+  const intensityAdj = intensity === 'high' ? 1 : intensity === 'low' ? -1 : 0;
+  const prefAdj = preference === 'quick' ? -1 : 0;
+  return Math.max(3, Math.min(8, base + levelAdj + goalAdj + intensityAdj + prefAdj));
 }
 
-function getRestForGoal(goal, level) {
+function getRestForGoal(goal, level, restStyle, intensity) {
+  if (restStyle === 'short') return 60;
+  if (restStyle === 'long') return 150;
   if (goal === 'strength') return level === 'advanced' ? 150 : 120;
-  if (goal === 'endurance' || goal === 'fatloss') return 60;
+  if (goal === 'endurance' || goal === 'fatloss' || intensity === 'high') return 60;
   return 90;
 }
 
-function canUseExerciseForEquipment(ex, equipment) {
+function canUseExerciseForEquipment(ex, equipment, profile) {
   const n = ex.name.toLowerCase();
+  const cat = ex.cat;
+  if (profile?.avoid?.includes(cat)) return false;
   if (equipment === 'full') return true;
   if (equipment === 'bodyweight') {
     return ex.type === 'time' || /push-up|pull-up|chin-up|burpee|plank|mountain climbers|wall sit|lunge|dips/.test(n);
@@ -871,19 +1003,70 @@ function canUseExerciseForEquipment(ex, equipment) {
   return true;
 }
 
-function pickExercisesForFocus(focus, slots, equipment) {
+function pickExercisesForFocus(focus, slots, equipment, profile) {
   const picked = [];
+  const preferredCats = normalizeFocusCategories(profile?.focus || []);
+  const focusCats = preferredCats.length ? [...new Set([...preferredCats, ...focus.cats])] : focus.cats;
   focus.cats.forEach(cat => {
-    const options = DB.exercises.filter(ex => ex.cat === cat && canUseExerciseForEquipment(ex, equipment));
+    const options = DB.exercises.filter(ex => ex.cat === cat && canUseExerciseForEquipment(ex, equipment, profile));
     if (options.length) picked.push(options[Math.floor(Math.random() * options.length)].id);
+  });
+  focusCats.forEach(cat => {
+    const options = DB.exercises.filter(ex => ex.cat === cat && !picked.includes(ex.id) && canUseExerciseForEquipment(ex, equipment, profile));
+    if (picked.length < slots && options.length) picked.push(options[Math.floor(Math.random() * options.length)].id);
   });
   if (picked.length < slots) {
     const fillers = DB.exercises
-      .filter(ex => !picked.includes(ex.id) && canUseExerciseForEquipment(ex, equipment))
+      .filter(ex => !picked.includes(ex.id) && canUseExerciseForEquipment(ex, equipment, profile))
       .sort((a, b) => a.name.localeCompare(b.name));
     while (picked.length < slots && fillers.length) picked.push(fillers.shift().id);
   }
+  if (profile?.cardio && profile.cardio !== 'none') {
+    const cardio = DB.exercises.find(ex => ex.cat === 'Cardio' && !picked.includes(ex.id) && canUseExerciseForEquipment(ex, equipment, profile));
+    if (cardio) {
+      if (profile.cardio === 'focus') picked.unshift(cardio.id);
+      else picked.push(cardio.id);
+    }
+  }
   return picked.slice(0, slots);
+}
+
+function getCheckedValues(name) {
+  return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
+}
+
+function normalizeFocusCategories(list) {
+  return (list || []).flatMap(v => (v === 'Arms' ? ['Biceps', 'Triceps'] : [v]));
+}
+
+function hydrateAutoTemplateForm() {
+  const p = { ...defaultAutoTemplateProfile(), ...(DB.settings?.autoTemplateProfile || {}) };
+  const fields = [
+    ['auto-template-name', p.name],
+    ['auto-goal', p.goal],
+    ['auto-days', String(p.days)],
+    ['auto-minutes', String(p.minutes)],
+    ['auto-level', p.level],
+    ['auto-equipment', p.equipment],
+    ['auto-split', p.split],
+    ['auto-intensity', p.intensity],
+    ['auto-preference', p.preference],
+    ['auto-cardio', p.cardio],
+    ['auto-rest-style', p.restStyle],
+    ['auto-notes', p.notes]
+  ];
+  fields.forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      const options = Array.from(el.options).map(o => o.value);
+      el.value = options.includes(value) ? value : el.value;
+    } else {
+      el.value = value || '';
+    }
+  });
+  document.querySelectorAll('input[name="auto-focus"]').forEach(el => { el.checked = (p.focus || []).includes(el.value); });
+  document.querySelectorAll('input[name="auto-avoid"]').forEach(el => { el.checked = (p.avoid || []).includes(el.value); });
 }
 
 function deleteTemplate(id) {
