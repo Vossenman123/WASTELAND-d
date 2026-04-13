@@ -83,13 +83,29 @@ function loadDB() {
 function saveDB() { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }
 function defaultDB() {
   return {
-    settings: { unit:'kg', username:'', userId: uid(), privacy:'friends', sharedExercises:[] },
+    settings: {
+      unit:'kg',
+      username:'',
+      userId: uid(),
+      privacy:'friends',
+      sharedExercises:[],
+      motivation: defaultMotivation()
+    },
     exercises: JSON.parse(JSON.stringify(BUILT_IN_EXERCISES)),
     templates: [],
     workouts:  [],
     prs:       {},
     friends:   [],
     onboarded: false,
+  };
+}
+function defaultMotivation() {
+  return {
+    goalType: 'workouts',
+    goalTarget: 8,
+    startedAt: new Date().toISOString(),
+    baseline: { workouts: 0, volume: 0, prs: 0 },
+    earned: []
   };
 }
 function uid() {
@@ -99,7 +115,16 @@ function uid() {
 }
 
 let DB = loadDB();
+ensureDBDefaults();
 mergeExerciseDefaults(); // ensure existing saved exercises have desc/type
+
+function ensureDBDefaults() {
+  if (!DB.settings) DB.settings = {};
+  if (!DB.settings.motivation) DB.settings.motivation = defaultMotivation();
+  if (!Array.isArray(DB.settings.motivation.earned)) DB.settings.motivation.earned = [];
+  if (!DB.settings.motivation.baseline) DB.settings.motivation.baseline = { workouts: 0, volume: 0, prs: 0 };
+  if (!DB.settings.motivation.startedAt) DB.settings.motivation.startedAt = new Date().toISOString();
+}
 
 /* ── TYPE HELPERS ──────────────────────────────────────────────────── */
 /** Returns true when the exercise tracks duration (seconds) instead of weight+reps. */
@@ -160,6 +185,7 @@ navBtns.forEach(b => b.addEventListener('click', () => {
   if (s === 'screen-home') renderHome();
   if (s === 'screen-templates') renderTemplates();
   if (s === 'screen-friends') renderFriends();
+  if (s === 'screen-achievements') renderAchievements();
   if (s === 'screen-settings') renderSettings();
   showScreen(s);
 }));
@@ -231,8 +257,7 @@ function renderHome() {
   // update unit label on volume card & online indicator
   const volCard = document.querySelector('#stat-volume')?.closest('.stat-card');
   if (volCard) { const lbl = volCard.querySelector('.stat-label'); if (lbl) lbl.textContent = 'Volume ('+DB.settings.unit+')'; }
-  const ind = document.getElementById('online-indicator');
-  if (ind) ind.textContent = navigator.onLine ? '🟢 online' : '⚫ offline';
+  updateConnectivityIndicators();
   document.getElementById('stat-prs').textContent      = recentPRs;
 
   const last = DB.workouts[DB.workouts.length - 1];
@@ -706,8 +731,26 @@ function getPrevSet(exerciseId, setIndex) {
 }
 
 /* ── TEMPLATES ──────────────────────────────────────────────────────── */
+let templateMode = 'manual';
+
 function renderTemplates() {
+  renderTemplateMode();
+  renderTemplateList();
+}
+
+function renderTemplateMode() {
+  const manualPanel = document.getElementById('templates-manual-panel');
+  const autoPanel = document.getElementById('templates-auto-panel');
+  document.querySelectorAll('.template-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.templateMode === templateMode);
+  });
+  manualPanel?.classList.toggle('hidden', templateMode !== 'manual');
+  autoPanel?.classList.toggle('hidden', templateMode !== 'auto');
+}
+
+function renderTemplateList() {
   const list = document.getElementById('templates-list');
+  if (!list) return;
   if (DB.templates.length===0) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><p>No templates yet. Create your first workout!</p></div>';
     return;
@@ -726,13 +769,122 @@ function renderTemplates() {
     </div>`).join('');
 }
 
+document.querySelectorAll('.template-mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    templateMode = btn.dataset.templateMode === 'auto' ? 'auto' : 'manual';
+    renderTemplateMode();
+  });
+});
+
 document.getElementById('btn-new-template').addEventListener('click', () => {
   const t = { id:uid(), name:'New Template', exercises:[] };
   DB.templates.push(t);
   saveDB();
-  renderTemplates();
+  renderTemplateList();
   openTemplateEditor(t.id);
 });
+
+document.getElementById('auto-template-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const profile = {
+    name: document.getElementById('auto-template-name').value.trim(),
+    goal: document.getElementById('auto-goal').value,
+    days: parseInt(document.getElementById('auto-days').value, 10) || 3,
+    minutes: parseInt(document.getElementById('auto-minutes').value, 10) || 45,
+    level: document.getElementById('auto-level').value,
+    equipment: document.getElementById('auto-equipment').value,
+    split: document.getElementById('auto-split').value
+  };
+  const generated = buildSmartTemplates(profile);
+  if (!generated.length) {
+    showToast('No matching exercises found for this setup.');
+    return;
+  }
+  DB.templates.push(...generated);
+  saveDB();
+  templateMode = 'manual';
+  renderTemplates();
+  showToast(`${generated.length} template${generated.length !== 1 ? 's' : ''} generated!`);
+});
+
+function buildSmartTemplates(profile) {
+  const days = Math.max(2, Math.min(6, profile.days || 3));
+  const split = chooseSplit(profile.split, days, profile.goal);
+  const exerciseSlots = getExerciseSlots(profile.goal, profile.minutes, profile.level);
+  const rest = getRestForGoal(profile.goal, profile.level);
+  const sessions = split.map((focus, i) => {
+    const exercises = pickExercisesForFocus(focus, exerciseSlots, profile.equipment).map(exId => ({ exerciseId: exId, rest }));
+    const fallbackName = `${focus.label} ${i + 1}`;
+    return {
+      id: uid(),
+      name: `${profile.name || 'Smart Plan'} · ${fallbackName}`,
+      exercises
+    };
+  }).filter(s => s.exercises.length > 0);
+  return sessions;
+}
+
+function chooseSplit(requestedSplit, days, goal) {
+  if (requestedSplit === 'fullbody') return Array.from({ length: days }, (_, i) => ({ label: `Full Body`, cats: ['Chest','Back','Legs','Shoulders','Core'] }));
+  if (requestedSplit === 'upperlower') {
+    const cycle = [
+      { label: 'Upper', cats: ['Chest','Back','Shoulders','Biceps','Triceps'] },
+      { label: 'Lower', cats: ['Legs','Core'] }
+    ];
+    return Array.from({ length: days }, (_, i) => cycle[i % 2]);
+  }
+  if (requestedSplit === 'ppl' || (requestedSplit === 'auto' && days >= 5)) {
+    const cycle = [
+      { label: 'Push', cats: ['Chest','Shoulders','Triceps'] },
+      { label: 'Pull', cats: ['Back','Biceps','Core'] },
+      { label: 'Legs', cats: ['Legs','Core'] }
+    ];
+    return Array.from({ length: days }, (_, i) => cycle[i % 3]);
+  }
+  if (days <= 3) return Array.from({ length: days }, (_, i) => ({ label: `Full Body`, cats: ['Chest','Back','Legs','Shoulders','Core'] }));
+  if (goal === 'strength') return chooseSplit('upperlower', days, goal);
+  return chooseSplit('ppl', days, goal);
+}
+
+function getExerciseSlots(goal, minutes, level) {
+  const levelAdj = level === 'advanced' ? 1 : level === 'beginner' ? -1 : 0;
+  const base = minutes <= 35 ? 4 : minutes <= 50 ? 5 : minutes <= 70 ? 6 : 7;
+  const goalAdj = goal === 'strength' ? -1 : goal === 'fatloss' ? 1 : 0;
+  return Math.max(3, Math.min(8, base + levelAdj + goalAdj));
+}
+
+function getRestForGoal(goal, level) {
+  if (goal === 'strength') return level === 'advanced' ? 150 : 120;
+  if (goal === 'endurance' || goal === 'fatloss') return 60;
+  return 90;
+}
+
+function canUseExerciseForEquipment(ex, equipment) {
+  const n = ex.name.toLowerCase();
+  if (equipment === 'full') return true;
+  if (equipment === 'bodyweight') {
+    return ex.type === 'time' || /push-up|pull-up|chin-up|burpee|plank|mountain climbers|wall sit|lunge|dips/.test(n);
+  }
+  if (equipment === 'dumbbell') {
+    return !/barbell|cable|machine|leg press|lat pulldown/.test(n);
+  }
+  return true;
+}
+
+function pickExercisesForFocus(focus, slots, equipment) {
+  const picked = [];
+  focus.cats.forEach(cat => {
+    const options = DB.exercises.filter(ex => ex.cat === cat && canUseExerciseForEquipment(ex, equipment));
+    if (options.length) picked.push(options[Math.floor(Math.random() * options.length)].id);
+  });
+  if (picked.length < slots) {
+    const fillers = DB.exercises
+      .filter(ex => !picked.includes(ex.id) && canUseExerciseForEquipment(ex, equipment))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    while (picked.length < slots && fillers.length) picked.push(fillers.shift().id);
+  }
+  return picked.slice(0, slots);
+}
 
 function deleteTemplate(id) {
   openConfirmDialog({
@@ -1108,13 +1260,117 @@ function openFriendProfile(id) {
 
 document.getElementById('btn-back-friend').addEventListener('click', () => { renderFriends(); showScreen('screen-friends'); });
 
+/* ── PRESTATIES / MOTIVATIE ─────────────────────────────────────────── */
+const MEDAL_RULES = [
+  { id: 'workout_10',  name: 'Consistency Bronze', desc: 'Complete 10 workouts',   test: m => m.totalWorkouts >= 10 },
+  { id: 'workout_25',  name: 'Consistency Silver', desc: 'Complete 25 workouts',   test: m => m.totalWorkouts >= 25 },
+  { id: 'workout_50',  name: 'Consistency Gold',   desc: 'Complete 50 workouts',   test: m => m.totalWorkouts >= 50 },
+  { id: 'goal_reached',name: 'Goal Crusher',       desc: 'Hit your current goal',  test: m => m.goalProgress >= m.goalTarget },
+  { id: 'pr_hunter',   name: 'PR Hunter',          desc: 'Improve PRs on 8 lifts', test: m => m.prCount >= 8 },
+];
+
+function getMetrics() {
+  const motivation = DB.settings.motivation || defaultMotivation();
+  const startedAt = new Date(motivation.startedAt || Date.now()).getTime();
+  const workoutsSince = DB.workouts.filter(w => new Date(w.date).getTime() >= startedAt);
+  const volumeSince = Math.round(workoutsSince.reduce((sum, w) => sum + workoutVolume(w), 0));
+  const prsSince = Object.values(DB.prs || {}).reduce((sum, p) => {
+    const dates = [p?.weight?.date, p?.e1rm?.date, p?.volume?.date, p?.duration?.date].filter(Boolean);
+    return sum + (dates.some(d => new Date(d).getTime() >= startedAt) ? 1 : 0);
+  }, 0);
+
+  const baseline = motivation.baseline || { workouts: 0, volume: 0, prs: 0 };
+  const currentByType = {
+    workouts: workoutsSince.length,
+    volume: volumeSince,
+    prs: prsSince
+  };
+  const goalType = motivation.goalType || 'workouts';
+  const goalProgress = Math.max(0, (currentByType[goalType] || 0) - (baseline[goalType] || 0));
+
+  return {
+    totalWorkouts: DB.workouts.length,
+    prCount: Object.keys(DB.prs || {}).length,
+    goalType,
+    goalTarget: motivation.goalTarget || 1,
+    goalProgress
+  };
+}
+
+function renderAchievements() {
+  const motivation = DB.settings.motivation || defaultMotivation();
+  document.getElementById('goal-type').value = motivation.goalType || 'workouts';
+  document.getElementById('goal-target').value = motivation.goalTarget || 8;
+
+  const metrics = getMetrics();
+  awardNewMedals(metrics);
+
+  const pct = Math.max(0, Math.min(100, (metrics.goalProgress / Math.max(1, metrics.goalTarget)) * 100));
+  document.getElementById('goal-progress').innerHTML = `
+    <div style="font-size:13px">${metrics.goalProgress} / ${metrics.goalTarget} ${esc(metrics.goalType)}</div>
+    <div class="goal-progress-meter"><div class="goal-progress-fill" style="width:${pct.toFixed(0)}%"></div></div>
+  `;
+
+  const earned = new Set(DB.settings.motivation.earned || []);
+  document.getElementById('achievements-list').innerHTML = MEDAL_RULES.map(rule => {
+    const isEarned = earned.has(rule.id);
+    return `
+      <div class="medal-item">
+        <div>
+          <div class="medal-name">${esc(rule.name)}</div>
+          <div class="medal-sub">${esc(rule.desc)}</div>
+        </div>
+        <div class="medal-badge ${isEarned ? 'earned' : ''}">${isEarned ? 'Behaald' : 'Nog niet'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function awardNewMedals(metrics) {
+  const motivation = DB.settings.motivation || defaultMotivation();
+  const earned = new Set(motivation.earned || []);
+  let changed = false;
+  MEDAL_RULES.forEach(rule => {
+    if (!earned.has(rule.id) && rule.test(metrics)) {
+      earned.add(rule.id);
+      showToast(`🏅 ${rule.name} unlocked`);
+      changed = true;
+    }
+  });
+  if (changed) {
+    DB.settings.motivation.earned = Array.from(earned);
+    saveDB();
+  }
+}
+
+document.getElementById('goal-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  const goalType = document.getElementById('goal-type').value;
+  const goalTarget = Math.max(1, parseInt(document.getElementById('goal-target').value, 10) || 1);
+  const metricsNow = {
+    workouts: DB.workouts.length,
+    volume: Math.round(DB.workouts.reduce((sum, w) => sum + workoutVolume(w), 0)),
+    prs: Object.keys(DB.prs || {}).length
+  };
+  DB.settings.motivation = {
+    ...(DB.settings.motivation || defaultMotivation()),
+    goalType,
+    goalTarget,
+    startedAt: new Date().toISOString(),
+    baseline: metricsNow
+  };
+  saveDB();
+  renderAchievements();
+  showToast('Motivatie doel bijgewerkt');
+});
+
 /* ── SETTINGS ───────────────────────────────────────────────────────── */
 function renderSettings() {
   const username = DB.settings.username||'Athlete';
   document.getElementById('settings-username').textContent = username;
   document.getElementById('settings-unit-select').value = DB.settings.unit;
   document.getElementById('settings-privacy-select').value = DB.settings.privacy;
-  document.getElementById('offline-status').textContent = navigator.onLine ? '🟢 Online' : '🔴 Offline';
+  updateConnectivityIndicators();
   renderSharedExercises();
   document.getElementById('settings-userpanel-name').textContent = username;
   document.getElementById('settings-userpanel-id').textContent = 'ID ' + String(DB.settings.userId || 'LOCAL').slice(0,8).toUpperCase();
@@ -1134,6 +1390,14 @@ function renderSettings() {
     accountSection.style.display = 'none';
     accountRow.style.display = 'none';
   }
+}
+
+function updateConnectivityIndicators() {
+  const isOnline = navigator.onLine;
+  const home = document.getElementById('online-indicator');
+  if (home) home.textContent = isOnline ? '🟢 online' : '🔴 offline';
+  const settings = document.getElementById('offline-status');
+  if (settings) settings.textContent = isOnline ? '🟢 Online' : '🔴 Offline';
 }
 
 document.getElementById('settings-unit-select').addEventListener('change', e => {
@@ -1470,8 +1734,12 @@ document.getElementById('btn-logout')?.addEventListener('click', async () => {
 /** Called once auth is confirmed (token found or offline chosen). Shows the app. */
 function startApp() {
   document.getElementById('bottom-nav').style.display = '';
+  updateConnectivityIndicators();
   initOnboarding(); // this will show home or onboarding
 }
+
+window.addEventListener('online', () => updateConnectivityIndicators());
+window.addEventListener('offline', () => updateConnectivityIndicators());
 
 /* ── BOOT ───────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {

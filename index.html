@@ -199,9 +199,90 @@
   <section class="screen" id="screen-templates">
     <div class="topbar">
       <h1>Templates</h1>
-      <button class="btn btn-primary btn-sm" id="btn-new-template">+ New</button>
+      <button class="btn btn-primary btn-sm" id="btn-new-template">+ Manual</button>
     </div>
-    <div class="templates-content" id="templates-list"></div>
+    <div class="templates-content">
+      <div class="template-mode-tabs">
+        <button class="template-mode-btn active" data-template-mode="manual">Manual</button>
+        <button class="template-mode-btn" data-template-mode="auto">Automatic</button>
+      </div>
+
+      <div id="templates-manual-panel">
+        <div id="templates-list"></div>
+      </div>
+
+      <div id="templates-auto-panel" class="hidden">
+        <div class="card auto-template-card">
+          <div class="section-title">Smart generator</div>
+          <p class="text-muted" style="font-size:12px;margin-bottom:10px">Answer a few questions. The app builds a complete plan automatically.</p>
+          <form id="auto-template-form" style="display:flex;flex-direction:column;gap:10px">
+            <div class="input-group">
+              <label for="auto-template-name">Program name</label>
+              <input type="text" id="auto-template-name" placeholder="e.g. Smart Strength Cycle" maxlength="40">
+            </div>
+            <div class="input-group">
+              <label for="auto-goal">Goal</label>
+              <select id="auto-goal">
+                <option value="strength">Strength</option>
+                <option value="hypertrophy">Muscle growth</option>
+                <option value="fatloss">Fat loss</option>
+                <option value="endurance">Endurance</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-days">Days / week</label>
+                <select id="auto-days">
+                  <option value="2">2</option>
+                  <option value="3" selected>3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-minutes">Minutes / session</label>
+                <select id="auto-minutes">
+                  <option value="30">30</option>
+                  <option value="45" selected>45</option>
+                  <option value="60">60</option>
+                  <option value="75">75</option>
+                  <option value="90">90</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-level">Level</label>
+                <select id="auto-level">
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate" selected>Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-equipment">Equipment</label>
+                <select id="auto-equipment">
+                  <option value="full" selected>Full gym</option>
+                  <option value="dumbbell">Dumbbell / basic</option>
+                  <option value="bodyweight">Bodyweight</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="auto-split">Split style</label>
+              <select id="auto-split">
+                <option value="auto" selected>Auto choose</option>
+                <option value="fullbody">Full body</option>
+                <option value="upperlower">Upper / lower</option>
+                <option value="ppl">Push / pull / legs</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Generate smart templates</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- Template Editor (sub-screen) -->
@@ -316,6 +397,43 @@
     </div>
   </section>
 
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 7: PRESTATIES / MOTIVATIE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-achievements">
+    <div class="topbar">
+      <h1>Prestaties</h1>
+    </div>
+    <div class="settings-content" style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="section-title">Motivatie doel</div>
+        <form id="goal-form" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="input-group">
+              <label for="goal-type">Doel type</label>
+              <select id="goal-type">
+                <option value="workouts">Workouts</option>
+                <option value="volume">Volume</option>
+                <option value="prs">PR verbeteringen</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="goal-target">Doelwaarde</label>
+              <input type="number" id="goal-target" min="1" value="8">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-full">Doel opslaan / resetten</button>
+        </form>
+        <div id="goal-progress" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Medailles</div>
+        <div id="achievements-list"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- Friend profile sub-screen -->
   <section class="screen" id="screen-friend-profile">
     <div class="topbar">
@@ -330,7 +448,7 @@
   </section>
 
   <!-- ══════════════════════════════════════════════════════════
-       SCREEN 7: WORKOUT SUMMARY
+       SCREEN 8: WORKOUT SUMMARY
        ══════════════════════════════════════════════════════════ -->
   <section class="screen" id="screen-summary">
     <div class="topbar" id="topbar-summary">
@@ -341,7 +459,7 @@
   </section>
 
   <!-- ══════════════════════════════════════════════════════════
-       SCREEN 8: SETTINGS
+       SCREEN 9: SETTINGS
        ══════════════════════════════════════════════════════════ -->
   <section class="screen" id="screen-settings">
     <div class="topbar"><h1>Settings</h1></div>
@@ -470,6 +588,9 @@
     </button>
     <button class="nav-btn" data-screen="screen-friends">
       <span class="nav-icon">👥</span>Friends
+    </button>
+    <button class="nav-btn" data-screen="screen-achievements">
+      <span class="nav-icon">🏅</span>Prestaties
     </button>
     <button class="nav-btn" data-screen="screen-settings">
       <span class="nav-icon">⚙️</span>Settings
