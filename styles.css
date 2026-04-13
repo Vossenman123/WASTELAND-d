@@ -769,3 +769,60 @@ select option { background: var(--surface2); }
   color: var(--muted); font-size: 13px; text-decoration: none;
 }
 .admin-panel-link:hover { color: var(--text); }
+
+/* ===== 2026 REFRESH THEME OVERRIDES ===== */
+:root {
+  --bg: #070b16;
+  --surface: #0f1628;
+  --surface2: #151f35;
+  --border: #233251;
+  --accent: #8cf56a;
+  --accent2: #63a2ff;
+  --text: #eef3ff;
+  --muted: #9eb0d1;
+  --radius: 14px;
+  --radius-sm: 10px;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 15% -10%, rgba(140,245,106,.22), transparent 34%),
+    radial-gradient(circle at 85% -18%, rgba(99,162,255,.2), transparent 38%);
+}
+
+.card,
+.stat-card,
+.template-card,
+.recent-item,
+.friend-item,
+.settings-card,
+.workout-ex-block {
+  box-shadow: 0 10px 26px rgba(0,0,0,.28);
+}
+
+.topbar,
+#bottom-nav,
+.workout-topbar {
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #70dfd8);
+  color: #071012;
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, #1b2842, #151f35);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost {
+  border-color: color-mix(in srgb, var(--accent) 80%, #fff 20%);
+  color: color-mix(in srgb, var(--accent) 84%, #fff 16%);
+}
+
+.nav-btn.active {
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(140,245,106,.25);
+}

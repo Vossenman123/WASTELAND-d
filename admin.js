@@ -7,6 +7,9 @@
 const STORE_KEY  = 'gymlog_v1';
 const ADMIN_PASS = 'gymadmin';   // ⚠️  DEV / DEMO ONLY – password visible in source.
 const ADMIN_PASS_KEY = 'gymlog_admin_password';
+const API_TOKEN_KEY = 'gymlog_api_token';
+const API_BASE_URL_KEY = 'gymlog_api_base_url';
+const API_BACKEND_ENABLED_KEY = 'gymlog_api_use_backend';
                                     // For production: replace the login() function with a
                                     // server-side authentication call (e.g. Laravel Sanctum)
                                     // and never ship credentials in client-side code.
@@ -86,9 +89,18 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 });
 
 /* ── NAV ─────────────────────────────────────────────────────────── */
+const TAB_TITLES = {
+  dashboard: 'Dashboard',
+  exercises: 'Exercises',
+  workouts: 'Workouts',
+  users: 'Users & PRs',
+  api: 'API / Backend',
+};
+
 function showTab(name) {
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+  document.getElementById('tab-title').textContent = TAB_TITLES[name] || 'Admin';
 }
 document.querySelectorAll('.admin-tab').forEach(t => t.addEventListener('click', () => {
   showTab(t.dataset.tab);
@@ -110,6 +122,7 @@ function renderTab(name) {
   if (name === 'exercises')  renderExercises();
   if (name === 'workouts')   renderWorkouts();
   if (name === 'users')      renderUsers();
+  if (name === 'api')        renderApi();
 }
 
 /* ── DASHBOARD ───────────────────────────────────────────────────── */
@@ -330,6 +343,45 @@ document.getElementById('import-file').addEventListener('change', e => {
 function getCurrentTab() {
   return document.querySelector('.admin-tab.active')?.dataset.tab || 'dashboard';
 }
+
+/* ── API / BACKEND ──────────────────────────────────────────────── */
+function renderApi() {
+  const db = loadDB() || {};
+  const workouts = (db.workouts || []).length;
+  const exercises = (db.exercises || []).length;
+  const templates = (db.templates || []).length;
+
+  const token = String(localStorage.getItem(API_TOKEN_KEY) || '');
+  const baseUrl = String(localStorage.getItem(API_BASE_URL_KEY) || '').trim();
+  const useBackend = localStorage.getItem(API_BACKEND_ENABLED_KEY) === '1';
+
+  const modeEl = document.getElementById('api-mode');
+  const urlEl = document.getElementById('api-base-url');
+  const tokenEl = document.getElementById('api-token');
+  const dataEl = document.getElementById('api-store-health');
+
+  if (modeEl) modeEl.textContent = useBackend ? 'Backend mode enabled' : 'Offline mode (localStorage)';
+  if (urlEl) urlEl.textContent = baseUrl || 'Not configured';
+  if (tokenEl) tokenEl.textContent = token ? `Present (${token.slice(0, 8)}…)` : 'No token saved';
+  if (dataEl) dataEl.textContent = `${workouts} workouts · ${exercises} exercises · ${templates} templates`;
+}
+
+document.getElementById('btn-admin-pass-save')?.addEventListener('click', () => {
+  const input = document.getElementById('admin-pass-new');
+  const next = String(input?.value || '').trim();
+  if (!next || next.length < 4) {
+    showToast('Use at least 4 characters.');
+    return;
+  }
+  localStorage.setItem(ADMIN_PASS_KEY, next);
+  if (input) input.value = '';
+  showToast('Admin password updated.');
+});
+
+document.getElementById('btn-admin-pass-reset')?.addEventListener('click', () => {
+  localStorage.setItem(ADMIN_PASS_KEY, ADMIN_PASS);
+  showToast('Admin password reset to default: gymadmin');
+});
 
 /* ── TOAST ───────────────────────────────────────────────────────── */
 function showToast(msg) {

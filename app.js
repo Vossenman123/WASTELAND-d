@@ -1025,7 +1025,7 @@ document.getElementById('btn-import-friend').addEventListener('click', () => {
     renderFriends();
     closeModal('modal-add-friend');
     showToast(`Added ${data.username}!`);
-  } catch(e) { alert('Invalid code. Please ask your friend to share again.'); }
+  } catch(e) { showToast('Invalid code. Ask your friend to share again.'); }
 });
 
 function buildShareData() {
