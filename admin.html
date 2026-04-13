@@ -391,7 +391,7 @@
       <!-- ── API / BACKEND ─────────────────────────────────────── -->
       <div class="tab-section" id="tab-api">
         <div class="admin-card">
-          <div class="admin-card-header"><h3>Connect to a Laravel Backend</h3></div>
+          <div class="admin-card-header"><h3>Connect to a Backend (Firebase or Laravel)</h3></div>
           <div class="admin-card-body" style="display:flex;flex-direction:column;gap:16px">
             <div class="api-state-grid">
               <div class="api-state-item">
@@ -426,17 +426,18 @@
             <p style="color:var(--muted);font-size:13px;line-height:1.6">
               The app uses <code class="admin-code">api.js</code> as a data abstraction layer.
               By default it reads from <code class="admin-code">localStorage</code>.
-              To connect a Laravel (or any REST) backend, edit <code class="admin-code">api.js</code> and set:
+              To connect Firebase or Laravel REST, edit <code class="admin-code">api.js</code> and set:
             </p>
             <div class="api-config-box">
               <strong style="font-size:12px;color:var(--muted)">api.js – top of file</strong>
               <code>const API_CONFIG = {
-  useBackend: true,             // ← flip this
-  baseUrl:    'https://your-app.test/api',
-  token:      null,             // set after login
+  useBackend: true,             // ← enable backend mode
+  provider:  'firebase',        // or 'laravel'
+  baseUrl:   'https://your-app.test/api', // required for laravel
+  token:     null,
 };</code>
             </div>
-            <p style="color:var(--muted);font-size:13px;line-height:1.6">Suggested <strong>Laravel routes/api.php</strong>:</p>
+            <p style="color:var(--muted);font-size:13px;line-height:1.6"><strong>Laravel option:</strong> keep using the following <code class="admin-code">routes/api.php</code> shape:</p>
             <div class="api-config-box">
               <code>Route::post('/login',  [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])
@@ -454,8 +455,9 @@ Route::middleware('auth:sanctum')->group(function () {
 });</code>
             </div>
             <p style="color:var(--muted);font-size:13px;line-height:1.6">
-              All API methods accept and return JSON. Auth is via Laravel Sanctum bearer tokens.
-              When <code class="admin-code">useBackend: false</code> (offline mode) every call reads/writes localStorage directly — no network required.
+              Firebase option uses <strong>Firebase Auth + Firestore</strong> through the same <code class="admin-code">GymApi</code> methods.
+              Laravel option uses JSON REST + Sanctum bearer tokens.
+              When <code class="admin-code">useBackend: false</code> every call reads/writes localStorage directly — no network required.
             </p>
           </div>
         </div>

@@ -10,6 +10,7 @@ const ADMIN_PASS_KEY = 'gymlog_admin_password';
 const API_TOKEN_KEY = 'gymlog_api_token';
 const API_BASE_URL_KEY = 'gymlog_api_base_url';
 const API_BACKEND_ENABLED_KEY = 'gymlog_api_use_backend';
+const API_PROVIDER_KEY = 'gymlog_api_provider';
                                     // For production: replace the login() function with a
                                     // server-side authentication call (e.g. Laravel Sanctum)
                                     // and never ship credentials in client-side code.
@@ -354,13 +355,17 @@ function renderApi() {
   const token = String(localStorage.getItem(API_TOKEN_KEY) || '');
   const baseUrl = String(localStorage.getItem(API_BASE_URL_KEY) || '').trim();
   const useBackend = localStorage.getItem(API_BACKEND_ENABLED_KEY) === '1';
+  const provider = String(localStorage.getItem(API_PROVIDER_KEY) || 'firebase').trim().toLowerCase();
 
   const modeEl = document.getElementById('api-mode');
   const urlEl = document.getElementById('api-base-url');
   const tokenEl = document.getElementById('api-token');
   const dataEl = document.getElementById('api-store-health');
 
-  if (modeEl) modeEl.textContent = useBackend ? 'Backend mode enabled' : 'Offline mode (localStorage)';
+  if (modeEl) {
+    if (!useBackend) modeEl.textContent = 'Offline mode (localStorage)';
+    else modeEl.textContent = provider === 'firebase' ? 'Firebase backend enabled' : 'Laravel/REST backend enabled';
+  }
   if (urlEl) urlEl.textContent = baseUrl || 'Not configured';
   if (tokenEl) tokenEl.textContent = token ? `Present (${token.slice(0, 8)}…)` : 'No token saved';
   if (dataEl) dataEl.textContent = `${workouts} workouts · ${exercises} exercises · ${templates} templates`;
