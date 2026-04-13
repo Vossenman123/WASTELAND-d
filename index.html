@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0f0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Gym Progress Log</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN: LOGIN
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen auth-screen" id="screen-login">
+    <div class="auth-wrap">
+      <div class="auth-logo">
+        <div class="logo-icon">🏋️</div>
+        <h2>Gym Progress Log</h2>
+        <p class="auth-tagline">Track your progress. Own your data.</p>
+      </div>
+
+      <div id="auth-error" class="auth-error" style="display:none"></div>
+
+      <form id="login-form" class="auth-form" novalidate>
+        <div class="input-group">
+          <label for="login-email">Email address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="input-group">
+          <label for="login-password">Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" data-target="login-password">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-login">Sign in</button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <button class="btn btn-ghost btn-full" id="btn-goto-register">Create a free account →</button>
+      <button class="btn btn-ghost btn-full auth-offline-btn" id="btn-offline-mode">Continue offline (no sync)</button>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN: REGISTER
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen auth-screen" id="screen-register">
+    <div class="auth-wrap">
+      <div class="auth-logo">
+        <div class="logo-icon">🏋️</div>
+        <h2>Create account</h2>
+      </div>
+
+      <div id="register-error" class="auth-error" style="display:none"></div>
+
+      <form id="register-form" class="auth-form" novalidate>
+        <div class="input-group">
+          <label for="reg-name">Your name</label>
+          <input type="text" id="reg-name" placeholder="e.g. Alex" maxlength="64" autocomplete="name" required>
+        </div>
+        <div class="input-group">
+          <label for="reg-email">Email address</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="input-group">
+          <label for="reg-password">Password <span class="hint">(min. 8 characters)</span></label>
+          <div class="pw-wrap">
+            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" minlength="8" required>
+            <button type="button" class="pw-toggle" data-target="reg-password">👁</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="reg-password-confirm">Confirm password</label>
+          <div class="pw-wrap">
+            <input type="password" id="reg-password-confirm" placeholder="••••••••" autocomplete="new-password" required>
+            <button type="button" class="pw-toggle" data-target="reg-password-confirm">👁</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Weight unit</label>
+          <div class="unit-toggle">
+            <button type="button" id="reg-unit-kg" class="active">kg</button>
+            <button type="button" id="reg-unit-lb">lb</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-register">Create account</button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+      <button class="btn btn-ghost btn-full" id="btn-goto-login">← Already have an account?</button>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 1: ONBOARDING
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen screen-onboarding" id="screen-onboarding">
+    <div class="onboard-wrap">
+      <div class="onboard-logo">
+        <div class="logo-icon">🏋️</div>
+        <h2>Gym Progress Log</h2>
+        <p>No ads · No tracking · 100% offline</p>
+      </div>
+
+      <!-- Step 0: Unit -->
+      <div class="onboard-step active" id="ob-step-0">
+        <div class="step-label">Step 1 of 2</div>
+        <div class="step-title">Which unit do you use?</div>
+        <div class="unit-toggle">
+          <button id="ob-unit-kg" class="active">kg</button>
+          <button id="ob-unit-lb">lb</button>
+        </div>
+        <button class="btn btn-primary btn-full" id="ob-next-1">Continue →</button>
+      </div>
+
+      <!-- Step 1: Account or offline -->
+      <div class="onboard-step" id="ob-step-1">
+        <div class="step-label">Step 2 of 2</div>
+        <div class="step-title">Set up your profile</div>
+        <form id="ob-account-form" style="display:flex;flex-direction:column;gap:10px">
+          <div class="input-group">
+            <label>Your name (optional)</label>
+            <input type="text" id="ob-username" placeholder="e.g. Alex" maxlength="32">
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Start with profile</button>
+        </form>
+        <div style="text-align:center;color:var(--muted);font-size:13px">or</div>
+        <button class="btn btn-ghost btn-full" id="ob-offline">Start offline (anonymous)</button>
+
+        <hr class="divider" style="margin:8px 0">
+        <div class="step-label">Your first templates</div>
+        <button class="btn btn-secondary btn-full" id="ob-example">Use Push/Pull/Legs example</button>
+        <button class="btn btn-ghost btn-full" id="ob-blank">Start blank</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 2: HOME / DASHBOARD
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-home">
+    <div class="topbar">
+      <button class="topbar-back topbar-home-back" type="button">‹</button>
+      <h1>Dashboard</h1>
+      <div class="topbar-search-wrap">
+        <input id="home-search" type="text" placeholder="Search" aria-label="Search dashboard">
+      </div>
+      <span id="online-indicator" style="font-size:12px;color:var(--muted)">offline</span>
+    </div>
+    <div class="home-content">
+      <div class="start-btn-wrap">
+        <button class="btn-start-workout" id="btn-start-workout">▶ Start Workout</button>
+      </div>
+
+      <div>
+        <div class="section-title">This week</div>
+        <div class="dashboard-stat-grid">
+          <article class="stat-card dashboard-stat-card">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-workouts">0</div>
+              <div class="ds-icon">🏋️</div>
+            </div>
+            <div class="stat-label">Workouts</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-workouts-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-workouts" style="width:0%"></div></div>
+            </div>
+          </article>
+          <article class="stat-card dashboard-stat-card">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-volume">0</div>
+              <div class="ds-icon">📈</div>
+            </div>
+            <div class="stat-label">Volume (kg)</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-volume-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-volume" style="width:0%"></div></div>
+            </div>
+          </article>
+          <article class="stat-card dashboard-stat-card pr">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-prs">0</div>
+              <div class="ds-icon">🏆</div>
+            </div>
+            <div class="stat-label">New PRs</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-prs-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-prs" style="width:0%"></div></div>
+            </div>
+          </article>
+          <article class="stat-card dashboard-stat-card">
+            <div class="ds-head">
+              <div class="stat-value" id="stat-streak">0</div>
+              <div class="ds-icon">🔥</div>
+            </div>
+            <div class="stat-label">Day streak</div>
+            <div class="ds-progress-row">
+              <span id="stat-progress-streak-label">0%</span>
+              <div class="ds-progress"><div id="stat-progress-streak" style="width:0%"></div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="home-analytics-grid">
+        <section class="card dashboard-panel">
+          <div class="panel-head">
+            <div class="section-title">Weekly training</div>
+            <span class="panel-subtle">Week</span>
+          </div>
+          <div class="week-chart" id="week-chart-bars"></div>
+        </section>
+        <section class="card dashboard-panel">
+          <div class="panel-head">
+            <div class="section-title">Category focus</div>
+            <span class="panel-subtle">See all</span>
+          </div>
+          <div id="dashboard-muscle-list" class="category-table-list"></div>
+        </section>
+      </div>
+
+      <div class="home-two-col">
+        <div id="last-workout-card" class="last-workout-card hidden">
+          <div class="section-title">Last workout</div>
+          <div class="lw-name" id="lw-name">—</div>
+          <div class="lw-meta" id="lw-meta"></div>
+          <button class="btn btn-secondary btn-sm" id="btn-continue">View details →</button>
+        </div>
+
+        <div>
+          <div class="section-title">Recent</div>
+          <div class="recent-list" id="recent-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 3: TEMPLATES
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-templates">
+    <div class="topbar">
+      <h1>Templates</h1>
+      <button class="btn btn-primary btn-sm" id="btn-new-template">+ Manual</button>
+    </div>
+    <div class="templates-content">
+      <div class="template-mode-tabs">
+        <button class="template-mode-btn active" data-template-mode="manual">Manual</button>
+        <button class="template-mode-btn" data-template-mode="auto">Automatic</button>
+      </div>
+
+      <div id="templates-manual-panel">
+        <div id="templates-list"></div>
+      </div>
+
+      <div id="templates-auto-panel" class="hidden">
+        <div class="card auto-template-card">
+          <div class="section-title">Smart generator</div>
+          <p class="text-muted" style="font-size:12px;margin-bottom:10px">Answer a few questions. The app builds a complete plan automatically.</p>
+          <form id="auto-template-form" style="display:flex;flex-direction:column;gap:10px">
+            <div class="input-group">
+              <label for="auto-template-name">Program name</label>
+              <input type="text" id="auto-template-name" placeholder="e.g. Smart Strength Cycle" maxlength="40">
+            </div>
+            <div class="input-group">
+              <label for="auto-goal">Goal</label>
+              <select id="auto-goal">
+                <option value="strength">Strength</option>
+                <option value="hypertrophy">Muscle growth</option>
+                <option value="fatloss">Fat loss</option>
+                <option value="endurance">Endurance</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-days">Days / week</label>
+                <select id="auto-days">
+                  <option value="2">2</option>
+                  <option value="3" selected>3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-minutes">Minutes / session</label>
+                <select id="auto-minutes">
+                  <option value="30">30</option>
+                  <option value="45" selected>45</option>
+                  <option value="60">60</option>
+                  <option value="75">75</option>
+                  <option value="90">90</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-level">Level</label>
+                <select id="auto-level">
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate" selected>Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-equipment">Equipment</label>
+                <select id="auto-equipment">
+                  <option value="full" selected>Full gym</option>
+                  <option value="dumbbell">Dumbbell / basic</option>
+                  <option value="bodyweight">Bodyweight</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="auto-split">Split style</label>
+              <select id="auto-split">
+                <option value="auto" selected>Auto choose</option>
+                <option value="fullbody">Full body</option>
+                <option value="upperlower">Upper / lower</option>
+                <option value="ppl">Push / pull / legs</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-intensity">Intensity</label>
+                <select id="auto-intensity">
+                  <option value="moderate" selected>Moderate</option>
+                  <option value="high">High</option>
+                  <option value="low">Low stress</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-preference">Session preference</label>
+                <select id="auto-preference">
+                  <option value="balanced" selected>Balanced</option>
+                  <option value="heavy">Heavy compounds</option>
+                  <option value="pump">Pump/isolation</option>
+                  <option value="quick">Quick circuits</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Focus muscles</label>
+              <div class="auto-pill-grid">
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Chest">Chest</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Back">Back</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Legs">Legs</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Shoulders">Shoulders</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Core">Core</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-focus" value="Arms">Arms</label>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Avoid / limit</label>
+              <div class="auto-pill-grid">
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Legs">Heavy legs</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Back">Lower back</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Shoulders">Overhead pressing</label>
+                <label class="auto-pill"><input type="checkbox" name="auto-avoid" value="Core">Core loading</label>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="input-group">
+                <label for="auto-cardio">Cardio add-on</label>
+                <select id="auto-cardio">
+                  <option value="none" selected>None</option>
+                  <option value="light">Light finishers</option>
+                  <option value="focus">Cardio focus</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="auto-rest-style">Rest style</label>
+                <select id="auto-rest-style">
+                  <option value="auto" selected>Auto</option>
+                  <option value="short">Short rests</option>
+                  <option value="long">Long rests</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="auto-notes">Injury / personal notes (optional)</label>
+              <input type="text" id="auto-notes" placeholder="e.g. avoid deep knee flexion this month" maxlength="120">
+            </div>
+            <label class="checkbox-inline">
+              <input type="checkbox" id="auto-save-profile" checked>
+              Save these preferences for next time
+            </label>
+            <button type="submit" class="btn btn-primary btn-full">Generate smart templates</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Template Editor (sub-screen) -->
+  <section class="screen" id="screen-template-editor">
+    <div class="topbar">
+      <button class="topbar-back" id="btn-back-template">‹</button>
+      <h1>Edit Template</h1>
+      <button class="btn btn-primary btn-sm" id="btn-save-template">Save</button>
+    </div>
+    <div class="template-editor">
+      <div class="input-group">
+        <label>Template name</label>
+        <input type="text" id="tpl-name" placeholder="e.g. Push Day A">
+      </div>
+      <div>
+        <div class="section-title">Exercises (drag to reorder)</div>
+        <div class="exercise-list-edit" id="tpl-exercise-list"></div>
+        <button class="btn btn-secondary btn-full mt-8" id="btn-add-ex-to-tpl">+ Add exercise</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 4: ACTIVE WORKOUT
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-active-workout">
+    <div class="workout-topbar">
+      <button class="btn-icon" id="btn-cancel-workout" style="font-size:14px">✕</button>
+      <div id="workout-name-display" style="flex:1;font-weight:700;font-size:15px;text-align:center"></div>
+      <div class="workout-timer-display" id="workout-timer">00:00</div>
+      <button class="btn btn-primary btn-sm" id="btn-finish-workout">Finish</button>
+    </div>
+    <div class="workout-content">
+      <div class="workout-notes-bar" id="workout-notes-bar">📝 Add notes…</div>
+      <div id="exercises-container"></div>
+      <button class="btn btn-ghost btn-full" id="btn-add-exercise">+ Add exercise</button>
+    </div>
+
+    <!-- Undo toast -->
+    <div class="undo-toast" id="undo-toast">
+      Set deleted <button id="undo-btn">Undo</button>
+    </div>
+
+    <!-- Rest timer overlay -->
+    <div class="rest-timer-overlay" id="rest-timer-overlay">
+      <div class="rest-timer-card">
+        <div class="rest-timer-label">Rest timer</div>
+        <div class="rest-timer-time" id="rest-timer-display">01:30</div>
+        <div class="rest-progress"><div class="rest-progress-bar" id="rest-progress-bar" style="width:100%"></div></div>
+        <div class="rest-timer-controls">
+          <button class="btn btn-secondary btn-full" id="rest-add30">+30s</button>
+          <button class="btn btn-ghost btn-full" id="rest-skip">Skip</button>
+          <button class="btn btn-primary btn-full" id="rest-close">Done</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 5: EXERCISE STATS
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-exercise-stats">
+    <div class="topbar">
+      <button class="topbar-back" id="btn-back-stats">‹</button>
+      <h1 id="stats-ex-name">Exercise</h1>
+    </div>
+    <div class="stats-content">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="progress">Progress</button>
+        <button class="tab-btn" data-tab="prs">PR's</button>
+        <button class="tab-btn" data-tab="history">History</button>
+      </div>
+      <!-- Progress tab -->
+      <div class="tab-panel active" id="tab-progress">
+        <div class="chart-wrap" id="chart-wrap"><div class="chart-empty">Loading…</div></div>
+        <p id="chart-note" style="font-size:12px;color:var(--muted);text-align:center">e1RM over time (Epley formula)</p>
+      </div>
+      <!-- PRs tab -->
+      <div class="tab-panel" id="tab-prs"></div>
+      <!-- History tab -->
+      <div class="tab-panel" id="tab-history"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 6: FRIENDS
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-friends">
+    <div class="topbar">
+      <h1>Friends</h1>
+      <button class="btn btn-ghost btn-sm" id="btn-add-friend">+ Add</button>
+    </div>
+    <div class="friends-content">
+      <!-- My profile card -->
+      <div class="my-profile-card">
+        <div class="profile-header">
+          <div class="profile-avatar" id="my-avatar">A</div>
+          <div>
+            <div class="profile-name" id="my-profile-name">Athlete</div>
+            <div class="profile-code">Code: <span id="my-share-code">—</span></div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-share-my-prs">Share PRs</button>
+        </div>
+        <div class="section-title">My shared PRs</div>
+        <div class="friend-prs-list" id="my-pr-summary"></div>
+      </div>
+
+      <div>
+        <div class="section-title">Friends</div>
+        <div id="friends-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 7: PRESTATIES / MOTIVATIE
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-achievements">
+    <div class="topbar">
+      <h1>Prestaties</h1>
+    </div>
+    <div class="settings-content" style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="section-title">Motivatie doel</div>
+        <form id="goal-form" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="input-group">
+              <label for="goal-type">Doel type</label>
+              <select id="goal-type">
+                <option value="workouts">Workouts</option>
+                <option value="volume">Volume</option>
+                <option value="prs">PR verbeteringen</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="goal-target">Doelwaarde</label>
+              <input type="number" id="goal-target" min="1" value="8">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-full">Doel opslaan / resetten</button>
+        </form>
+        <div id="goal-progress" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Medailles</div>
+        <div id="achievements-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Friend profile sub-screen -->
+  <section class="screen" id="screen-friend-profile">
+    <div class="topbar">
+      <button class="topbar-back" id="btn-back-friend">‹</button>
+      <h1 id="friend-profile-name">Friend</h1>
+      <button class="btn btn-danger btn-sm" id="btn-remove-friend">Remove</button>
+    </div>
+    <div class="friend-profile-content">
+      <div class="section-title">Their PRs</div>
+      <div class="friend-prs-list" id="friend-prs-list"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 8: WORKOUT SUMMARY
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-summary">
+    <div class="topbar" id="topbar-summary">
+      <button class="topbar-back" id="btn-back-summary">‹</button>
+      <h1>Workout</h1>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px" id="summary-content"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SCREEN 9: SETTINGS
+       ══════════════════════════════════════════════════════════ -->
+  <section class="screen" id="screen-settings">
+    <div class="topbar"><h1>Settings</h1></div>
+    <div class="settings-content">
+      <div class="user-panel">
+        <div class="user-panel-head">
+          <div class="user-panel-avatar" id="settings-user-avatar">A</div>
+          <div class="user-panel-info">
+            <div class="user-panel-name" id="settings-userpanel-name">Athlete</div>
+            <div class="user-panel-id" id="settings-userpanel-id">ID —</div>
+          </div>
+        </div>
+        <div class="user-panel-stats">
+          <span class="user-chip" id="settings-userpanel-workouts">0 workouts</span>
+          <span class="user-chip" id="settings-userpanel-unit">KG</span>
+        </div>
+        <div class="user-panel-actions">
+          <button class="btn btn-primary btn-sm" id="btn-userpanel-edit">Edit profile</button>
+          <button class="btn btn-secondary btn-sm" id="btn-userpanel-add-exercise">Add exercise</button>
+          <button class="btn btn-secondary btn-sm" id="btn-userpanel-export">Backup</button>
+        </div>
+      </div>
+
+      <!-- Privacy badge -->
+      <div class="no-tracking-badge">
+        <span>🛡</span> 100% ad-free · No tracking · No data sent
+      </div>
+
+      <div class="settings-section-title">Profile</div>
+      <div class="settings-row">
+        <span class="sr-icon">👤</span>
+        <div class="sr-info">
+          <div class="sr-label" id="settings-username">Athlete</div>
+          <div class="sr-sub">Your display name</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-change-name">Edit</button>
+      </div>
+
+      <div class="settings-section-title">Units</div>
+      <div class="settings-row">
+        <span class="sr-icon">⚖️</span>
+        <div class="sr-info"><div class="sr-label">Weight unit</div></div>
+        <select id="settings-unit-select">
+          <option value="kg">kg</option>
+          <option value="lb">lb</option>
+        </select>
+      </div>
+
+      <div class="settings-section-title">Privacy</div>
+      <div class="settings-row">
+        <span class="sr-icon">🔒</span>
+        <div class="sr-info">
+          <div class="sr-label">Who can see my PRs</div>
+          <div class="sr-sub">Via shared link/code</div>
+        </div>
+        <select id="settings-privacy-select">
+          <option value="none">Nobody</option>
+          <option value="friends">Friends only</option>
+          <option value="link">Anyone with link</option>
+        </select>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="sr-icon">🏋️</span>
+          <div class="sr-label">Exercises to share</div>
+        </div>
+        <div id="shared-exercises-list" style="width:100%"></div>
+      </div>
+
+      <div class="settings-section-title">Sync & Storage</div>
+      <div class="settings-row">
+        <span class="sr-icon">📶</span>
+        <div class="sr-info">
+          <div class="sr-label" id="offline-status">🔴 Offline</div>
+          <div class="sr-sub">App works 100% offline</div>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Export / Backup</div>
+      <div class="settings-row" style="cursor:pointer" onclick="document.getElementById('btn-export-json').click()">
+        <span class="sr-icon">📦</span>
+        <div class="sr-info"><div class="sr-label">Export JSON backup</div><div class="sr-sub">Full data backup</div></div>
+        <button class="btn btn-secondary btn-sm" id="btn-export-json">Export</button>
+      </div>
+      <div class="settings-row" style="cursor:pointer" onclick="document.getElementById('btn-export-csv').click()">
+        <span class="sr-icon">📊</span>
+        <div class="sr-info"><div class="sr-label">Export CSV</div><div class="sr-sub">Workouts spreadsheet</div></div>
+        <button class="btn btn-secondary btn-sm" id="btn-export-csv">Export</button>
+      </div>
+
+      <!-- Account / auth -->
+      <div class="settings-section-title" id="settings-account-section" style="display:none">Account</div>
+      <div class="settings-row" id="settings-account-row" style="display:none">
+        <span class="sr-icon">✉️</span>
+        <div class="sr-info">
+          <div class="sr-label" id="settings-email">—</div>
+          <div class="sr-sub">Signed-in account</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-logout">Sign out</button>
+      </div>
+
+      <div class="settings-section-title">Danger zone</div>
+      <button class="btn btn-danger btn-full" id="btn-reset-data">🗑 Reset all data</button>
+
+      <div class="settings-section-title">Admin</div>
+      <div class="settings-row">
+        <span class="sr-icon">🛠</span>
+        <div class="sr-info">
+          <div class="sr-label">Admin Panel</div>
+          <div class="sr-sub">Manage exercises, workouts &amp; API settings</div>
+        </div>
+        <a href="admin.html" class="btn btn-secondary btn-sm">Open →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════
+       BOTTOM NAVIGATION
+       ══════════════════════════════════════════════════════════ -->
+  <nav id="bottom-nav">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">🏋️</div>
+      <div class="nav-brand-copy">
+        <div class="nav-brand-title">Gym Progress</div>
+        <div class="nav-brand-sub">Performance tracker</div>
+      </div>
+    </div>
+    <div class="nav-section-label">Main</div>
+    <button class="nav-btn active" data-screen="screen-home">
+      <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+    </button>
+    <button class="nav-btn" data-screen="screen-templates">
+      <span class="nav-icon">📋</span><span class="nav-label">Templates</span>
+    </button>
+    <button class="nav-btn" data-screen="screen-friends">
+      <span class="nav-icon">👥</span><span class="nav-label">Friends</span>
+    </button>
+    <div class="nav-section-label">Progress</div>
+    <button class="nav-btn" data-screen="screen-achievements">
+      <span class="nav-icon">🏅</span><span class="nav-label">Achievements</span>
+    </button>
+    <button class="nav-btn" data-screen="screen-settings">
+      <span class="nav-icon">⚙️</span><span class="nav-label">Settings</span>
+    </button>
+    <a class="nav-admin-link" href="admin.html">🛠 Admin Panel</a>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════════
+       MODALS
+       ══════════════════════════════════════════════════════════ -->
+
+  <!-- Start workout modal -->
+  <div class="modal-overlay" id="modal-start">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Start workout</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <div class="section-title">Choose template</div>
+      <div class="ex-search-list" id="start-template-list"></div>
+      <button class="btn btn-ghost btn-full" id="btn-empty-workout">+ Empty workout</button>
+    </div>
+  </div>
+
+  <!-- Exercise picker modal -->
+  <div class="modal-overlay" id="modal-exercise-picker">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Add exercise</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <input type="text" id="ex-search-input" placeholder="Search exercises…">
+      <div class="ex-search-list" id="ex-picker-list"></div>
+      <button class="btn btn-ghost btn-full" id="btn-new-exercise">+ Create new exercise</button>
+    </div>
+  </div>
+
+  <!-- Share PRs modal -->
+  <div class="modal-overlay" id="modal-share">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Share your PRs</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">Send this code to a friend. They can import it in the Friends tab.</p>
+      <div class="share-code-box">
+        <div class="code-text" id="share-link-display">—</div>
+      </div>
+      <input type="text" id="share-link-full" readonly style="font-size:11px;word-break:break-all">
+      <button class="btn btn-primary btn-full" id="btn-copy-share">📋 Copy code</button>
+    </div>
+  </div>
+
+  <!-- Add friend modal -->
+  <div class="modal-overlay" id="modal-add-friend">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Add friend</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">Paste your friend's share code below.</p>
+      <div class="input-group">
+        <label>Friend's share code</label>
+        <textarea id="friend-code-input" placeholder="Paste code here…" rows="3"></textarea>
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-import-friend">Import</button>
+    </div>
+  </div>
+
+  <!-- Confirm action modal -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title" id="confirm-title">Confirm action</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <p id="confirm-message" style="font-size:13px;color:var(--muted);line-height:1.5">Are you sure?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-full" id="btn-confirm-cancel">Cancel</button>
+        <button class="btn btn-danger btn-full" id="btn-confirm-ok">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit name modal -->
+  <div class="modal-overlay" id="modal-edit-name">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Edit profile</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <form id="edit-name-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="input-group">
+          <label for="edit-name-input">Display name</label>
+          <input type="text" id="edit-name-input" placeholder="Your name" maxlength="32" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-full" id="btn-edit-name-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New exercise modal -->
+  <div class="modal-overlay" id="modal-new-exercise">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Create new exercise</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <form id="new-exercise-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="input-group">
+          <label for="new-ex-name">Exercise name</label>
+          <input type="text" id="new-ex-name" placeholder="e.g. Incline Dumbbell Press" maxlength="64" required>
+        </div>
+        <div class="input-group">
+          <label for="new-ex-cat">Category</label>
+          <input type="text" id="new-ex-cat" placeholder="e.g. Chest, Back, Legs" maxlength="32">
+        </div>
+        <div class="input-group">
+          <label for="new-ex-type">Tracking type</label>
+          <select id="new-ex-type">
+            <option value="weight">Weight + reps</option>
+            <option value="time">Time (seconds)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="new-ex-desc">Description / coaching cue (optional)</label>
+          <textarea id="new-ex-desc" rows="3" maxlength="160" placeholder="Short exercise note"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-full" id="btn-new-ex-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Add exercise</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Workout notes modal -->
+  <div class="modal-overlay" id="modal-workout-notes">
+    <div class="modal-card">
+      <div class="flex-row">
+        <div class="modal-title">Workout notes</div>
+        <button class="btn-modal-close btn-icon">✕</button>
+      </div>
+      <form id="workout-notes-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="input-group">
+          <label for="workout-notes-input">Notes</label>
+          <textarea id="workout-notes-input" rows="4" maxlength="400" placeholder="How did this workout feel?"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-full" id="btn-workout-notes-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Save notes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script src="api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

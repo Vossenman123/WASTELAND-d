@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f0f0f">
+  <title>Gym Log – Admin</title>
+  <style>
+    /* ── RESET & TOKENS ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #070b16;
+      --surface:  #0f1628;
+      --surface2: #151f35;
+      --border:   #22324f;
+      --accent:   #8cf56a;
+      --text:     #eef3ff;
+      --muted:    #9eb0d1;
+      --danger:   #ff3b30;
+      --success:  #30d158;
+      --radius:   12px;
+      --sidebar:  220px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px; min-height: 100vh;
+      background-image: radial-gradient(circle at 20% 0%, rgba(140,245,106,.14), transparent 40%), radial-gradient(circle at 80% 0%, rgba(99,162,255,.12), transparent 45%);
+    }
+    .hidden { display: none !important; }
+
+    /* ── LOGIN ────────────────────────────────────────────────────── */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 40px 32px; width: 100%; max-width: 380px;
+      display: flex; flex-direction: column; gap: 18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.45);
+    }
+    .login-logo { font-size: 40px; text-align: center; }
+    .login-card h1 { font-size: 22px; font-weight: 800; text-align: center; }
+    .login-card p  { font-size: 13px; color: var(--muted); text-align: center; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    input[type=password], input[type=text], input[type=number], select, textarea {
+      background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 14px; padding: 10px 12px; width: 100%; outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    .error-msg { color: var(--danger); font-size: 13px; min-height: 16px; }
+
+    /* ── BUTTONS ──────────────────────────────────────────────────── */
+    .admin-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 700; padding: 9px 16px;
+      background: var(--surface2); color: var(--text); transition: opacity .15s, transform .12s;
+    }
+    .admin-btn:active { opacity: .85; transform: scale(.98); }
+    .admin-btn-primary { background: linear-gradient(135deg, var(--accent), #70dfd8); color: #071012; }
+    .admin-btn-danger  { background: var(--danger);  color: #fff; }
+    .admin-btn-sm      { padding: 5px 10px; font-size: 12px; }
+    .admin-btn-full    { width: 100%; justify-content: center; }
+
+    /* ── ADMIN LAYOUT ─────────────────────────────────────────────── */
+    #admin-app { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .admin-sidebar {
+      width: var(--sidebar); background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-logo .logo { font-size: 26px; }
+    .sidebar-logo .title { font-size: 15px; font-weight: 800; line-height: 1.2; }
+    .sidebar-logo .subtitle { font-size: 11px; color: var(--muted); }
+    .sidebar-nav { padding: 12px 0; flex: 1; }
+    .admin-tab {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; width: 100%; background: none; border: none;
+      color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer;
+      text-align: left; transition: color .15s, background .15s; border-radius: 0;
+    }
+    .admin-tab .tab-icon { font-size: 18px; }
+    .admin-tab:hover { color: var(--text); background: var(--surface2); }
+    .admin-tab.active { color: var(--accent); background: rgba(232,255,0,.07); border-left: 3px solid var(--accent); }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-link { font-size: 12px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .sidebar-link:hover { color: var(--text); }
+
+    /* Main content */
+    .admin-main { flex: 1; display: flex; flex-direction: column; overflow: auto; }
+    .admin-header {
+      padding: 20px 28px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg); position: sticky; top: 0; z-index: 10;
+    }
+    .admin-header h2 { font-size: 20px; font-weight: 800; }
+    .admin-header-actions { display: flex; gap: 8px; align-items: center; }
+    .admin-content { padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
+
+    /* Responsive: mobile sidebar collapses to top nav */
+    @media (max-width: 700px) {
+      #admin-app { flex-direction: column; }
+      .admin-sidebar { width: 100%; height: auto; position: static; flex-direction: column; }
+      .sidebar-nav { display: flex; flex-direction: row; overflow-x: auto; padding: 8px; gap: 2px; }
+      .admin-tab { padding: 8px 14px; white-space: nowrap; border-radius: 8px; }
+      .admin-tab.active { border-left: none; border-bottom: 2px solid var(--accent); }
+      .sidebar-footer { flex-direction: row; flex-wrap: wrap; }
+    }
+
+    /* ── DASHBOARD STATS ──────────────────────────────────────────── */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;
+    }
+    .stat-tile {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; text-align: center;
+    }
+    .stat-tile .st-val { font-size: 30px; font-weight: 900; color: var(--accent); }
+    .stat-tile .st-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+    /* ── CARDS ────────────────────────────────────────────────────── */
+    .admin-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0,0,0,.28);
+    }
+    .admin-card-header {
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .admin-card-header h3 { font-size: 15px; font-weight: 700; flex: 1; }
+    .admin-card-header .count {
+      background: var(--surface2); border-radius: 20px; padding: 2px 10px;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+    }
+    .admin-card-body { padding: 16px 18px; }
+
+    /* ── TABLES ───────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .admin-table th {
+      text-align: left; font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px; padding: 8px 12px;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .admin-table td {
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04);
+      vertical-align: middle;
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: var(--surface2); }
+
+    /* ── MISC ─────────────────────────────────────────────────────── */
+    .admin-badge {
+      display: inline-block; background: var(--surface2); border-radius: 20px;
+      padding: 2px 8px; font-size: 11px; font-weight: 600; color: var(--muted);
+    }
+    .admin-code {
+      font-family: monospace; font-size: 12px; color: var(--muted);
+      background: var(--surface2); border-radius: 4px; padding: 1px 4px;
+    }
+    .admin-empty { text-align: center; color: var(--muted); padding: 24px; font-size: 13px; }
+    .search-bar { position: relative; }
+    .search-bar input { padding-left: 32px; }
+    .search-bar::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
+    .info-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .info-val { font-size: 14px; font-weight: 600; text-align: right; }
+
+    /* Tab sections */
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-backdrop.hidden { display: none; }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      width: 100%; max-width: 400px; padding: 24px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal-box h3 { font-size: 17px; font-weight: 800; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+    /* Toast */
+    #admin-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 20px; font-size: 13px; font-weight: 600;
+      opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; white-space: nowrap; z-index: 999;
+    }
+    #admin-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* API config box */
+    .api-config-box {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; font-size: 13px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .api-config-box code { font-family: monospace; color: var(--accent); font-size: 12px; background: #111; display: block; padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre; }
+    .api-state-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .api-state-item {
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .api-state-item .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .api-state-item .value {
+      font-weight: 700;
+      font-size: 13px;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ───────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🏋️</div>
+    <h1>Admin Panel</h1>
+    <p>Gym Progress Log – restricted access</p>
+    <form id="login-form" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label>Admin password</label>
+        <input type="password" id="admin-password" placeholder="Enter password" autocomplete="current-password">
+        <small style="color:var(--muted);font-size:12px">Default: <code>gymadmin</code> (can be overridden via localStorage key <code>gymlog_admin_password</code>)</small>
+      </div>
+      <p id="login-error" class="error-msg"></p>
+      <button type="submit" class="admin-btn admin-btn-primary admin-btn-full">Sign in →</button>
+    </form>
+    <a href="index.html" style="text-align:center;color:var(--muted);font-size:13px;text-decoration:none">← Back to app</a>
+  </div>
+</div>
+
+<!-- ── ADMIN APP ──────────────────────────────────────────────────── -->
+<div id="admin-app" class="hidden">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo">🏋️</div>
+      <div>
+        <div class="title">Gym Log</div>
+        <div class="subtitle">Admin Panel</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="admin-tab active" data-tab="dashboard">
+        <span class="tab-icon">📊</span> Dashboard
+      </button>
+      <button class="admin-tab" data-tab="exercises">
+        <span class="tab-icon">🏋️</span> Exercises
+      </button>
+      <button class="admin-tab" data-tab="workouts">
+        <span class="tab-icon">📅</span> Workouts
+      </button>
+      <button class="admin-tab" data-tab="users">
+        <span class="tab-icon">👤</span> Users & PRs
+      </button>
+      <button class="admin-tab" data-tab="api">
+        <span class="tab-icon">🔌</span> API / Backend
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="index.html" class="sidebar-link">← Open App</a>
+      <button class="admin-btn admin-btn-sm" id="btn-logout" style="margin-left:auto">🔐 Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="admin-header">
+      <h2 id="tab-title">Dashboard</h2>
+      <div class="admin-header-actions">
+        <button class="admin-btn" id="btn-admin-import">📂 Import JSON</button>
+        <button class="admin-btn admin-btn-primary" id="btn-admin-export">⬇️ Export JSON</button>
+        <input type="file" id="import-file" accept=".json" class="hidden" style="display:none">
+      </div>
+    </div>
+    <div class="admin-content">
+
+      <!-- ── DASHBOARD ─────────────────────────────────────────── -->
+      <div class="tab-section active" id="tab-dashboard">
+        <div class="stat-grid">
+          <div class="stat-tile"><div class="st-val" id="dash-workouts">—</div><div class="st-label">Workouts</div></div>
+          <div class="stat-tile"><div class="st-val" id="dash-exercises">—</div><div class="st-label">Exercises</div></div>
+          <div class="stat-tile"><div class="st-val" id="dash-templates">—</div><div class="st-label">Templates</div></div>
+          <div class="stat-tile"><div class="st-val" id="dash-prs">—</div><div class="st-label">PRs</div></div>
+          <div class="stat-tile"><div class="st-val" id="dash-volume">—</div><div class="st-label">Total volume (<span id="dash-unit">kg</span>)</div></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-header"><h3>Recent Workouts</h3></div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Name</th><th>Date</th><th>Duration</th><th>Volume</th></tr></thead>
+              <tbody id="dash-recent"><tr><td colspan="4" class="admin-empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EXERCISES ─────────────────────────────────────────── -->
+      <div class="tab-section" id="tab-exercises">
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Exercise Library</h3>
+            <span class="count" id="ex-count">0</span>
+            <button class="admin-btn admin-btn-primary admin-btn-sm" onclick="openAddExercise()">+ Add</button>
+          </div>
+          <div class="admin-card-body" style="padding-bottom:0">
+            <div class="search-bar" style="margin-bottom:12px">
+              <input type="text" id="ex-search" placeholder="Search exercises…">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Actions</th></tr></thead>
+              <tbody id="exercises-tbody"><tr><td colspan="4" class="admin-empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WORKOUTS ──────────────────────────────────────────── -->
+      <div class="tab-section" id="tab-workouts">
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>All Workouts</h3>
+            <span class="count" id="workout-count">0</span>
+          </div>
+          <div class="admin-card-body" style="padding-bottom:0">
+            <div class="search-bar" style="margin-bottom:12px">
+              <input type="text" id="workout-search" placeholder="Search workouts…">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>Template</th><th>Date</th><th>Duration</th><th>Sets</th><th>Volume</th><th></th></tr></thead>
+              <tbody id="workouts-tbody"><tr><td colspan="7" class="admin-empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USERS & PRs ────────────────────────────────────────── -->
+      <div class="tab-section" id="tab-users">
+        <div class="admin-card">
+          <div class="admin-card-header"><h3>User Profile</h3></div>
+          <div class="admin-card-body">
+            <div class="info-row"><span class="info-label">Name</span><span class="info-val" id="user-name">—</span></div>
+            <div class="info-row"><span class="info-label">User ID</span><span class="info-val admin-code" id="user-id">—</span></div>
+            <div class="info-row"><span class="info-label">Unit</span><span class="info-val" id="user-unit">—</span></div>
+            <div class="info-row"><span class="info-label">Privacy</span><span class="info-val" id="user-privacy">—</span></div>
+            <div class="info-row"><span class="info-label">Onboarded</span><span class="info-val" id="user-onboarded">—</span></div>
+            <div class="info-row"><span class="info-label">Friends</span><span class="info-val" id="user-friends">—</span></div>
+          </div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-header"><h3>Personal Records (PRs)</h3></div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Exercise</th><th>Best Weight</th><th>Best e1RM</th><th>Best Volume</th><th>Date</th></tr></thead>
+              <tbody id="prs-tbody"><tr><td colspan="5" class="admin-empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── API / BACKEND ─────────────────────────────────────── -->
+      <div class="tab-section" id="tab-api">
+        <div class="admin-card">
+          <div class="admin-card-header"><h3>Connect to a Backend (Firebase or Laravel)</h3></div>
+          <div class="admin-card-body" style="display:flex;flex-direction:column;gap:16px">
+            <div class="api-state-grid">
+              <div class="api-state-item">
+                <div class="label">Mode</div>
+                <div class="value" id="api-mode">—</div>
+              </div>
+              <div class="api-state-item">
+                <div class="label">Base URL</div>
+                <div class="value" id="api-base-url">—</div>
+              </div>
+              <div class="api-state-item">
+                <div class="label">Auth token</div>
+                <div class="value" id="api-token">—</div>
+              </div>
+              <div class="api-state-item">
+                <div class="label">Data store</div>
+                <div class="value" id="api-store-health">—</div>
+              </div>
+            </div>
+
+            <div class="api-config-box">
+              <strong style="font-size:12px;color:var(--muted)">Admin panel password</strong>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <input type="password" id="admin-pass-new" placeholder="Set new admin password (min 4 chars)" autocomplete="new-password">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="admin-btn admin-btn-primary" id="btn-admin-pass-save" type="button">Save new password</button>
+                  <button class="admin-btn" id="btn-admin-pass-reset" type="button">Reset to default (gymadmin)</button>
+                </div>
+              </div>
+            </div>
+
+            <p style="color:var(--muted);font-size:13px;line-height:1.6">
+              The app uses <code class="admin-code">api.js</code> as a data abstraction layer.
+              By default it reads from <code class="admin-code">localStorage</code>.
+              To connect Firebase or Laravel REST, edit <code class="admin-code">api.js</code> and set:
+            </p>
+            <div class="api-config-box">
+              <strong style="font-size:12px;color:var(--muted)">api.js – top of file</strong>
+              <code>const API_CONFIG = {
+  useBackend: true,             // ← enable backend mode
+  provider:  'firebase',        // or 'laravel'
+  baseUrl:   'https://your-app.test/api', // required for laravel
+  token:     null,
+};</code>
+            </div>
+            <p style="color:var(--muted);font-size:13px;line-height:1.6"><strong>Laravel option:</strong> keep using the following <code class="admin-code">routes/api.php</code> shape:</p>
+            <div class="api-config-box">
+              <code>Route::post('/login',  [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('exercises', ExerciseController::class);
+    Route::apiResource('workouts',  WorkoutController::class);
+    Route::apiResource('templates', TemplateController::class);
+    Route::apiResource('friends',   FriendController::class);
+    Route::get ('prs',      [PrController::class, 'index']);
+    Route::put ('prs',      [PrController::class, 'update']);
+    Route::get ('settings', [SettingsController::class, 'show']);
+    Route::put ('settings', [SettingsController::class, 'update']);
+});</code>
+            </div>
+            <p style="color:var(--muted);font-size:13px;line-height:1.6">
+              Firebase option uses <strong>Firebase Auth + Firestore</strong> through the same <code class="admin-code">GymApi</code> methods.
+              Laravel option uses JSON REST + Sanctum bearer tokens.
+              When <code class="admin-code">useBackend: false</code> every call reads/writes localStorage directly — no network required.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /admin-content -->
+  </main>
+</div>
+
+<!-- Exercise modal -->
+<div class="modal-backdrop hidden" id="modal-exercise">
+  <div class="modal-box">
+    <h3 id="ex-modal-title">Add Exercise</h3>
+    <form id="ex-form" style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label>ID (optional, auto-generated)</label>
+        <input type="text" id="ex-form-id" placeholder="e.g. ex_myexercise">
+      </div>
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" id="ex-form-name" placeholder="e.g. Incline Dumbbell Press" required>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" id="ex-form-cat" placeholder="e.g. Chest">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-full" onclick="closeExModal()">Cancel</button>
+        <button type="submit" class="admin-btn admin-btn-primary admin-btn-full">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
