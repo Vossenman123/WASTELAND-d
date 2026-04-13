@@ -147,38 +147,88 @@ html, body {
   position: static;
   width: var(--sidebar-w);
   height: 100dvh;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 10px 0;
+  padding: 14px 10px;
   z-index: 100;
   overflow-y: auto;
   flex-shrink: 0;
+  gap: 4px;
 }
 #bottom-nav.hidden { display: none; }
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  margin-bottom: 8px;
+}
+.nav-brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255,120,90,.36), rgba(255,90,70,.24));
+}
+.nav-brand-title { font-size: 13px; font-weight: 800; line-height: 1.15; }
+.nav-brand-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.nav-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .9px;
+  color: color-mix(in srgb, var(--muted) 86%, #fff);
+  margin: 8px 8px 6px;
+}
 .nav-btn {
   flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 10px;
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: .3px;
+  letter-spacing: 0;
   cursor: pointer;
-  padding: 12px 4px;
-  transition: color .15s;
-  border-left: 3px solid transparent;
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: color .15s, background .15s, transform .12s;
+  border-left: 0;
+  text-align: left;
 }
-.nav-btn .nav-icon { font-size: 19px; line-height: 1; }
-.nav-btn.active { color: var(--accent); border-left-color: var(--accent); background: rgba(255,255,255,.03); }
+.nav-btn .nav-icon { font-size: 17px; line-height: 1; width: 20px; text-align: center; }
+.nav-btn .nav-label { flex: 1; min-width: 0; }
+.nav-btn.active {
+  color: #fff;
+  background: linear-gradient(90deg, rgba(255,90,72,.35), rgba(255,90,72,.12));
+  box-shadow: inset 0 0 0 1px rgba(255,138,114,.32);
+}
+.nav-btn:hover { transform: translateX(1px); }
+.nav-admin-link {
+  margin-top: auto;
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--muted);
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface2) 75%, transparent);
+  font-size: 12px;
+  transition: color .15s, border-color .15s;
+}
+.nav-admin-link:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
 
 /* ===== ONBOARDING ===== */
 .onboard-wrap {
@@ -414,27 +464,6 @@ select option { background: var(--surface2); }
 .recent-item .ri-name { font-size: 15px; font-weight: 600; }
 .recent-item .ri-meta { font-size: 12px; color: var(--muted); }
 .recent-item .ri-right { color: var(--muted); font-size: 18px; }
-.home-quick-actions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-.quick-card {
-  border: none;
-  border-radius: 18px;
-  padding: 16px;
-  text-align: left;
-  cursor: pointer;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.quick-card .qc-title { font-size: 16px; font-weight: 800; }
-.quick-card .qc-sub { font-size: 12px; opacity: .88; }
-.quick-card-dark { background: linear-gradient(135deg, #31363f, #1f232b); }
-.quick-card-coral { background: linear-gradient(135deg, #ff7f7d, #ff5f5f); }
-.quick-card-teal { background: linear-gradient(135deg, #4cc4b2, #279f8d); }
 
 /* ===== TEMPLATES ===== */
 .templates-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -867,49 +896,16 @@ select option { background: var(--surface2); }
 /* ===== RESPONSIVE – TABLET / DESKTOP (≥ 768px) ===== */
 @media (min-width: 768px) {
   :root {
-    --sidebar-w: 210px;
+    --sidebar-w: 248px;
   }
 
   #bottom-nav {
     width: var(--sidebar-w);
-    padding: 12px 0;
+    padding: 18px 12px;
   }
   #bottom-nav.hidden { display: none; }
 
-  .nav-btn {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 12px 20px;
-    font-size: 13px;
-    letter-spacing: 0;
-  }
-  .nav-btn .nav-icon { font-size: 20px; }
-  .nav-btn.active { border-left: 3px solid var(--accent); }
-
-  /* Sidebar header / branding */
-  #bottom-nav::before {
-    content: '🏋️  Gym Log';
-    display: block;
-    padding: 20px 20px 16px;
-    font-size: 16px;
-    font-weight: 800;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
-    color: var(--text);
-  }
-
-  /* Admin link at bottom of sidebar */
-  #bottom-nav::after {
-    content: '⚙️  Admin Panel →';
-    display: block;
-    margin-top: auto;
-    padding: 16px 20px;
-    font-size: 12px;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
-    cursor: pointer;
-  }
+  .nav-btn .nav-icon { font-size: 18px; }
 
   /* Onboarding is still centred */
   .screen-onboarding { justify-content: center; align-items: center; }
@@ -925,7 +921,6 @@ select option { background: var(--surface2); }
   .stat-card .stat-value { font-size: 34px; }
   .dashboard-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .home-analytics-grid { grid-template-columns: 1.1fr .9fr; }
-  .home-quick-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
   /* Home content wider */
   .home-content { padding: 20px 24px; gap: 20px; max-width: 860px; }
@@ -991,11 +986,11 @@ body {
     radial-gradient(circle at 78% 20%, rgba(255,70,50,.32), transparent 34%),
     radial-gradient(circle at 12% 78%, rgba(255,130,60,.22), transparent 42%),
     linear-gradient(to bottom, rgba(7,11,22,.76), rgba(7,11,22,.9)),
-    url("https://github.com/user-attachments/assets/409fc830-286d-4979-8be3-bdb1d9cdb53a");
+    url("https://github.com/user-attachments/assets/4e90b8af-c9b1-43f6-8654-9bc055f1474e");
   background-size: cover;
-  background-position: center top;
+  background-position: center center;
   background-repeat: no-repeat;
-  background-attachment: scroll;
+  background-attachment: fixed;
 }
 
 .card,

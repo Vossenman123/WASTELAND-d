@@ -319,13 +319,6 @@ function renderHome() {
 }
 
 document.getElementById('btn-start-workout').addEventListener('click', openStartModal);
-document.getElementById('quick-view-templates').addEventListener('click', () => { renderTemplates(); showScreen('screen-templates'); });
-document.getElementById('quick-auto-plan').addEventListener('click', () => {
-  templateMode = 'auto';
-  renderTemplates();
-  showScreen('screen-templates');
-});
-document.getElementById('quick-open-friends').addEventListener('click', () => { renderFriends(); showScreen('screen-friends'); });
 
 function updateProgressChip(barId, labelId, value, target) {
   const pct = Math.max(0, Math.min(100, Math.round((value / Math.max(1, target)) * 100)));

@@ -239,21 +239,6 @@
           <div class="recent-list" id="recent-list"></div>
         </div>
       </div>
-
-      <div class="home-quick-actions">
-        <button class="quick-card quick-card-dark" id="quick-view-templates" type="button">
-          <span class="qc-title">Templates</span>
-          <span class="qc-sub">Manage your plans</span>
-        </button>
-        <button class="quick-card quick-card-coral" id="quick-auto-plan" type="button">
-          <span class="qc-title">Auto plan</span>
-          <span class="qc-sub">Build smart templates</span>
-        </button>
-        <button class="quick-card quick-card-teal" id="quick-open-friends" type="button">
-          <span class="qc-title">Friends</span>
-          <span class="qc-sub">Compare progress</span>
-        </button>
-      </div>
     </div>
   </section>
 
@@ -709,21 +694,31 @@
        BOTTOM NAVIGATION
        ══════════════════════════════════════════════════════════ -->
   <nav id="bottom-nav">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">🏋️</div>
+      <div class="nav-brand-copy">
+        <div class="nav-brand-title">Gym Progress</div>
+        <div class="nav-brand-sub">Performance tracker</div>
+      </div>
+    </div>
+    <div class="nav-section-label">Main</div>
     <button class="nav-btn active" data-screen="screen-home">
-      <span class="nav-icon">🏠</span>Home
+      <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
     </button>
     <button class="nav-btn" data-screen="screen-templates">
-      <span class="nav-icon">📋</span>Templates
+      <span class="nav-icon">📋</span><span class="nav-label">Templates</span>
     </button>
     <button class="nav-btn" data-screen="screen-friends">
-      <span class="nav-icon">👥</span>Friends
+      <span class="nav-icon">👥</span><span class="nav-label">Friends</span>
     </button>
+    <div class="nav-section-label">Progress</div>
     <button class="nav-btn" data-screen="screen-achievements">
-      <span class="nav-icon">🏅</span>Prestaties
+      <span class="nav-icon">🏅</span><span class="nav-label">Achievements</span>
     </button>
     <button class="nav-btn" data-screen="screen-settings">
-      <span class="nav-icon">⚙️</span>Settings
+      <span class="nav-icon">⚙️</span><span class="nav-label">Settings</span>
     </button>
+    <a class="nav-admin-link" href="admin.html">🛠 Admin Panel</a>
   </nav>
 
   <!-- ══════════════════════════════════════════════════════════
