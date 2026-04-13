@@ -42,17 +42,14 @@ let _authUserCache = null;
 function _loadToken() {
   if (API_CONFIG.provider === 'firebase') {
     API_CONFIG.token = null;
+    _authUserCache = null;
     return;
   }
   API_CONFIG.token = localStorage.getItem(TOKEN_KEY) || null;
-  _authUserCache = _getAuthUser();
+  try { _authUserCache = JSON.parse(localStorage.getItem(AUTH_USER_KEY)) || null; }
+  catch (_) { _authUserCache = null; }
 }
-function _saveToken(token, user) {
-  if (API_CONFIG.provider === 'firebase') {
-    API_CONFIG.token = token || null;
-    _authUserCache = user || null;
-    return;
-  }
+function _saveLaravelToken(token, user) {
   if (token) {
     localStorage.setItem(TOKEN_KEY, token);
     API_CONFIG.token = token;
@@ -62,6 +59,11 @@ function _saveToken(token, user) {
   }
   if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
   else localStorage.removeItem(AUTH_USER_KEY);
+  _authUserCache = user || null;
+}
+function _saveFirebaseSession(token, user) {
+  API_CONFIG.token = token || null;
+  _authUserCache = user || null;
 }
 function _getAuthUser() {
   if (API_CONFIG.provider === 'firebase') return _authUserCache;
@@ -238,11 +240,9 @@ async function _firebaseGetDb() {
     seeded.settings.userId = seeded.settings.userId || user.uid;
     seeded.settings.username = seeded.settings.username || user.displayName || user.email || 'Athlete';
     await ctx.setDoc(ref, { ...seeded, updatedAt: ctx.serverTimestamp() }, { merge: true });
-    _saveLocal(seeded);
     return seeded;
   }
   const db = _normalizeDb(snap.data());
-  _saveLocal(db);
   return db;
 }
 
@@ -251,7 +251,6 @@ async function _firebaseSetDb(db) {
   const normalized = _normalizeDb(db);
   const ref = ctx.doc(ctx.db, 'gymlog_users', user.uid);
   await ctx.setDoc(ref, { ...normalized, updatedAt: ctx.serverTimestamp() }, { merge: true });
-  _saveLocal(normalized);
   return normalized;
 }
 
@@ -542,7 +541,7 @@ const GymApi = {
         name: cred.user.displayName || name || email,
         email: cred.user.email || email,
       };
-      _saveToken(token, user);
+      _saveFirebaseSession(token, user);
 
       const seeded = _normalizeDb(_loadLocal() || _emptyDb());
       seeded.settings = { ...seeded.settings, username: user.name, userId: user.id, unit };
@@ -559,7 +558,7 @@ const GymApi = {
       password_confirmation: password,
       unit,
     });
-    if (res?.token) _saveToken(res.token, res.user);
+    if (res?.token) _saveLaravelToken(res.token, res.user);
     _persistApiConfig();
     return res;
   },
@@ -576,14 +575,14 @@ const GymApi = {
         name: cred.user.displayName || email,
         email: cred.user.email || email,
       };
-      _saveToken(token, user);
+      _saveFirebaseSession(token, user);
       await _firebaseGetDb();
       _persistApiConfig();
       return { user, token };
     }
 
     const res = await _http('POST', '/login', { email, password });
-    if (res?.token) _saveToken(res.token, res.user);
+    if (res?.token) _saveLaravelToken(res.token, res.user);
     _persistApiConfig();
     return res;
   },
@@ -596,13 +595,13 @@ const GymApi = {
         const ctx = await _firebaseCtx();
         await ctx.signOut(ctx.auth);
       } catch (_) {}
-      _saveToken(null, null);
+      _saveFirebaseSession(null, null);
       _persistApiConfig();
       return;
     }
 
     try { await _http('POST', '/logout'); } catch (_) {}
-    _saveToken(null, null);
+    _saveLaravelToken(null, null);
     _persistApiConfig();
   },
 
@@ -614,7 +613,7 @@ const GymApi = {
       if (!user) return null;
       const token = await user.getIdToken();
       const payload = { id: user.uid, name: user.displayName || user.email, email: user.email || '' };
-      _saveToken(token, payload);
+      _saveFirebaseSession(token, payload);
       return payload;
     }
 
